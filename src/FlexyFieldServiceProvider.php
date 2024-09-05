@@ -2,9 +2,9 @@
 
 namespace AuroraWebSoftware\FlexyField;
 
+use AuroraWebSoftware\FlexyField\Commands\FlexyFieldCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use AuroraWebSoftware\FlexyField\Commands\FlexyFieldCommand;
 
 class FlexyFieldServiceProvider extends PackageServiceProvider
 {

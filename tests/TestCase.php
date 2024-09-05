@@ -2,9 +2,9 @@
 
 namespace AuroraWebSoftware\FlexyField\Tests;
 
+use AuroraWebSoftware\FlexyField\FlexyFieldServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use AuroraWebSoftware\FlexyField\FlexyFieldServiceProvider;
 
 class TestCase extends Orchestra
 {
