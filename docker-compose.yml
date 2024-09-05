@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+  mariadb:
+    image: mariadb:10.8
+    ports:
+      - "33063:3306"
+    volumes:
+      - ~/apps/flexyfield/mariadb:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=flexyfield
+      - MYSQL_PASSWORD=flexyfield
+      - MYSQL_USER=flexyfield
+      - MYSQL_DATABASE=flexyfield
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.10.0/24

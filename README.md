@@ -1,12 +1,5 @@
 # Laravel Models are now Uber Flexy!
-
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/aurora-web-software-team/flexyfield.svg?style=flat-square)](https://packagist.org/packages/aurora-web-software-team/flexyfield)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/aurora-web-software-team/flexyfield/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/aurora-web-software-team/flexyfield/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/aurora-web-software-team/flexyfield/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/aurora-web-software-team/flexyfield/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/aurora-web-software-team/flexyfield.svg?style=flat-square)](https://packagist.org/packages/aurora-web-software-team/flexyfield)
-
 Laravel FlexyField is useful package for dynamic model fields.
-
 
 ## Installation
 

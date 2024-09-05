@@ -8,6 +8,12 @@ use AuroraWebSoftware\FlexyField\Commands\FlexyFieldCommand;
 
 class FlexyFieldServiceProvider extends PackageServiceProvider
 {
+    public function boot() : FlexyFieldServiceProvider
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        return parent::boot();
+    }
+
     public function configurePackage(Package $package): void
     {
         /*
@@ -18,8 +24,9 @@ class FlexyFieldServiceProvider extends PackageServiceProvider
         $package
             ->name('flexyfield')
             ->hasConfigFile()
-            ->hasViews()
-            ->hasMigration('create_flexyfield_table')
-            ->hasCommand(FlexyFieldCommand::class);
+            // ->hasViews()
+            //->hasMigration('create_flexyfield_table')
+            // ->hasCommand(FlexyFieldCommand::class)
+        ;
     }
 }

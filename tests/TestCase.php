@@ -26,11 +26,17 @@ class TestCase extends Orchestra
 
     public function getEnvironmentSetUp($app)
     {
+        // for GitHub tests wirh mysql
+        // config()->set('database.default', 'mysql');
+
+        // for local tests with sqlite
         config()->set('database.default', 'testing');
 
-        /*
-        $migration = include __DIR__.'/../database/migrations/create_flexyfield_table.php.stub';
-        $migration->up();
-        */
+        // for local tests with mysql
+        config()->set('database.default', 'mysql');
+
+        //$migration = include __DIR__.'/../database/migrations/create_flexyfield_table.php';
+        //$migration->up();
+
     }
 }
