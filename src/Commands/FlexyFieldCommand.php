@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace AuroraWebSoftware\FlexyField\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class FlexyFieldCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'flexyfield';
 
     public $description = 'My command';
 
