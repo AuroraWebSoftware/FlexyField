@@ -26,4 +26,9 @@ it('can test set, get and delete a shape for a flexy model', function () {
     expect(ExampleFlexyModel::getFlexyShape('test_field'))->toBeNull();
 });
 
+it('can test x', function () {
+
+
+
+});
 
