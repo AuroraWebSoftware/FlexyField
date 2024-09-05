@@ -25,5 +25,3 @@ it('can test set, get and delete a shape for a flexy model', function () {
     ExampleFlexyModel::deleteFlexyShape('test_field');
     expect(ExampleFlexyModel::getFlexyShape('test_field'))->toBeNull();
 });
-
-

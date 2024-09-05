@@ -8,9 +8,10 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class FlexyFieldServiceProvider extends PackageServiceProvider
 {
-    public function boot() : FlexyFieldServiceProvider
+    public function boot(): FlexyFieldServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
         return parent::boot();
     }
 
@@ -23,10 +24,9 @@ class FlexyFieldServiceProvider extends PackageServiceProvider
          */
         $package
             ->name('flexyfield')
-            ->hasConfigFile()
-            // ->hasViews()
-            //->hasMigration('create_flexyfield_table')
-            // ->hasCommand(FlexyFieldCommand::class)
-        ;
+            ->hasConfigFile();
+        // ->hasViews()
+        //->hasMigration('create_flexyfield_table')
+        // ->hasCommand(FlexyFieldCommand::class)
     }
 }
