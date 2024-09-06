@@ -42,9 +42,9 @@ it('can set get a flexy models flexy fields', function () {
     ]);
 
     dump($flexyModel1->flexy->isDirty());
-    dump($flexyModel1->flexy->a='a');
+    dump($flexyModel1->flexy->a = 'a');
     dump($flexyModel1->flexy->b);
-    dump($flexyModel1->flexy->b=4);
+    dump($flexyModel1->flexy->b = 4);
     dump($flexyModel1->flexy->b);
     dump($flexyModel1->flexy->isDirty());
 
@@ -53,4 +53,3 @@ it('can set get a flexy models flexy fields', function () {
     $flexyModel1->save();
 
 });
-
