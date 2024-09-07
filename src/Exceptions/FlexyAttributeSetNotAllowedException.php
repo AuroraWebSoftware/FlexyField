@@ -2,7 +2,4 @@
 
 namespace AuroraWebSoftware\FlexyField\Exceptions;
 
-class FlexyAttributeSetNotAllowedException extends \Exception
-{
-
-}
+class FlexyAttributeSetNotAllowedException extends \Exception {}
