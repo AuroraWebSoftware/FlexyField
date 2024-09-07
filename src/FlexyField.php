@@ -92,7 +92,6 @@ BEGIN
 END $$;
 ";
 
-
         // Execute SQL statements
         DB::unprepared($columnsSql);
     }
