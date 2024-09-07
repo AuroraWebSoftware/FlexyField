@@ -11,12 +11,7 @@ interface FlexyModelContract
     public static function hasShape(): bool;
 
     /**
-     * @param string $fieldName
-     * @param FlexyFieldType $fieldType
-     * @param int $sort
-     * @param string|null $validationRules
-     * @param array<string, string>|null $validationMessages
-     * @return Shape
+     * @param  array<string, string>|null  $validationMessages
      */
     public static function setFlexyShape(string $fieldName, FlexyFieldType $fieldType,
         int $sort, ?string $validationRules = null,

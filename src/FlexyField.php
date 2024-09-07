@@ -67,7 +67,7 @@ class FlexyField
     /**
      * @throws Exception
      */
-    public static function dropAndCreatePivotViewForPostgres() : void
+    public static function dropAndCreatePivotViewForPostgres(): void
     {
         throw new Exception('not implemented');
     }
