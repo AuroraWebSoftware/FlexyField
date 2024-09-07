@@ -19,7 +19,6 @@ beforeEach(function () {
         $table->timestamps();
     });
 
-
 });
 
 it('can test', function () {
@@ -88,8 +87,6 @@ it('can get exception when shape is mandatory', function () {
     $flexyModel1->save();
 })->expectException(FlexyFieldIsNotInShape::class);
 
-
-
 it('can create shape for a model and save', function () {
     $flexyModel1 = ExampleFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
     ExampleFlexyModel::$hasShape = true;
@@ -121,5 +118,3 @@ it('can create shape for a model and validate and save', function () {
 
     expect(ExampleFlexyModel::where('flexy_a', 5)->get())->toHaveCount(1);
 });
-
-

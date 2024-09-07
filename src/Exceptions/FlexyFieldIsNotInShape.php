@@ -2,7 +2,4 @@
 
 namespace AuroraWebSoftware\FlexyField\Exceptions;
 
-class FlexyFieldIsNotInShape extends \Exception
-{
-
-}
+class FlexyFieldIsNotInShape extends \Exception {}

@@ -43,7 +43,7 @@ return new class extends Migration
             'model_type' => 'App\\FlexyField\Models\Value',
             'model_id' => 1,
             'field_name' => 'test',
-            'value_string' => 'test'
+            'value_string' => 'test',
         ]);
 
         FlexyField::dropAndCreatePivotView();
