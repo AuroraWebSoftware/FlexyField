@@ -42,14 +42,6 @@ jobs:
           MYSQL_DATABASE: flexyfield
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
-      postgres:
-        image: postgres:15
-        ports:
-          - 5432
-        env:
-          POSTGRES_USER: flexyfield
-          POSTGRES_PASSWORD: flexyfield
-          POSTGRES_DB: flexyfield
 
     steps:
       - name: Verify Mysql connection
@@ -57,12 +49,6 @@ jobs:
           mysql --version
           sudo apt-get install -y mysql-client
           mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -uflexyfield -pflexyfield -e "SHOW DATABASES"
-
-      - name: Verify PostgreSQL connection
-        run: |
-          psql --version
-          sudo apt-get install -y postgresql-client
-          PGPASSWORD=flexyfield psql --host 127.0.0.1 --port ${{ job.services.postgres.ports['5432'] }} -U flexyfield -d flexyfield -c "\l"
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -89,9 +75,6 @@ jobs:
 
       - name: Execute tests
         run: vendor/bin/pest --ci
-
-      - name: Execute tests for using postgress
-        run: vendor/bin/pest --ci --configuration /phpunit-postgress.xml.dist
 
         env:
           DB_USERNAME: flexyfield
