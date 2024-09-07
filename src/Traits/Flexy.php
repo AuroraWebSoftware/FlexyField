@@ -4,24 +4,42 @@ namespace AuroraWebSoftware\FlexyField\Traits;
 
 use AuroraWebSoftware\FlexyField\Contracts\FlexyModelContract;
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\Exceptions\FlexyAttributeSetNotAllowedException;
+use AuroraWebSoftware\FlexyField\Exceptions\FlexyFieldIsNotInShape;
+use AuroraWebSoftware\FlexyField\Exceptions\FlexyFieldTypeNotAllowedException;
+use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\Models\Shape;
 use AuroraWebSoftware\FlexyField\Models\Value;
 use DateTime;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 trait Flexy
 {
     private ?\AuroraWebSoftware\FlexyField\Models\Flexy $fields = null;
     private ?array $creatingFields = null;
 
+    public static bool $hasShape = false;
+
+    public static function hasShape(): bool {
+        return self::$hasShape;
+    }
+
     public static function bootFlexy(): void
     {
-        static::saving(function (FlexyModelContract $flexyModelContract) {
+        static::addGlobalScope('flexy', function (Builder $builder) {
+            $modelType = static::class;
+            $builder->leftJoin('ff_values_pivot_view', 'ff_values_pivot_view.model_id', '=', 'id')
+                ->where('ff_values_pivot_view.model_type', '=', $modelType);
+        });
 
-            // todo validations shape e göre
+
+        static::saving(/**
+         * @throws FlexyFieldTypeNotAllowedException
+         * @throws \Exception
+         */ function (FlexyModelContract $flexyModelContract) {
 
             if ($flexyModelContract->flexy->isDirty()) {
 
@@ -29,6 +47,19 @@ trait Flexy
                 $dirtyFields = $flexyModelContract->flexy->getDirty() ?? [];
 
                 foreach ($dirtyFields as $field => $value) {
+
+                    if ($flexyModelContract::hasShape()) {
+                        $shape = Shape::where('model_type', $modelType)
+                            ->where('field_name', $field)
+                            ->first() ?? throw new FlexyFieldIsNotInShape($field);
+
+                        $data = [$field => $value];
+                        $rules = $shape?->validation_rules ? [$field => $shape->validation_rules] : [];
+                        $messages = $shape?->validation_rule ? [$field => $shape->validation_rules] : [];
+
+                        Validator::make($data, $rules, $messages)->validate();
+                    }
+
 
                     $addition = [];
 
@@ -39,13 +70,9 @@ trait Flexy
                     } elseif (is_numeric($value)) {
                         $addition['value_decimal'] = $value;
                     } elseif ($value instanceof DateTime) {
-                        // todo
-                    } elseif (DateTime::createFromFormat('Y-m-d', $value)) {
-                        // todo
-                    } elseif (DateTime::createFromFormat('Y-m-d H:i:s', $value)) {
-                        // todo
+                        $addition['value_datetime'] = $value;
                     } else {
-                        // todo
+                        throw new FlexyFieldTypeNotAllowedException();
                     }
 
                     Value::updateOrCreate(
@@ -62,7 +89,14 @@ trait Flexy
                         ]
                     );
                 }
+
+                if ($dirtyFields) {
+                    $flexyModelContract->flexy->setRawAttributes($flexyModelContract->flexy->getAttributes(), true);
+                    FlexyField::dropAndCreatePivotView();
+                }
             }
+
+
         });
     }
 
@@ -121,8 +155,6 @@ trait Flexy
                             $value->value_string ?? null;
                     });
                 }
-                $this->fields->a = 1;
-                $this->fields->b = 2;
 
                 $this->fields->setRawAttributes($this->fields->getAttributes(), true);
 

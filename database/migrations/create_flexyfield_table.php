@@ -1,7 +1,10 @@
 <?php
 
+use AuroraWebSoftware\FlexyField\FlexyField;
+use AuroraWebSoftware\FlexyField\Models\Value;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -35,11 +38,23 @@ return new class extends Migration
 
             $table->unique(['model_type', 'model_id', 'field_name']);
         });
+
+        $exampleValue = Value::create([
+            'model_type' => 'App\\FlexyField\Models\Value',
+            'model_id' => 1,
+            'field_name' => 'test',
+            'value_string' => 'test'
+        ]);
+
+        FlexyField::dropAndCreatePivotView();
+
+        $exampleValue->delete();
     }
 
     public function down(): void
     {
         Schema::dropIfExists('ff_shapes');
         Schema::dropIfExists('ff_values');
+        DB::statement('DROP VIEW IF EXISTS flexyfield.ff_values_pivot_view');
     }
 };
