@@ -30,7 +30,6 @@ jobs:
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
-
     services:
       mysql:
         image: mysql:8.0
@@ -44,10 +43,7 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
 
-
-
     steps:
-
       - name: Verify Mysql connection
         run: |
           mysql --version
