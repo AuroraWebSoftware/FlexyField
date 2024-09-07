@@ -12,6 +12,17 @@ services:
       - MYSQL_PASSWORD=flexyfield
       - MYSQL_USER=flexyfield
       - MYSQL_DATABASE=flexyfield
+  postgres:
+    image: postgres:15
+    ports:
+      - "54321:5432"
+    volumes:
+      - ~/apps/flexyfield/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=flexyfield
+      - POSTGRES_PASSWORD=flexyfield
+      - POSTGRES_DB=flexyfield
+
 networks:
   default:
     driver: bridge
