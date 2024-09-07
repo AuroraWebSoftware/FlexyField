@@ -30,7 +30,31 @@ jobs:
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
+
+    services:
+      mysql:
+        image: mysql:8.0
+        ports:
+          - 3306
+        env:
+          MYSQL_ROOT_PASSWORD: flexyfield
+          MYSQL_PASSWORD: flexyfield
+          MYSQL_USER: flexyfield
+          MYSQL_DATABASE: flexyfield
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+
+
+
     steps:
+
+      - name: Verify Mysql connection
+        run: |
+          mysql --version
+          sudo apt-get install -y mysql-client
+          mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -uflexyfield -pflexyfield -e "SHOW DATABASES"
+
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -56,3 +80,8 @@ jobs:
 
       - name: Execute tests
         run: vendor/bin/pest --ci
+
+        env:
+          DB_USERNAME: flexyfield
+          DB_PASSWORD: flexyfield
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
