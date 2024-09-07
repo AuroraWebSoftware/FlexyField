@@ -62,7 +62,7 @@ jobs:
         run: |
           psql --version
           sudo apt-get install -y postgresql-client
-          psql --host 127.0.0.1 --port ${{ job.services.postgres.ports['5432'] }} -U flexyfield -d flexyfield -c "\l"
+          PGPASSWORD=flexyfield psql --host 127.0.0.1 --port ${{ job.services.postgres.ports['5432'] }} -U flexyfield -d flexyfield -c "\l"
 
 
       - name: Checkout code
