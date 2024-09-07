@@ -93,7 +93,6 @@ jobs:
       - name: Execute tests for using postgress
         run: vendor/bin/pest --ci --configuration ./phpunit-postgress.xml.dist
 
-
         env:
           DB_USERNAME: flexyfield
           DB_PASSWORD: flexyfield

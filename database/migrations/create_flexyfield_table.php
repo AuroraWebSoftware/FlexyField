@@ -51,6 +51,8 @@ return new class extends Migration
 
         FlexyField::dropAndCreatePivotView();
 
+        // someting
+
         $exampleValue->delete();
     }
 
