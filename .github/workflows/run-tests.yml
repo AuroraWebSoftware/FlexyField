@@ -64,7 +64,6 @@ jobs:
           sudo apt-get install -y postgresql-client
           PGPASSWORD=flexyfield psql --host 127.0.0.1 --port ${{ job.services.postgres.ports['5432'] }} -U flexyfield -d flexyfield -c "\l"
 
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -90,6 +89,10 @@ jobs:
 
       - name: Execute tests
         run: vendor/bin/pest --ci
+
+      - name: Execute tests for using postgress
+        run: vendor/bin/pest --ci --configuration ./phpunit-postgress.xml.dist
+
 
         env:
           DB_USERNAME: flexyfield

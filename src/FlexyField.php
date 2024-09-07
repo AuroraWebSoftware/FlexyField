@@ -69,6 +69,31 @@ class FlexyField
      */
     public static function dropAndCreatePivotViewForPostgres(): void
     {
-        throw new Exception('not implemented');
+        $columnsSql = "
+DO $$
+DECLARE
+    sql TEXT;
+BEGIN
+    -- Concatenate column names using STRING_AGG for dynamic pivot column generation
+    SELECT STRING_AGG(
+        'MAX(CASE WHEN field_name = ''' || field_name || ''' THEN ' ||
+        'COALESCE(CAST(value_date AS TEXT), CAST(value_datetime AS TEXT), CAST(value_decimal AS TEXT), CAST(value_int AS TEXT), value_string) ' ||
+        'END) AS flexy_' || field_name,
+        ', ')
+    INTO sql
+    FROM (SELECT DISTINCT field_name FROM ff_values) AS distinct_fields;
+
+    -- Prepare the view creation SQL statement
+    EXECUTE 'DROP VIEW IF EXISTS ff_values_pivot_view';
+    EXECUTE 'CREATE VIEW ff_values_pivot_view AS ' ||
+            'SELECT model_type, model_id, ' || sql || ' ' ||
+            'FROM ff_values ' ||
+            'GROUP BY model_type, model_id';
+END $$;
+";
+
+
+        // Execute SQL statements
+        DB::unprepared($columnsSql);
     }
 }

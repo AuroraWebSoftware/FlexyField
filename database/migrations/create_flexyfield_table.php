@@ -47,6 +47,8 @@ return new class extends Migration
             'value_string' => 'test',
         ]);
 
+        DB::commit();
+
         FlexyField::dropAndCreatePivotView();
 
         $exampleValue->delete();
