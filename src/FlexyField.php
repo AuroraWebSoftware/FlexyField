@@ -5,9 +5,8 @@ namespace AuroraWebSoftware\FlexyField;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
-class FlexyField {
-
-
+class FlexyField
+{
     /**
      * @throws Exception
      */
@@ -68,8 +67,8 @@ class FlexyField {
     /**
      * @throws Exception
      */
-    public static function dropAndCreatePivotViewForPostgres() {
+    public static function dropAndCreatePivotViewForPostgres() : void
+    {
         throw new Exception('not implemented');
     }
-
 }

@@ -39,11 +39,12 @@ return new class extends Migration
             $table->unique(['model_type', 'model_id', 'field_name']);
         });
 
+        // @phpstan-ignore argument.type
         $exampleValue = Value::create([
             'model_type' => 'App\\FlexyField\Models\Value',
             'model_id' => 1,
             'field_name' => 'test',
-            'value_string' => 'test'
+            'value_string' => 'test',
         ]);
 
         FlexyField::dropAndCreatePivotView();
