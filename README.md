@@ -137,9 +137,9 @@ $products = Product::where('flexy_color', 'blue')->get();
 // or dynamic where
 $products = Product::whereFlexyColor('blue')->get();
 
-// Find models with multiple conditions on dynamic fields
-$models = ExampleFlexyModel::where('flexy_field1', 'Value 1')
-    ->where('flexy_field2', 100)
+// Find models with multiple conditions on flexy fields
+$models = Product::where('flexy_color', 'blue 1')
+    ->where('flexy_price', '<',  100)
     ->get();
 ```
 
@@ -147,135 +147,75 @@ $models = ExampleFlexyModel::where('flexy_field1', 'Value 1')
 
 Flexy fields can be validated using the shapes you define. For example, you can set validation rules like:
 
-php
+```php
+use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
-Copy code
+User::setFlexyShape('username', FlexyFieldType::STRING, 1, 'required|max:20');
+User::setFlexyShape('score', FlexyFieldType::INTEGER, 2, 'numeric|min:0|max:100');`
+```
 
-`use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-
-ExampleFlexyModel::setFlexyShape('username', FlexyFieldType::STRING, 1, 'required|max:20');
-ExampleFlexyModel::setFlexyShape('score', FlexyFieldType::INTEGER, 2, 'numeric|min:0|max:100');`
 
 If a user tries to save invalid data, Laravel's native validation system kicks in and prevents the save:
 
-php
-
-Copy code
-
-`$flexyModel->flexy->username = 'too_long_username_exceeding_the_limit';
-$flexyModel->flexy->score = 120;
-$flexyModel->save(); // ValidationException thrown due to invalid data`
+```php
+$user->flexy->username = 'too_long_username_exceeding_the_limit';
+$user->flexy->score = 120;
+$user->save(); // ValidationException thrown due to invalid data`
+```
 
 ### Using Dates and Datetimes
 
-FlexyField supports handling  `date`  and  `datetime`  fields dynamically.
+FlexyField supports handling  `date`  and  `datetime`  field types.
 
-php
+```php
+use Carbon\Carbon;
 
-Copy code
-
-`use Carbon\Carbon;
-
-$flexyModel->flexy->event_date = Carbon::now(); // Save current date as a dynamic field
+$flexyModel->flexy->event_date = Carbon::now(); // Save current date as a flexy field
 $flexyModel->save();
 
 echo $flexyModel->flexy->event_date; // Output the saved date`
+```
+
+
 
 ### Dynamic Field Sorting
 
 FlexyField allows you to specify a sorting order for fields using the  `sort`  parameter:
 
-php
+```php
+ExampleFlexyModel::setFlexyShape('sorted_top_field', FlexyFieldType::STRING, 1);
+ExampleFlexyModel::setFlexyShape('sorted_bottom_field', FlexyFieldType::STRING, 10);
+```
 
-Copy code
-
-`ExampleFlexyModel::setFlexyShape('sorted_field', FlexyFieldType::STRING, 1);`
 
 This controls how fields are ordered when retrieved or displayed.
 
-## Example Test Cases
 
-You can run the tests provided using  [Pest](https://pestphp.com/)  to ensure everything is working as expected.
-
-bash
-
-Copy code
-
-`./vendor/bin/pest`
-
-### Example Test: Setting and Getting Fields
-
-php
-
-Copy code
-
-`it('can set and retrieve dynamic fields', function () {
-$model = ExampleFlexyModel::create(['name' => 'Test Model']);
-$model->flexy->field1 = 'Test Value';
-$model->save();
-
-    expect($model->flexy->field1)->toBe('Test Value');
-});`
-
-### Example Test: Validating Fields
-
-php
-
-Copy code
-
-`it('throws validation exception when validation fails', function () {
-ExampleFlexyModel::setFlexyShape('test_field', FlexyFieldType::INTEGER, 1, 'numeric|max:5');
-
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
-    
-    $model->flexy->test_field = 10; // This should fail due to max:5 validation
-    $model->save();
-})->expectException(ValidationException::class);`
 
 ## Configuration
 
-You can configure the package to use different database drivers (e.g., MySQL or PostgreSQL) for the dynamic field pivot table. The default settings are set in your  `database`  configuration.
-
-php
-
-Copy code
-
-`'connections' => [
-    'mysql' => [
-        // MySQL connection settings
-    ],
-    'pgsql' => [
-        // PostgreSQL connection settings
-    ],
-]`
-
+You can configure the package to use different database drivers (e.g., MySQL or PostgreSQL) for the flexy field pivot table.
 ## Contribution
 
 Feel free to contribute to the development of  **FlexyField**  by submitting a pull request or opening an issue. Contributions are always welcome to enhance this package.
+
+
+
+----
+
 
 ### Running Tests
 
 Before submitting any changes, make sure to run the tests to ensure everything is working as expected:
 
-bash
+You can run the tests provided using  [Pest](https://pestphp.com/)  to ensure everything is working as expected.
 
-Copy code
-
-`./vendor/bin/pest`
+```shell
+./vendor/bin/pest
+```
 
 ## License
 
 The FlexyField package is open-sourced software licensed under the  MIT License.
 
 ----------
-
-### Enhanced Examples Added:
-
--   **Setting and retrieving flexy fields**: Showing both string and integer usage.
--   **Shape validation**: Demonstrated with real-world examples.
--   **Handling exceptions**: How to catch and handle validation exceptions.
--   **Querying dynamic fields**: Filtering models based on dynamic field values.
--   **Using dates and datetimes**: Handling date-specific flexy fields.
--   **Unit tests**: Testing for valid and invalid data scenarios.
-
-This README now provides a comprehensive guide to FlexyField usage, with real-world examples and a broader range of use cases. Let me know if you need further enhancements!
