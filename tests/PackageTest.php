@@ -36,11 +36,8 @@ it('can test set, get and delete a shape for a flexy model', function () {
     expect($flexyModel)->toBeInstanceOf(Shape::class)
         ->and(ExampleFlexyModel::getFlexyShape('test_field')->count())->toBeInt()->toBe(1);
 
-
     ExampleFlexyModel::deleteFlexyShape('test_field');
     expect(ExampleFlexyModel::getFlexyShape('test_field'))->toBeNull();
-
-
 
 });
 
