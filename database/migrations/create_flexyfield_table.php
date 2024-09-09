@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('sort')->default(100);
             $table->string('validation_rules')->nullable();
             $table->json('validation_messages')->nullable();
+            $table->json('field_metadata')->nullable();
             $table->timestamps();
 
             $table->unique(['model_type', 'field_name']);

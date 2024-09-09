@@ -31,12 +31,17 @@ it('can test set, get and delete a shape for a flexy model', function () {
         'test_field',
         FlexyFieldType::INTEGER,
         1,
+        fieldMetadata: ['a' => 1, 'b' => 2],
     );
     expect($flexyModel)->toBeInstanceOf(Shape::class)
         ->and(ExampleFlexyModel::getFlexyShape('test_field')->count())->toBeInt()->toBe(1);
 
+
     ExampleFlexyModel::deleteFlexyShape('test_field');
     expect(ExampleFlexyModel::getFlexyShape('test_field'))->toBeNull();
+
+
+
 });
 
 it('can set and get a flexy models flexy fields', function () {

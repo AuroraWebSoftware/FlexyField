@@ -100,7 +100,9 @@ trait Flexy
     public static function setFlexyShape(
         string $fieldName, FlexyFieldType $fieldType,
         int $sort,
-        ?string $validationRules = null, ?array $validationMessages = null
+        ?string $validationRules = null,
+        ?array $validationMessages = null,
+        ?array $fieldMetadata = []
     ): Shape {
         $modelType = static::class;
 
@@ -109,7 +111,9 @@ trait Flexy
             [
                 'model_type' => $modelType, 'field_name' => $fieldName,
                 'field_type' => $fieldType, 'sort' => $sort,
-                'validation_rules' => $validationRules, 'validation_messages' => $validationMessages,
+                'validation_rules' => $validationRules,
+                'validation_messages' => $validationMessages,
+                'field_metadata' => $fieldMetadata,
             ]
         );
     }
