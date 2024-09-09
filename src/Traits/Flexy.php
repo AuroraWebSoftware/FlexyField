@@ -32,7 +32,10 @@ trait Flexy
         static::addGlobalScope('flexy', function (Builder $builder) {
             $modelType = static::class;
             $builder->leftJoin('ff_values_pivot_view', 'ff_values_pivot_view.model_id', '=', 'id')
-                ->where('ff_values_pivot_view.model_type', '=', $modelType);
+                ->where(function ($query) use ($modelType) {
+                    $query->where('ff_values_pivot_view.model_type', '=', $modelType)
+                        ->orWhereNull('ff_values_pivot_view.model_type');
+                });
         });
 
         static::saving(/**
