@@ -30,7 +30,7 @@ class FlexyField
                     CONCAT(
                         'MAX(CASE WHEN field_name = ''',
                         field_name,
-                        ''' THEN COALESCE(value_date, value_datetime, value_decimal, value_int, value_string, NULL) END) AS `flexy_',
+                        ''' THEN COALESCE(value_date, value_datetime, value_decimal, value_int, value_string, value_boolean, NULL) END) AS `flexy_',
                         field_name,
                         '`'
                     )
@@ -77,7 +77,7 @@ BEGIN
     -- Concatenate column names using STRING_AGG for dynamic pivot column generation
     SELECT STRING_AGG(
         'MAX(CASE WHEN field_name = ''' || field_name || ''' THEN ' ||
-        'COALESCE(CAST(value_date AS TEXT), CAST(value_datetime AS TEXT), CAST(value_decimal AS TEXT), CAST(value_int AS TEXT), value_string) ' ||
+        'COALESCE(CAST(value_date AS TEXT), CAST(value_datetime AS TEXT), CAST(value_decimal AS TEXT), CAST(value_int AS TEXT), value_string, value_boolean) ' ||
         'END) AS flexy_' || field_name,
         ', ')
     INTO sql

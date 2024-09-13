@@ -9,4 +9,5 @@ enum FlexyFieldType: string
     case DECIMAL = 'decimal';
     case INTEGER = 'integer';
     case STRING = 'string';
+    case BOOLEAN = 'boolean';
 }
