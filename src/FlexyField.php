@@ -77,7 +77,7 @@ BEGIN
     -- Concatenate column names using STRING_AGG for dynamic pivot column generation
     SELECT STRING_AGG(
         'MAX(CASE WHEN field_name = ''' || field_name || ''' THEN ' ||
-        'COALESCE(CAST(value_date AS TEXT), CAST(value_datetime AS TEXT), CAST(value_decimal AS TEXT), CAST(value_int AS TEXT), CAST(value_boolean AS TEXT), value_string) ' ||
+        'COALESCE(value_date, value_datetime, value_decimal, value_int, value_boolean, value_string) ' ||
         'END) AS flexy_' || field_name,
         ', ')
     INTO sql
