@@ -140,27 +140,27 @@ it('can test set, get and delete a shape for a flexy model bool', function () {
 });
 
 it('can create shape for a model and validate and save bool', function () {
-//    $flexyModel1 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
-//    ExampleShapelyFlexyModel::$hasShape = true;
-//
-//    ExampleShapelyFlexyModel::setFlexyShape('a', FlexyFieldType::BOOLEAN, 1, 'required|bool');
-//
-//    $flexyModel1->flexy->a = false;
-//    $flexyModel1->save();
-//
-//    expect(ExampleShapelyFlexyModel::where('flexy_a', false)->get())->toHaveCount(1);
-//    expect(ExampleShapelyFlexyModel::where('flexy_a', true)->get())->toHaveCount(0);
-//
-//    $flexyModel2 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 2']);
-//    ExampleShapelyFlexyModel::$hasShape = true;
-//
-//    ExampleShapelyFlexyModel::setFlexyShape('b', FlexyFieldType::BOOLEAN, 1, 'required|bool');
-//
-//    $flexyModel2->flexy->b = true;
-//    $flexyModel2->save();
-//
-//    expect(ExampleShapelyFlexyModel::where('flexy_b', true)->get())->toHaveCount(1);
-//    expect(ExampleShapelyFlexyModel::where('flexy_b', false)->get())->toHaveCount(0);
+    $flexyModel1 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
+    ExampleShapelyFlexyModel::$hasShape = true;
+
+    ExampleShapelyFlexyModel::setFlexyShape('a', FlexyFieldType::BOOLEAN, 1, 'required|bool');
+
+    $flexyModel1->flexy->a = false;
+    $flexyModel1->save();
+
+    expect(ExampleShapelyFlexyModel::where('flexy_a', false)->get())->toHaveCount(1);
+    expect(ExampleShapelyFlexyModel::where('flexy_a', true)->get())->toHaveCount(0);
+
+    $flexyModel2 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 2']);
+    ExampleShapelyFlexyModel::$hasShape = true;
+
+    ExampleShapelyFlexyModel::setFlexyShape('b', FlexyFieldType::BOOLEAN, 1, 'required|bool');
+
+    $flexyModel2->flexy->b = true;
+    $flexyModel2->save();
+
+    expect(ExampleShapelyFlexyModel::where('flexy_b', true)->get())->toHaveCount(1);
+    expect(ExampleShapelyFlexyModel::where('flexy_b', false)->get())->toHaveCount(0);
 
     $flexyModel3 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 3']);
     ExampleShapelyFlexyModel::$hasShape = true;
