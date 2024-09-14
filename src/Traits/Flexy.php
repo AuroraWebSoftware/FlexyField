@@ -27,7 +27,6 @@ trait Flexy
         return static::class;
     }
 
-
     public static function hasShape(): bool
     {
         return self::$hasShape;
