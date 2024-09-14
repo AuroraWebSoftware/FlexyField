@@ -72,6 +72,8 @@ trait Flexy
                         $addition['value_decimal'] = $value;
                     } elseif ($value instanceof DateTime) {
                         $addition['value_datetime'] = $value;
+                    } elseif (is_bool($value)) {
+                        $addition['value_boolean'] = $value;
                     } else {
                         throw new FlexyFieldTypeNotAllowedException;
                     }
@@ -158,7 +160,8 @@ trait Flexy
                             $value->value_datetime ??
                             $value->value_decimal ??
                             $value->value_int ??
-                            $value->value_string ?? null;
+                            $value->value_string ??
+                            $value->value_boolean ?? null;
                     });
                 }
 

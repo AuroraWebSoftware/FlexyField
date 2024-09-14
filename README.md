@@ -8,7 +8,7 @@ It enables on-the-fly definition of fields, field types, validation, and value a
 ## Key Features
 
 -   Dynamically add fields to any Eloquent model.
--   Supports field types: String, Integer, Decimal, Date, and DateTime.
+-   Supports field types: String, Integer, Decimal, Date, Boolean and DateTime.
 -   Field-level validation using Laravel’s validation rules.
 -   Query models by flexible field values using Elequent's native methods.
 -   Supports multiple field types and data storage through a pivot view.
@@ -69,16 +69,19 @@ $product = Product::create(['name' => 'Training Shoes']);
 $product->flexy->color = 'blue'; // string
 $product->flexy->price = 49.90; // decimal value
 $product->flexy->size = 42; // integer
-$product->flexy->gender = 'man'; // integer
+$product->flexy->gender = 'man'; // string
+$product->flexy->in_stock = true; // boolean
 $product->save();
 
 // Retrieve the flexy fields using flexy attribute
 echo $product->flexy->color; // Outputs 'blue'
 echo $product->flexy->size; // Outputs 42`
+echo $product->flexy->in_stock; // Outputs true`
 
 // or retrieve the flexy fields using default models' attribute with flexy_ prefix
 echo $product->flexy_color; // Outputs 'blue'
 echo $product->flexy_size; // Outputs 42`
+echo $product->flexy_in_stock; // Outputs true`
 
 ```
 
@@ -92,7 +95,8 @@ You can define shapes dynamically with `setFlexyShape()` for fields to apply val
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
 Product::setFlexyShape('color', FlexyFieldType::STRING, 1, 'required');
-Product::setFlexyShape('size', FlexyFieldType::INTEGER, 2, 'numeric|min:20');`
+Product::setFlexyShape('size', FlexyFieldType::INTEGER, 2, 'numeric|min:20');
+Product::setFlexyShape('in_stock', FlexyFieldType::BOOLEAN, 3, 'required|bool');
 ```
 
 This ensures that when saving the  `color`  field, it must be a required, and the  `size`  field must be a number greater than or equal to 20.
@@ -140,6 +144,7 @@ $products = Product::whereFlexyColor('blue')->get();
 // Find models with multiple conditions on flexy fields
 $models = Product::where('flexy_color', 'blue 1')
     ->where('flexy_price', '<',  100)
+    ->where('flexy_in_stock', true)
     ->get();
 ```
 
@@ -151,7 +156,8 @@ Flexy fields can be validated using the shapes you define. For example, you can 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
 User::setFlexyShape('username', FlexyFieldType::STRING, 1, 'required|max:20');
-User::setFlexyShape('score', FlexyFieldType::INTEGER, 2, 'numeric|min:0|max:100');`
+User::setFlexyShape('score', FlexyFieldType::INTEGER, 2, 'numeric|min:0|max:100');
+User::setFlexyShape('banned', FlexyFieldType::BOOLEAN, 3, 'bool');
 ```
 
 
@@ -160,6 +166,7 @@ If a user tries to save invalid data, Laravel's native validation system kicks i
 ```php
 $user->flexy->username = 'too_long_username_exceeding_the_limit';
 $user->flexy->score = 120;
+$user->flexy->banned = false;
 $user->save(); // ValidationException thrown due to invalid data`
 ```
 
@@ -212,6 +219,18 @@ You can run the tests provided using  [Pest](https://pestphp.com/)  to ensure ev
 
 ```shell
 ./vendor/bin/pest
+```
+
+#### Code Style
+
+```shell
+./vendor/bin/pint
+```
+
+#### Static Analyze
+
+```shell
+./vendor/bin/phpstan analyse
 ```
 
 ## License

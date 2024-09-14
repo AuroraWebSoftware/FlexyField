@@ -30,7 +30,7 @@ class FlexyField
                     CONCAT(
                         'MAX(CASE WHEN field_name = ''',
                         field_name,
-                        ''' THEN COALESCE(value_date, value_datetime, value_decimal, value_int, value_string, NULL) END) AS `flexy_',
+                        ''' THEN COALESCE(value_date, value_datetime, value_decimal, value_int, value_string, value_boolean, NULL) END) AS `flexy_',
                         field_name,
                         '`'
                     )
@@ -64,6 +64,7 @@ class FlexyField
 
     }
 
+    //TODO BOOLEAN values will be checked
     /**
      * @throws Exception
      */
@@ -75,11 +76,16 @@ DECLARE
     sql TEXT;
 BEGIN
     -- Concatenate column names using STRING_AGG for dynamic pivot column generation
-    SELECT STRING_AGG(
+SELECT STRING_AGG(
         'MAX(CASE WHEN field_name = ''' || field_name || ''' THEN ' ||
-        'COALESCE(CAST(value_date AS TEXT), CAST(value_datetime AS TEXT), CAST(value_decimal AS TEXT), CAST(value_int AS TEXT), value_string) ' ||
-        'END) AS flexy_' || field_name,
-        ', ')
+        'CASE ' ||
+        'WHEN value_date IS NOT NULL THEN value_date::TEXT ' ||
+        'WHEN value_datetime IS NOT NULL THEN value_datetime::TEXT ' ||
+        'WHEN value_decimal IS NOT NULL THEN value_decimal::TEXT ' ||
+        'WHEN value_int IS NOT NULL THEN value_int::TEXT ' ||
+        'WHEN value_boolean IS NOT NULL THEN CASE WHEN value_boolean THEN ''true'' ELSE ''false'' END ' ||
+        'ELSE value_string END ' ||
+        'END) AS \"flexy_' || field_name || '\"', ', ')
     INTO sql
     FROM (SELECT DISTINCT field_name FROM ff_values) AS distinct_fields;
 
