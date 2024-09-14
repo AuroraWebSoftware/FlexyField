@@ -47,7 +47,7 @@ class FlexyField
             );
 
             -- Drop the view if it exists
-            SET @drop_view_sql = 'DROP VIEW IF EXISTS flexyfield.ff_values_pivot_view';
+            SET @drop_view_sql = 'DROP VIEW IF EXISTS ff_values_pivot_view';
             PREPARE stmt FROM @drop_view_sql;
             EXECUTE stmt;
             DEALLOCATE PREPARE stmt;
