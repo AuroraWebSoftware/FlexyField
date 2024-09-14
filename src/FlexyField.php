@@ -64,6 +64,7 @@ class FlexyField
 
     }
 
+    //TODO BOOLEAN values will be checked
     /**
      * @throws Exception
      */
