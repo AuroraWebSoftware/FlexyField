@@ -35,14 +35,14 @@ class FlexyField
                         '`'
                     )
                 ) INTO @sql
-            FROM flexyfield.ff_values;
+            FROM ff_values;
         ";
 
         $createViewSql = "
             SET @create_view_sql = CONCAT(
-                'CREATE VIEW flexyfield.ff_values_pivot_view AS ',
+                'CREATE VIEW ff_values_pivot_view AS ',
                 'SELECT model_type, model_id, ', @sql, ' ',
-                'FROM flexyfield.ff_values ',
+                'FROM ff_values ',
                 'GROUP BY model_type, model_id'
             );
 
