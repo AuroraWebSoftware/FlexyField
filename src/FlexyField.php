@@ -77,14 +77,13 @@ BEGIN
     -- Concatenate column names using STRING_AGG for dynamic pivot column generation
 SELECT STRING_AGG(
         'MAX(CASE WHEN field_name = ''' || field_name || ''' THEN ' ||
-        'COALESCE(' ||
-        'CASE WHEN value_date IS NOT NULL THEN value_date ' ||
-        'WHEN value_datetime IS NOT NULL THEN value_datetime ' ||
-        'WHEN value_decimal IS NOT NULL THEN value_decimal ' ||
-        'WHEN value_int IS NOT NULL THEN value_int ' ||
-        'WHEN value_boolean IS NOT NULL THEN value_boolean ' ||
-        'WHEN value_string IS NOT NULL THEN value_string ' ||
-        'ELSE NULL END, NULL) ' ||
+        'CASE ' ||
+        'WHEN value_date IS NOT NULL THEN value_date::TEXT ' ||
+        'WHEN value_datetime IS NOT NULL THEN value_datetime::TEXT ' ||
+        'WHEN value_decimal IS NOT NULL THEN value_decimal::TEXT ' ||
+        'WHEN value_int IS NOT NULL THEN value_int::TEXT ' ||
+        'WHEN value_boolean IS NOT NULL THEN value_boolean::TEXT ' ||
+        'ELSE value_string END ' ||
         'END) AS \"flexy_' || field_name || '\"', ', ')
     INTO sql
     FROM (SELECT DISTINCT field_name FROM ff_values) AS distinct_fields;
