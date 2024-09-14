@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 interface FlexyModelContract
 {
+
+    public static function getModelType(): string;
+
     public static function hasShape(): bool;
 
     /**

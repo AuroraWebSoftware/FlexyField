@@ -22,6 +22,12 @@ trait Flexy
 
     public static bool $hasShape = false;
 
+    public static function getModelType(): string
+    {
+        return static::class;
+    }
+
+
     public static function hasShape(): bool
     {
         return self::$hasShape;
@@ -30,7 +36,7 @@ trait Flexy
     public static function bootFlexy(): void
     {
         static::addGlobalScope('flexy', function (Builder $builder) {
-            $modelType = static::class;
+            $modelType = static::getModelType();
             $builder->leftJoin('ff_values_pivot_view', 'ff_values_pivot_view.model_id', '=', 'id')
                 ->where(function ($query) use ($modelType) {
                     $query->where('ff_values_pivot_view.model_type', '=', $modelType)
@@ -45,7 +51,7 @@ trait Flexy
 
             if ($flexyModelContract->flexy->isDirty()) {
 
-                $modelType = static::class;
+                $modelType = static::getModelType();
                 $dirtyFields = $flexyModelContract->flexy->getDirty() ?? [];
 
                 foreach ($dirtyFields as $field => $value) {
@@ -109,7 +115,7 @@ trait Flexy
         ?array $validationMessages = null,
         ?array $fieldMetadata = []
     ): Shape {
-        $modelType = static::class;
+        $modelType = static::getModelType();
 
         return Shape::updateOrCreate(
             ['model_type' => $modelType, 'field_name' => $fieldName],
@@ -125,14 +131,14 @@ trait Flexy
 
     public static function getFlexyShape(string $fieldName): ?Shape
     {
-        $modelType = static::class;
+        $modelType = static::getModelType();
 
         return Shape::where('model_type', $modelType)->where('field_name', $fieldName)->first();
     }
 
     public static function deleteFlexyShape(string $fieldName): bool
     {
-        $modelType = static::class;
+        $modelType = static::getModelType();
 
         return Shape::where('model_type', $modelType)->where('field_name', $fieldName)->delete();
     }
@@ -144,12 +150,12 @@ trait Flexy
                 if ($this->fields == null) {
 
                     $this->fields = new \AuroraWebSoftware\FlexyField\Models\Flexy;
-                    $this->fields->_model_type = static::class;
+                    $this->fields->_model_type = static::getModelType();
                     $this->fields->_model_id = $this->id;
 
                     $values = Value::where(
                         [
-                            'model_type' => static::class,
+                            'model_type' => static::getModelType(),
                             'model_id' => $this->id,
                         ]
                     )->get();
