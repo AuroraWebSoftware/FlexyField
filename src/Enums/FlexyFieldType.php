@@ -10,4 +10,5 @@ enum FlexyFieldType: string
     case INTEGER = 'integer';
     case STRING = 'string';
     case BOOLEAN = 'boolean';
+    case JSON = 'json';
 }

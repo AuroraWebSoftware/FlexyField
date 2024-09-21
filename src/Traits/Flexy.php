@@ -79,6 +79,8 @@ trait Flexy
                         $addition['value_datetime'] = $value;
                     } elseif (is_bool($value)) {
                         $addition['value_boolean'] = $value;
+                    } elseif (is_array($value)) {
+                        $addition['value_json'] = json_encode($value);
                     } else {
                         throw new FlexyFieldTypeNotAllowedException;
                     }
@@ -108,12 +110,13 @@ trait Flexy
     }
 
     public static function setFlexyShape(
-        string $fieldName, FlexyFieldType $fieldType,
-        int $sort,
+        string  $fieldName, FlexyFieldType $fieldType,
+        int     $sort,
         ?string $validationRules = null,
-        ?array $validationMessages = null,
-        ?array $fieldMetadata = []
-    ): Shape {
+        ?array  $validationMessages = null,
+        ?array  $fieldMetadata = []
+    ): Shape
+    {
         $modelType = static::getModelType();
 
         return Shape::updateOrCreate(
@@ -166,6 +169,7 @@ trait Flexy
                             $value->value_decimal ??
                             $value->value_int ??
                             $value->value_string ??
+                            $value->value_json ??
                             $value->value_boolean ?? null;
                     });
                 }

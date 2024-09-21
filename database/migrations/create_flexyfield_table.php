@@ -36,6 +36,7 @@ return new class extends Migration
             $table->bigInteger('value_int')->nullable();
             $table->string('value_string')->nullable();
             $table->boolean('value_boolean')->nullable();
+            $table->json('value_json')->nullable();
             $table->timestamps();
 
             $table->unique(['model_type', 'model_id', 'field_name']);

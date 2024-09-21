@@ -196,3 +196,21 @@ it('can create shape for a model and save bool', function () {
 
     expect(ExampleShapelyFlexyModel::getFlexyShape('a'))->toBeInstanceOf(Shape::class);
 });
+
+it('can create shape for a model and save json', function () {
+    $flexyModel1 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
+    ExampleShapelyFlexyModel::$hasShape = true;
+
+    ExampleShapelyFlexyModel::setFlexyShape('a', FlexyFieldType::JSON, 1);
+
+    $flexyModel1->flexy->a = ['a', 'b'];
+    $flexyModel1->save();
+
+    expect(ExampleShapelyFlexyModel::getFlexyShape('a'))->toBeInstanceOf(Shape::class);
+
+    //dd(ExampleShapelyFlexyModel::whereName('ExampleFlexyModel 1')->first()->flexy->a);
+
+    expect(json_decode(ExampleShapelyFlexyModel::whereName('ExampleFlexyModel 1')->first()->flexy_a))->toBe(['a', 'b']);
+    expect(json_decode(ExampleShapelyFlexyModel::whereName('ExampleFlexyModel 1')->first()->flexy->a))->toBe(['a', 'b']);
+
+});

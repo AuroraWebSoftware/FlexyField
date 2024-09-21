@@ -30,7 +30,7 @@ class FlexyField
                     CONCAT(
                         'MAX(CASE WHEN field_name = ''',
                         field_name,
-                        ''' THEN COALESCE(value_date, value_datetime, value_decimal, value_int, value_string, value_boolean, NULL) END) AS `flexy_',
+                        ''' THEN COALESCE(value_date, value_datetime, value_decimal, value_int, value_string, value_boolean, value_json,  NULL) END) AS `flexy_',
                         field_name,
                         '`'
                     )
@@ -83,6 +83,7 @@ SELECT STRING_AGG(
         'WHEN value_datetime IS NOT NULL THEN value_datetime::TEXT ' ||
         'WHEN value_decimal IS NOT NULL THEN value_decimal::TEXT ' ||
         'WHEN value_int IS NOT NULL THEN value_int::TEXT ' ||
+        'WHEN value_json IS NOT NULL THEN value_json::TEXT ' ||
         'WHEN value_boolean IS NOT NULL THEN CASE WHEN value_boolean THEN ''true'' ELSE ''false'' END ' ||
         'ELSE value_string END ' ||
         'END) AS \"flexy_' || field_name || '\"', ', ')
