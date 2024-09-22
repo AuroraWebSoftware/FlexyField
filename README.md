@@ -71,12 +71,14 @@ $product->flexy->price = 49.90; // decimal value
 $product->flexy->size = 42; // integer
 $product->flexy->gender = 'man'; // string
 $product->flexy->in_stock = true; // boolean
+$product->flexy->availables_coupons = ['summer15', 'white_saturday']; // array, json
 $product->save();
 
 // Retrieve the flexy fields using flexy attribute
 echo $product->flexy->color; // Outputs 'blue'
 echo $product->flexy->size; // Outputs 42`
 echo $product->flexy->in_stock; // Outputs true`
+echo $product->flexy->availables_coupons; // json string, must be decoded
 
 // or retrieve the flexy fields using default models' attribute with flexy_ prefix
 echo $product->flexy_color; // Outputs 'blue'
@@ -97,6 +99,7 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 Product::setFlexyShape('color', FlexyFieldType::STRING, 1, 'required');
 Product::setFlexyShape('size', FlexyFieldType::INTEGER, 2, 'numeric|min:20');
 Product::setFlexyShape('in_stock', FlexyFieldType::BOOLEAN, 3, 'required|bool');
+Product::setFlexyShape('availables_coupons', FlexyFieldType::JSON, 3, 'required');
 ```
 
 This ensures that when saving the  `color`  field, it must be a required, and the  `size`  field must be a number greater than or equal to 20.
