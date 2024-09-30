@@ -111,12 +111,13 @@ trait Flexy
     }
 
     public static function setFlexyShape(
-        string $fieldName, FlexyFieldType $fieldType,
-        int $sort,
+        string  $fieldName, FlexyFieldType $fieldType,
+        int     $sort,
         ?string $validationRules = null,
-        ?array $validationMessages = null,
-        ?array $fieldMetadata = []
-    ): Shape {
+        ?array  $validationMessages = null,
+        ?array  $fieldMetadata = []
+    ): Shape
+    {
         $modelType = static::getModelType();
 
         return Shape::updateOrCreate(
@@ -162,13 +163,13 @@ trait Flexy
                     $this->fields->_model_type = static::getModelType();
                     $this->fields->_model_id = $this->id;
 
-                    $values = Value::leftJoin('ff_shapes', 'ff_values.model_type', '=', 'ff_shapes.model_type')
-                        ->where(
-                            [
-                                'ff_values.model_type' => static::getModelType(),
-                                'ff_values.model_id' => $this->id,
-                            ]
-                        )->orderBy('ff_shapes.sort')->get();
+//                    leftJoin('ff_shapes', 'ff_values.model_type', '=', 'ff_shapes.model_type')
+                    $values = Value::where(
+                        [
+                            'ff_values.model_type' => static::getModelType(),
+                            'ff_values.model_id' => $this->id,
+                        ]
+                    )->get();
 
                     $values->each(function ($value) {
                         $this->fields[$value->field_name] =
