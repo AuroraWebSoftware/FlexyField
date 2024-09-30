@@ -214,3 +214,21 @@ it('can create shape for a model and save json', function () {
     expect(json_decode(ExampleShapelyFlexyModel::whereName('ExampleFlexyModel 1')->first()->flexy->a))->toBe(['a', 'b']);
 
 });
+
+it('can get all shapes', function () {
+    $flexyModel1 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
+    ExampleShapelyFlexyModel::$hasShape = true;
+
+    ExampleShapelyFlexyModel::setFlexyShape('a', FlexyFieldType::INTEGER, 2, 'numeric|max:7');
+    ExampleShapelyFlexyModel::setFlexyShape('b', FlexyFieldType::INTEGER, 1, 'numeric|max:7');
+
+    //    $flexyModel1->flexy->a = 5;
+    //    $flexyModel1->save();
+    //
+    //    dd(ExampleShapelyFlexyModel::getAllFlexyShapes());
+    expect(ExampleShapelyFlexyModel::getAllFlexyShapes())->toHaveCount(2);
+
+    ExampleShapelyFlexyModel::setFlexyShape('c', FlexyFieldType::STRING, 5, 'string|max:7');
+
+    expect(ExampleShapelyFlexyModel::getAllFlexyShapes())->toHaveCount(3);
+});
