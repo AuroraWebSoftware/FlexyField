@@ -5,6 +5,7 @@ namespace AuroraWebSoftware\FlexyField\Contracts;
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\Models\Shape;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Collection;
 
 interface FlexyModelContract
 {
@@ -21,6 +22,11 @@ interface FlexyModelContract
     ): Shape;
 
     public static function getFlexyShape(string $fieldName): ?Shape;
+
+    /**
+     * @return Collection<int,Shape>|null
+     */
+    public static function getAllFlexyShapes(): ?Collection;
 
     public static function deleteFlexyShape(string $fieldName): bool;
 

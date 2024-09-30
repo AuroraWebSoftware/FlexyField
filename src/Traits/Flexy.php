@@ -12,6 +12,7 @@ use AuroraWebSoftware\FlexyField\Models\Value;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 
 trait Flexy
@@ -137,6 +138,13 @@ trait Flexy
         return Shape::where('model_type', $modelType)->where('field_name', $fieldName)->first();
     }
 
+    public static function getAllFlexyShapes(): ?Collection
+    {
+        $modelType = static::getModelType();
+
+        return Shape::where('model_type', $modelType)->orderBy('sort')->get();
+    }
+
     public static function deleteFlexyShape(string $fieldName): bool
     {
         $modelType = static::getModelType();
@@ -154,12 +162,13 @@ trait Flexy
                     $this->fields->_model_type = static::getModelType();
                     $this->fields->_model_id = $this->id;
 
-                    $values = Value::where(
-                        [
-                            'model_type' => static::getModelType(),
-                            'model_id' => $this->id,
-                        ]
-                    )->get();
+                    $values = Value::leftJoin('ff_shapes', 'ff_values.model_type', '=', 'ff_shapes.model_type')
+                        ->where(
+                            [
+                                'ff_values.model_type' => static::getModelType(),
+                                'ff_values.model_id' => $this->id,
+                            ]
+                        )->orderBy('ff_shapes.sort')->get();
 
                     $values->each(function ($value) {
                         $this->fields[$value->field_name] =
