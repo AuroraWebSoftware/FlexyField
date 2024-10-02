@@ -118,12 +118,13 @@ trait Flexy
     }
 
     public static function setFlexyShape(
-        string $fieldName, FlexyFieldType $fieldType,
-        int $sort,
+        string  $fieldName, FlexyFieldType $fieldType,
+        int     $sort,
         ?string $validationRules = null,
-        ?array $validationMessages = null,
-        ?array $fieldMetadata = []
-    ): Shape {
+        ?array  $validationMessages = null,
+        ?array  $fieldMetadata = []
+    ): Shape
+    {
         $modelType = static::getModelType();
 
         return Shape::updateOrCreate(
