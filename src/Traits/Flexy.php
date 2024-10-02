@@ -68,7 +68,14 @@ trait Flexy
                         Validator::make($data, $rules, $messages)->validate();
                     }
 
-                    $addition = [];
+                    $addition = [
+                        'value_string' => null,
+                        'value_int' => null,
+                        'value_decimal' => null,
+                        'value_datetime' => null,
+                        'value_boolean' => null,
+                        'value_json' => null,
+                    ];
 
                     if (is_string($value)) {
                         $addition['value_string'] = $value;
@@ -111,13 +118,12 @@ trait Flexy
     }
 
     public static function setFlexyShape(
-        string  $fieldName, FlexyFieldType $fieldType,
-        int     $sort,
+        string $fieldName, FlexyFieldType $fieldType,
+        int $sort,
         ?string $validationRules = null,
-        ?array  $validationMessages = null,
-        ?array  $fieldMetadata = []
-    ): Shape
-    {
+        ?array $validationMessages = null,
+        ?array $fieldMetadata = []
+    ): Shape {
         $modelType = static::getModelType();
 
         return Shape::updateOrCreate(
@@ -163,13 +169,16 @@ trait Flexy
                     $this->fields->_model_type = static::getModelType();
                     $this->fields->_model_id = $this->id;
 
-//                    leftJoin('ff_shapes', 'ff_values.model_type', '=', 'ff_shapes.model_type')
-                    $values = Value::where(
-                        [
-                            'ff_values.model_type' => static::getModelType(),
-                            'ff_values.model_id' => $this->id,
-                        ]
-                    )->get();
+                    $values = Value::where([
+                        'ff_values.model_type' => static::getModelType(),
+                        'ff_values.model_id' => $this->id,
+                    ])
+                        ->leftJoin('ff_shapes', function ($join) {
+                            $join->on('ff_values.field_name', '=', 'ff_shapes.field_name')
+                                ->on('ff_values.model_type', '=', 'ff_shapes.model_type');
+                        })
+                        ->orderBy('ff_shapes.sort')
+                        ->get();
 
                     $values->each(function ($value) {
                         $this->fields[$value->field_name] =

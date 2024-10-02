@@ -219,8 +219,8 @@ it('can get all shapes', function () {
     $flexyModel1 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
     ExampleShapelyFlexyModel::$hasShape = true;
 
-    ExampleShapelyFlexyModel::setFlexyShape('a', FlexyFieldType::INTEGER, 2, 'numeric|max:7');
-    ExampleShapelyFlexyModel::setFlexyShape('b', FlexyFieldType::INTEGER, 1, 'numeric|max:7');
+    ExampleShapelyFlexyModel::setFlexyShape('a', FlexyFieldType::INTEGER, 3, 'numeric|max:7');
+    ExampleShapelyFlexyModel::setFlexyShape('b', FlexyFieldType::INTEGER, 2, 'numeric|max:7');
 
     //    $flexyModel1->flexy->a = 5;
     //    $flexyModel1->save();
@@ -228,7 +228,28 @@ it('can get all shapes', function () {
     //    dd(ExampleShapelyFlexyModel::getAllFlexyShapes());
     expect(ExampleShapelyFlexyModel::getAllFlexyShapes())->toHaveCount(2);
 
-    ExampleShapelyFlexyModel::setFlexyShape('c', FlexyFieldType::STRING, 5, 'string|max:7');
-
+    ExampleShapelyFlexyModel::setFlexyShape('c', FlexyFieldType::STRING, 1, 'string|max:7');
+    //    dd(ExampleShapelyFlexyModel::getAllFlexyShapes());
     expect(ExampleShapelyFlexyModel::getAllFlexyShapes())->toHaveCount(3);
+});
+
+it('can get all shapes models field_name', function () {
+    $flexyModel1 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
+    $flexyModel2 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 2']);
+    ExampleShapelyFlexyModel::$hasShape = true;
+
+    $flexyModel1::setFlexyShape('a', FlexyFieldType::INTEGER, 3, 'numeric|max:7');
+    $flexyModel2::setFlexyShape('a', FlexyFieldType::INTEGER, 2, 'numeric|max:7');
+
+    $flexyModel1->flexy->a = 5;
+    $flexyModel1->save();
+    $flexyModel2->flexy->a = 1;
+    $flexyModel2->save();
+
+    //    dd(ExampleShapelyFlexyModel::getAllFlexyShapes());
+    expect(ExampleShapelyFlexyModel::getAllFlexyShapes())->toHaveCount(1);
+
+    ExampleShapelyFlexyModel::setFlexyShape('c', FlexyFieldType::STRING, 1, 'string|max:7');
+    //    dd(ExampleShapelyFlexyModel::getAllFlexyShapes());
+    expect(ExampleShapelyFlexyModel::getAllFlexyShapes())->toHaveCount(2);
 });
