@@ -112,8 +112,21 @@ trait Flexy
                     $flexyModelContract->flexy->setRawAttributes($flexyModelContract->flexy->getAttributes(), true);
                     FlexyField::dropAndCreatePivotView();
                 }
+
             }
 
+        });
+
+        static::deleting(function (FlexyModelContract $flexyModelContract) {
+            $modelType = static::getModelType();
+            $modelId = $flexyModelContract->id;
+
+            Value::where([
+                'model_type' => $modelType,
+                'model_id' => $modelId,
+            ])->delete();
+
+            FlexyField::dropAndCreatePivotView();
         });
     }
 
