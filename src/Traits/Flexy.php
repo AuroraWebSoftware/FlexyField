@@ -178,6 +178,7 @@ trait Flexy
                                 ->on('ff_values.model_type', '=', 'ff_shapes.model_type');
                         })
                         ->orderBy('ff_shapes.sort')
+                        ->select('ff_values.*', 'ff_shapes.sort')
                         ->get();
 
                     $values->each(function ($value) {
