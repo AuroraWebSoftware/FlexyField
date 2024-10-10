@@ -3,6 +3,7 @@
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\Exceptions\FlexyFieldIsNotInShape;
 use AuroraWebSoftware\FlexyField\Models\Shape;
+use AuroraWebSoftware\FlexyField\Models\Value;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleShapelyFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
@@ -252,4 +253,30 @@ it('can get all shapes models field_name', function () {
     ExampleShapelyFlexyModel::setFlexyShape('c', FlexyFieldType::STRING, 1, 'string|max:7');
     //    dd(ExampleShapelyFlexyModel::getAllFlexyShapes());
     expect(ExampleShapelyFlexyModel::getAllFlexyShapes())->toHaveCount(2);
+});
+
+it('can delete flexy values', function () {
+
+    $flexyModel1 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
+    $flexyModel2 = ExampleShapelyFlexyModel::create(['name' => 'ExampleFlexyModel 2']);
+    ExampleShapelyFlexyModel::$hasShape = true;
+
+    $flexyModel1::setFlexyShape('a', FlexyFieldType::INTEGER, 3, 'numeric|max:7');
+    $flexyModel2::setFlexyShape('b', FlexyFieldType::INTEGER, 2, 'numeric|max:7');
+
+    $flexyModel1->flexy->a = 5;
+    $flexyModel1->save();
+    $flexyModel2->flexy->b = 1;
+    $flexyModel2->save();
+
+    expect(Value::where('model_type', ExampleShapelyFlexyModel::getModelType())
+        ->where('model_id', $flexyModel1->id)->exists())->toBeTrue();
+
+    $flexyModel1->delete();
+
+    expect(Value::where('model_type', ExampleShapelyFlexyModel::getModelType())
+        ->where('model_id', $flexyModel1->id)->exists())->toBeFalse();
+
+    expect(Value::where('model_type', ExampleShapelyFlexyModel::getModelType())
+        ->where('model_id', $flexyModel2->id)->exists())->toBeTrue();
 });
