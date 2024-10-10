@@ -117,7 +117,7 @@ trait Flexy
 
         });
 
-        static::deleting(function (FlexyModelContract $flexyModelContract) {
+        static::deleted(function (FlexyModelContract $flexyModelContract) {
             $modelType = static::getModelType();
             $modelId = $flexyModelContract->id;
 
