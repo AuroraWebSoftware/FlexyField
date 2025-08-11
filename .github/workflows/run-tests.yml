@@ -68,10 +68,36 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/php.json"
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
-      - name: Install dependencies
+      - name: Install dependencies (matrix pinned)
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "nesbot/carbon:${{ matrix.os == 'windows-latest' && '^^^' || '' }}${{ matrix.carbon }}" --no-interaction --no-update
-          composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+          composer require --no-interaction --no-update \
+            "laravel/framework:${{ matrix.laravel }}" \
+            "orchestra/testbench:${{ matrix.testbench }}" \
+            "nesbot/carbon:${{ matrix.carbon }}"
+
+          # Laravel 10 için uyumlu Pest ve Collision sürümlerini sabitle
+          if [[ "${{ matrix.laravel }}" == "10.*" ]]; then
+            composer require --no-interaction --no-update --dev \
+              "pestphp/pest:^2" \
+              "pestphp/pest-plugin-laravel:^2" \
+              "nunomaduro/collision:^7"
+          fi
+
+          # Laravel 11/12 için (zaten ^3 uygundur, isterseniz açıkça pinleyebilirsiniz)
+          if [[ "${{ matrix.laravel }}" != "10.*" ]]; then
+            composer require --no-interaction --no-update --dev \
+              "pestphp/pest:^3" \
+              "pestphp/pest-plugin-laravel:^3" \
+              "nunomaduro/collision:^8"
+          fi
+
+          # Kilitleri çözüp kurulumu yap
+          if [ "${{ matrix.stability }}" = "prefer-lowest" ]; then
+            composer update --prefer-lowest --prefer-stable --no-interaction --with-all-dependencies
+          else
+            composer update --no-interaction --with-all-dependencies
+          fi
+
 
       - name: List Installed Dependencies
         run: composer show -D
