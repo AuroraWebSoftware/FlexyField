@@ -113,7 +113,10 @@ trait Flexy
 
                 if ($dirtyFields) {
                     $flexyModelContract->flexy->setRawAttributes($flexyModelContract->flexy->getAttributes(), true);
-                    FlexyField::dropAndCreatePivotView();
+
+                    // Only recreate view if new fields were added
+                    $fieldNames = array_keys($dirtyFields);
+                    FlexyField::recreateViewIfNeeded($fieldNames);
                 }
 
             }
@@ -129,7 +132,7 @@ trait Flexy
                 'model_id' => $modelId,
             ])->delete();
 
-            FlexyField::dropAndCreatePivotView();
+            // No need to recreate view on deletion - no schema changes
         });
     }
 

@@ -42,27 +42,20 @@ return new class extends Migration
             $table->unique(['model_type', 'model_id', 'field_name']);
         });
 
-        // @phpstan-ignore argument.type
-        $exampleValue = Value::create([
-            'model_type' => 'App\\FlexyField\Models\Value',
-            'model_id' => 1,
-            'field_name' => 'test',
-            'value_string' => 'test',
-        ]);
-
-        DB::commit();
+        Schema::create('ff_view_schema', function (Blueprint $table) {
+            $table->id();
+            $table->string('field_name')->unique();
+            $table->timestamp('added_at')->useCurrent();
+        });
 
         FlexyField::dropAndCreatePivotView();
-
-        // someting TAY ssd s asxd asd
-
-        $exampleValue->delete();
     }
 
     public function down(): void
     {
         Schema::dropIfExists('ff_shapes');
         Schema::dropIfExists('ff_values');
+        Schema::dropIfExists('ff_view_schema');
         DB::statement('DROP VIEW IF EXISTS flexyfield.ff_values_pivot_view');
     }
 };
