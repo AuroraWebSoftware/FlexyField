@@ -139,7 +139,8 @@ it('queries efficiently with 100 field sets', function () {
     // Create models across different sets
     for ($i = 1; $i <= 50; $i++) {
         $model = ExampleFlexyModel::create(['name' => "Model {$i}"]);
-        $model->field_set_code = 'set'.($i % 100 + 1);
+        // Distribute across set1-set50: (i-1) % 100 + 1 ensures set1 for i=1, set2 for i=2, etc.
+        $model->field_set_code = 'set'.(($i - 1) % 100 + 1);
         $model->save();
     }
 
