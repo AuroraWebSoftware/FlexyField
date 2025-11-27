@@ -2,9 +2,7 @@
 
 ## Purpose
 FlexyField seamlessly integrates with Laravel's Eloquent query builder, allowing developers to query models by their flexy field values using standard Eloquent methods. This is achieved through a database pivot view and global scopes that automatically join the view to model queries.
-
 ## Requirements
-
 ### Requirement: Eloquent Query Builder Integration
 The system SHALL enable querying models by flexy field values using Eloquent's where methods.
 
@@ -97,3 +95,19 @@ The system SHALL support both MySQL and PostgreSQL for view creation.
 - **WHEN** dropAndCreatePivotView() is called multiple times
 - **THEN** the view SHALL be dropped and recreated each time
 - **AND** no errors SHALL occur from attempting to drop non-existent views
+
+### Requirement: Batch Operation Support
+The system SHALL provide an API for batch operations that defers view recreation until completion.
+
+#### Scenario: Batch mode defers view updates
+- **WHEN** withoutViewUpdates() closure is executed
+- **THEN** view recreation SHALL be disabled during closure execution
+- **AND** view SHALL be recreated once after closure completes
+- **AND** errors SHALL re-enable updates automatically
+
+#### Scenario: Batch mode handles errors gracefully
+- **WHEN** an exception occurs inside withoutViewUpdates() closure
+- **THEN** view updates SHALL be re-enabled
+- **AND** the exception SHALL be re-thrown
+- **AND** the system SHALL remain in a consistent state
+
