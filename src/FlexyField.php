@@ -143,46 +143,70 @@ class FlexyField
      */
     public static function dropAndCreatePivotViewForPostgres(): void
     {
-        $columnsSql = "
-DO $$
-DECLARE
-    sql TEXT;
-BEGIN
-    -- Concatenate column names using STRING_AGG for dynamic pivot column generation
-    SELECT STRING_AGG(
-        'MAX(CASE WHEN field_name = ''' || field_name || ''' THEN ' ||
-        'CASE ' ||
-        'WHEN value_date IS NOT NULL THEN value_date::TEXT ' ||
-        'WHEN value_datetime IS NOT NULL THEN value_datetime::TEXT ' ||
-        'WHEN value_decimal IS NOT NULL THEN value_decimal::TEXT ' ||
-        'WHEN value_int IS NOT NULL THEN value_int::TEXT ' ||
-        'WHEN value_json IS NOT NULL THEN value_json::TEXT ' ||
-        'WHEN value_boolean IS NOT NULL THEN CASE WHEN value_boolean THEN ''true'' ELSE ''false'' END ' ||
-        'ELSE value_string END ' ||
-        'END) AS \"flexy_' || field_name || '\"', ', ')
-    INTO sql
-    FROM (SELECT DISTINCT field_name FROM ff_values) AS distinct_fields;
+        // Get distinct field names from values
+        $fieldNames = DB::table('ff_values')
+            ->select('field_name')
+            ->distinct()
+            ->pluck('field_name')
+            ->toArray();
 
-    -- Drop the view if it exists
-    EXECUTE 'DROP VIEW IF EXISTS ff_values_pivot_view';
+        if (empty($fieldNames)) {
+            // Create empty view structure when no fields exist
+            DB::unprepared('DROP VIEW IF EXISTS ff_values_pivot_view');
+            DB::unprepared('CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_values WHERE FALSE');
 
-    -- Create the view with dynamic columns or empty view if no columns
-    IF sql IS NOT NULL THEN
-        EXECUTE 'CREATE VIEW ff_values_pivot_view AS ' ||
-                'SELECT model_type, model_id, ' || sql || ' ' ||
-                'FROM ff_values ' ||
-                'GROUP BY model_type, model_id';
-    ELSE
-        -- Create empty view structure when no fields exist
-        EXECUTE 'CREATE VIEW ff_values_pivot_view AS ' ||
-                'SELECT model_type, model_id ' ||
-                'FROM ff_values ' ||
-                'WHERE FALSE';
-    END IF;
-END $$;
-";
+            return;
+        }
 
-        // Execute SQL statements
-        DB::unprepared($columnsSql);
+        // Get field types from ff_set_fields
+        $fieldTypes = DB::table('ff_set_fields')
+            ->select('field_name', 'field_type')
+            ->whereIn('field_name', $fieldNames)
+            ->pluck('field_type', 'field_name')
+            ->toArray();
+
+        // Build column definitions for each field
+        $columns = [];
+        foreach ($fieldNames as $fieldName) {
+            $fieldType = $fieldTypes[$fieldName] ?? 'STRING';
+            $fieldTypeStr = is_object($fieldType) ? $fieldType->value : (string) $fieldType;
+
+            // Build CASE statement based on field type
+            switch (strtoupper($fieldTypeStr)) {
+                case 'BOOLEAN':
+                    // Cast boolean to integer for MAX(), then cast back to boolean
+                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_boolean::INTEGER END)::BOOLEAN";
+                    break;
+                case 'DATE':
+                    // DATE fields are stored in value_datetime column, keep as TIMESTAMP for proper date comparisons
+                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_datetime END)";
+                    break;
+                case 'DATETIME':
+                    // Keep as TIMESTAMP type for proper datetime comparisons
+                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_datetime END)";
+                    break;
+                case 'DECIMAL':
+                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_decimal::TEXT END)";
+                    break;
+                case 'INTEGER':
+                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_int::TEXT END)";
+                    break;
+                case 'JSON':
+                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_json::TEXT END)";
+                    break;
+                default:
+                    // For STRING or unknown types, use COALESCE to get the first non-null value
+                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN COALESCE(value_string, value_date::TEXT, value_datetime::TEXT, value_decimal::TEXT, value_int::TEXT, value_json::TEXT, CASE WHEN value_boolean IS NOT NULL THEN CASE WHEN value_boolean THEN 'true' ELSE 'false' END ELSE NULL END) END)";
+                    break;
+            }
+
+            $columns[] = "{$columnExpr} AS \"flexy_{$fieldName}\"";
+        }
+
+        $columnsSql = implode(', ', $columns);
+
+        // Drop and create view
+        DB::unprepared('DROP VIEW IF EXISTS ff_values_pivot_view');
+        DB::unprepared("CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id, {$columnsSql} FROM ff_values GROUP BY model_type, model_id");
     }
 }

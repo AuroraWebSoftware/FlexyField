@@ -46,9 +46,14 @@ it('can drop and create pivot view for MySQL', function () {
     // Recreate view
     FlexyField::dropAndCreatePivotView();
 
-    // Check view exists - use current database name
-    $dbName = DB::connection()->getDatabaseName();
-    $viewExists = DB::select("SHOW FULL TABLES WHERE Table_type = 'VIEW' AND Tables_in_{$dbName} = 'ff_values_pivot_view'");
+    // Check view exists - database-agnostic check
+    $driver = DB::connection()->getDriverName();
+    if ($driver === 'pgsql') {
+        $viewExists = DB::select("SELECT * FROM information_schema.views WHERE table_name = 'ff_values_pivot_view'");
+    } else {
+        $dbName = DB::connection()->getDatabaseName();
+        $viewExists = DB::select("SHOW FULL TABLES WHERE Table_type = 'VIEW' AND Tables_in_{$dbName} = 'ff_values_pivot_view'");
+    }
     expect(count($viewExists))->toBeGreaterThan(0);
 });
 
@@ -148,8 +153,13 @@ it('forceRecreateView handles empty values table', function () {
     // No values exist
     FlexyField::forceRecreateView();
 
-    // Should not throw exception - use current database name
-    $dbName = DB::connection()->getDatabaseName();
-    $viewExists = DB::select("SHOW FULL TABLES WHERE Table_type = 'VIEW' AND Tables_in_{$dbName} = 'ff_values_pivot_view'");
+    // Should not throw exception - database-agnostic check
+    $driver = DB::connection()->getDriverName();
+    if ($driver === 'pgsql') {
+        $viewExists = DB::select("SELECT * FROM information_schema.views WHERE table_name = 'ff_values_pivot_view'");
+    } else {
+        $dbName = DB::connection()->getDatabaseName();
+        $viewExists = DB::select("SHOW FULL TABLES WHERE Table_type = 'VIEW' AND Tables_in_{$dbName} = 'ff_values_pivot_view'");
+    }
     expect(count($viewExists))->toBeGreaterThan(0);
 });
