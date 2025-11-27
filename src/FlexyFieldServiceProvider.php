@@ -32,7 +32,7 @@ class FlexyFieldServiceProvider extends PackageServiceProvider
                 MigrateShapesToFieldSetsCommand::class,
             ]);
         // ->hasViews()
-        //->hasMigration('create_flexyfield_table')
+        // ->hasMigration('create_flexyfield_table')
         // ->hasCommand(FlexyFieldCommand::class)
     }
 }
