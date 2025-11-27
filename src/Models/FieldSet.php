@@ -54,6 +54,26 @@ class FieldSet extends Model
             DB::table('ff_values')
                 ->where('field_set_code', $fieldSet->set_code)
                 ->update(['field_set_code' => null]);
+
+            // Set field_set_code to null in the model's table
+            // Get the model class from model_type and update its table
+            if (class_exists($fieldSet->model_type)) {
+                try {
+                    /** @var \Illuminate\Database\Eloquent\Model $modelInstance */
+                    $modelInstance = new $fieldSet->model_type;
+                    $tableName = $modelInstance->getTable();
+
+                    // Only update if table exists
+                    if (\Illuminate\Support\Facades\Schema::hasTable($tableName)) {
+                        DB::table($tableName)
+                            ->where('field_set_code', $fieldSet->set_code)
+                            ->update(['field_set_code' => null]);
+                    }
+                } catch (\Exception $e) {
+                    // Ignore errors (e.g., table doesn't exist, model can't be instantiated)
+                    // This is expected in some test scenarios
+                }
+            }
         });
     }
 
