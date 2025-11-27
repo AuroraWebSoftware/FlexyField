@@ -2,10 +2,9 @@ name: PHPStan
 
 on:
   push:
-    paths:
-      - '**.php'
-      - 'phpstan.neon.dist'
-      - '.github/workflows/phpstan.yml'
+    # Her commit'te ve PR merge edildiğinde çalışır
+  pull_request:
+    # Her PR'da çalışır
 
 jobs:
   phpstan:

@@ -8,6 +8,7 @@ class Shape extends Model
 {
     protected $casts = [
         'field_metadata' => 'array',
+        'validation_messages' => 'array',
     ];
 
     protected $table = 'ff_shapes';

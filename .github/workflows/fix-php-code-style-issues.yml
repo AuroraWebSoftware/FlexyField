@@ -2,16 +2,43 @@ name: Fix PHP code style issues
 
 on:
   push:
-    paths:
-      - '**.php'
+    # Her commit'te çalışır (sadece PR branch'lerinde otomatik düzeltme yapar)
+  pull_request:
+    # Her PR'da çalışır
 
 permissions:
   contents: write
 
 jobs:
-  php-code-styling:
+  php-code-styling-check:
+    name: Check PHP code style (push)
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer require "laravel/framework:^11.0" --no-interaction --no-update
+          composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Check Pint
+        run: ./vendor/bin/pint --test
+
+  php-code-styling-fix:
+    name: Fix PHP code style (PR)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
 
     steps:
       - name: Checkout code
