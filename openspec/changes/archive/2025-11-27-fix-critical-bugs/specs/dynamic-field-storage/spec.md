@@ -2,7 +2,7 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Database Migration and View Creation
+### Requirement: Database Migration
 The migration SHALL create the necessary database tables and pivot view without unnecessary operations or invalid code.
 
 #### Scenario: Migration creates tables cleanly

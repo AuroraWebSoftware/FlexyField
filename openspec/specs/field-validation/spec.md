@@ -2,9 +2,7 @@
 
 ## Purpose
 FlexyField provides a Shape-based validation system where field definitions include Laravel validation rules and custom error messages. Validation is performed before values are persisted to the database, ensuring data integrity for flexy fields.
-
 ## Requirements
-
 ### Requirement: Shape Definition
 The system SHALL allow defining field shapes that specify type, validation rules, and sort order.
 
@@ -44,13 +42,18 @@ The system SHALL validate flexy field values against their Shape validation rule
 - **AND** the value SHALL be persisted to ff_values
 
 ### Requirement: Custom Validation Messages
-The system SHALL support custom error messages for validation failures.
+The system SHALL support custom validation error messages defined in Shape validation_messages property.
 
-#### Scenario: Custom messages are used when provided
-- **WHEN** a Shape has validation_messages defined
+#### Scenario: Custom validation messages are displayed
+- **WHEN** a Shape has custom validation_messages defined
 - **AND** validation fails for that field
-- **THEN** the custom error message SHALL be used
-- **AND** Laravel's default message SHALL NOT be shown
+- **THEN** the custom error message SHALL be displayed to the user
+- **AND** the default Laravel validation message SHALL NOT be shown
+
+#### Scenario: Validation messages property is correctly accessed
+- **WHEN** the system validates a field with a Shape
+- **THEN** it SHALL read from the validation_messages property
+- **AND** it SHALL NOT attempt to read from validation_rule property
 
 ### Requirement: Validation with Shapes Optional
 The system SHALL allow flexy fields to be used without predefined Shapes.
@@ -80,3 +83,4 @@ The system SHALL enforce Shape requirements when strict mode is enabled.
 - **AND** a flexy field is set without a corresponding Shape
 - **THEN** no exception SHALL be thrown
 - **AND** the field SHALL be saved using type detection
+

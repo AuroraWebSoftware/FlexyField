@@ -2,9 +2,7 @@
 
 ## Purpose
 FlexyField implements an Entity-Attribute-Value (EAV) pattern to enable dynamic field management for Laravel Eloquent models without requiring database schema modifications. This capability handles the storage, retrieval, and management of flexible field values using a polymorphic storage system.
-
 ## Requirements
-
 ### Requirement: EAV Storage Tables
 The system SHALL provide database tables for storing field definitions and values using an EAV pattern.
 
@@ -20,18 +18,20 @@ The system SHALL provide database tables for storing field definitions and value
 - **AND** the value SHALL be stored in the appropriate typed column
 
 ### Requirement: Database Migration
-The system SHALL provide migrations to create necessary database tables and views.
+The migration SHALL create the necessary database tables and pivot view without unnecessary operations or invalid code.
 
-#### Scenario: Migration creates required tables
-- **WHEN** migrations are executed
-- **THEN** ff_shapes table SHALL be created with appropriate schema
-- **AND** ff_values table SHALL be created with polymorphic relationship columns
-- **AND** ff_values_pivot_view SHALL be created for efficient querying
+#### Scenario: Migration creates tables cleanly
+- **WHEN** the FlexyField migration runs
+- **THEN** it SHALL create ff_shapes and ff_values tables
+- **AND** it SHALL create the pivot view
+- **AND** it SHALL NOT contain meaningless comments or invalid SQL
+- **AND** it SHALL NOT execute transactions without proper begin/commit pairs
 
-#### Scenario: Migration is reversible
-- **WHEN** migration rollback is executed
-- **THEN** all FlexyField tables and views SHALL be dropped
-- **AND** the database SHALL return to its previous state
+#### Scenario: Initial view creation is efficient
+- **WHEN** the migration creates the initial pivot view
+- **THEN** it SHALL create an empty view using dropAndCreatePivotView()
+- **AND** it SHALL NOT create dummy data just for view creation
+- **AND** it SHALL NOT perform unnecessary database operations
 
 ### Requirement: Model Integration
 The system SHALL integrate with Laravel Eloquent models through traits and contracts.
@@ -74,3 +74,4 @@ The system SHALL maintain a database view that pivots EAV data into a queryable 
 - **WHEN** new fields are added to any model
 - **THEN** the pivot view SHALL be dropped and recreated
 - **AND** all existing and new fields SHALL be included in the view
+

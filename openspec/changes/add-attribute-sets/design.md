@@ -297,3 +297,241 @@ $product->save();
 ❌ **Alternative**: Application-level integrity checks
 - Pros: Database agnostic
 - Cons: Risk of orphaned data, more code to maintain
+
+## Edge Cases and Error Handling
+
+### 1. Concurrent Modifications
+
+**Edge Case**: Two users modify the same field set simultaneously
+- **Detection**: Use Laravel's optimistic locking (updated_at comparison)
+- **Behavior**: Last write wins (database-level constraint enforcement)
+- **Test**: Simulate concurrent createFieldSet() calls with same set_code
+- **Expected**: Second call fails with unique constraint violation
+
+**Edge Case**: User deletes field set while another assigns model to it
+- **Detection**: Foreign key constraint checks
+- **Behavior**: Assignment fails with FieldSetNotFoundException
+- **Test**: Delete field set in one transaction, assign in another
+- **Expected**: Foreign key constraint prevents orphan reference
+
+### 2. Field Set Deletion Scenarios
+
+**Edge Case**: Delete field set with 1000+ model instances assigned
+- **Prevention**: Application-level check counts instances before delete
+- **Behavior**: Throw FieldSetInUseException with count
+- **Test**: Create 1000 models, attempt delete
+- **Expected**: Exception with "Field set in use by 1000 instances"
+
+**Edge Case**: Force delete field set (bypass application check)
+- **Behavior**: Foreign key ON DELETE SET NULL sets all instances to null
+- **Side Effect**: All instances lose field set assignment
+- **Test**: Direct DB delete, verify instances have null field_set_code
+- **Expected**: Null field_set_code, FieldSetNotFoundException on field access
+
+**Edge Case**: Delete default field set
+- **Behavior**: Allowed if no instances assigned
+- **Side Effect**: model_type has no default set
+- **Test**: Delete default set, create new model instance
+- **Expected**: New instance has null field_set_code (must manually assign)
+
+### 3. Field Set Assignment Edge Cases
+
+**Edge Case**: Assign non-existent field set to model
+- **Behavior**: Foreign key constraint violation
+- **Test**: assignToFieldSet('nonexistent')
+- **Expected**: Database exception (FK violation)
+
+**Edge Case**: Assign field set from different model_type
+- **Prevention**: Application-level validation checks model_type match
+- **Behavior**: Throw FieldSetNotFoundException
+- **Test**: Product::assignToFieldSet('category_electronics')
+- **Expected**: Exception: "Field set not found for model type Product"
+
+**Edge Case**: Assign field set to unsaved model
+- **Behavior**: Works, but field values cannot be saved until model saved
+- **Test**: $model = new Product(); $model->assignToFieldSet('footwear');
+- **Expected**: field_set_code set, but flexy values fail until model has ID
+
+**Edge Case**: Change field set after setting field values
+- **Behavior**: Old field values remain in ff_values with old field_set_code
+- **Side Effect**: Values from old set become inaccessible
+- **Test**: Set values, change field set, access old values
+- **Expected**: Old values return null, new field set fields accessible
+
+### 4. Field Value Edge Cases
+
+**Edge Case**: Set field not in assigned field set
+- **Behavior**: Throw FieldNotInSetException during save
+- **Test**: assignToFieldSet('footwear'); $model->flexy->isbn = '123';
+- **Expected**: Exception: "Field 'isbn' not in field set 'footwear'"
+
+**Edge Case**: Set field with null value
+- **Behavior**: Allowed, stores null in appropriate value_* column
+- **Test**: $model->flexy->color = null; $model->save();
+- **Expected**: Value record exists with all value_* columns null
+
+**Edge Case**: Set field with empty string
+- **Behavior**: Stores empty string in value_string
+- **Validation**: Depends on validation rules (e.g., 'required' fails)
+- **Test**: $model->flexy->color = ''; with 'required' validation
+- **Expected**: ValidationException
+
+**Edge Case**: Set field with value exceeding column length
+- **Behavior**: Database truncates or throws error
+- **Prevention**: Validation rule 'max:500' recommended
+- **Test**: Set 1000-char string with validation_rules='max:500'
+- **Expected**: ValidationException before database error
+
+**Edge Case**: Access field before model saved
+- **Behavior**: Returns in-memory value if set, null otherwise
+- **Test**: $model = new Product(); $model->flexy->color = 'Red'; echo $model->flexy->color;
+- **Expected**: Returns 'Red' from memory, not database
+
+### 5. Query Edge Cases
+
+**Edge Case**: Query field that exists in multiple field sets
+- **Behavior**: Returns all models with that field value across all sets
+- **Test**: Product::where('flexy_color', 'Red')->get();
+- **Expected**: Returns footwear AND clothing products with color=Red
+
+**Edge Case**: Query field that doesn't exist in any field set
+- **Behavior**: No results (pivot view has no column)
+- **Test**: Product::where('flexy_nonexistent', 'value')->get();
+- **Expected**: Empty collection (or SQL error if column doesn't exist in view)
+
+**Edge Case**: Query with null field_set_code
+- **Behavior**: Returns models without field set assignment
+- **Test**: Product::whereFieldSetNull()->get();
+- **Expected**: All products with field_set_code = NULL
+
+**Edge Case**: Order by field with mixed types across sets
+- **Behavior**: Database orders by string representation
+- **Side Effect**: Unexpected order (e.g., "10" before "2")
+- **Test**: Order by field that's INTEGER in one set, STRING in another
+- **Expected**: String-based ordering (document this limitation)
+
+### 6. Validation Edge Cases
+
+**Edge Case**: Validation rules conflict with field type
+- **Example**: FlexyFieldType::INTEGER with validation 'email'
+- **Behavior**: Type detection takes precedence, stores as integer
+- **Test**: Add INTEGER field with 'email' rule, set value '123'
+- **Expected**: Validation fails (123 is not email)
+
+**Edge Case**: Validation messages contain special characters
+- **Behavior**: JSON encoded/decoded correctly
+- **Test**: validation_messages = ['required' => 'Field "color" is required']
+- **Expected**: Double quotes escaped, displays correctly
+
+**Edge Case**: Very long validation rule string (>500 chars)
+- **Behavior**: Database column truncates or errors
+- **Prevention**: Validation during addFieldToSet()
+- **Test**: Add field with 1000-char validation string
+- **Expected**: Exception or truncation warning
+
+### 7. Migration Edge Cases
+
+**Edge Case**: Migration runs twice accidentally
+- **Behavior**: Idempotent checks prevent duplicate data
+- **Test**: Run migration, then run again
+- **Expected**: Second run detects existing data, skips creation
+
+**Edge Case**: ff_shapes has invalid model_type references
+- **Behavior**: Migration creates field sets but logs warnings
+- **Test**: Insert shape with model_type='NonExistent\\Model'
+- **Expected**: Field set created, warning logged
+
+**Edge Case**: Model instances have different model_type casing
+- **Example**: 'App\\Models\\Product' vs 'app\\models\\product'
+- **Behavior**: Treated as different types
+- **Prevention**: Normalize to class name during migration
+- **Test**: Mixed casing in ff_shapes
+- **Expected**: Normalized to canonical class name
+
+**Edge Case**: Rollback migration after models already created with field sets
+- **Behavior**: Foreign keys prevent rollback
+- **Solution**: Must manually delete or nullify model references first
+- **Test**: Create models with field sets, attempt rollback
+- **Expected**: Foreign key constraint error with instructions
+
+### 8. Performance Edge Cases
+
+**Edge Case**: Field set with 1000+ fields
+- **Behavior**: Pivot view becomes very wide
+- **Performance Impact**: Slower view recreation (30+ seconds)
+- **Test**: Create field set with 1000 fields, recreate view
+- **Expected**: Works but slow, document recommended limit (100 fields)
+
+**Edge Case**: Model with 100,000+ instances changing field sets
+- **Behavior**: Mass update of field_set_code
+- **Performance Impact**: Long-running transaction
+- **Test**: Update 100k models to new field set
+- **Expected**: Works but slow (batch updates recommended)
+
+**Edge Case**: Concurrent pivot view recreation
+- **Behavior**: Last recreation wins
+- **Side Effect**: Temporary inconsistency during recreation
+- **Test**: Drop/create view while queries running
+- **Expected**: Queries may fail during recreation window
+
+### 9. Data Integrity Edge Cases
+
+**Edge Case**: Manually modify field_set_code in database
+- **Behavior**: Foreign key allows if references valid set
+- **Side Effect**: Field access uses new set's field definitions
+- **Test**: UPDATE models SET field_set_code='books' WHERE...
+- **Expected**: Models switch sets, old field values inaccessible
+
+**Edge Case**: field_set_code and ff_values.field_set_code mismatch
+- **Prevention**: Application ensures sync during save
+- **Behavior**: If mismatch occurs, model's field_set_code takes precedence
+- **Test**: Manually create mismatch, load model
+- **Expected**: Uses model's field_set_code for field definitions
+
+**Edge Case**: Field type changed in field set
+- **Example**: Change 'price' from DECIMAL to STRING
+- **Behavior**: Existing values remain in old column
+- **Side Effect**: Values appear null until migrated
+- **Test**: Change field type, access existing values
+- **Expected**: Returns null (old column not checked)
+
+### 10. Metadata Edge Cases
+
+**Edge Case**: Metadata JSON contains malicious script
+- **Prevention**: Sanitize before rendering in UI
+- **Behavior**: Stored as-is, XSS risk if not sanitized
+- **Test**: Set metadata = ['icon' => '<script>alert(1)</script>']
+- **Expected**: Stored correctly, but must escape when displaying
+
+**Edge Case**: Metadata exceeds JSON column size
+- **Behavior**: Database error or truncation
+- **Prevention**: Validate size during createFieldSet()
+- **Test**: Set 1MB metadata JSON
+- **Expected**: Exception before database error
+
+**Edge Case**: Metadata contains circular reference
+- **Behavior**: json_encode fails
+- **Prevention**: Validate before storing
+- **Test**: $obj = new stdClass(); $obj->self = $obj; metadata = ['obj' => $obj]
+- **Expected**: JSON encoding exception
+
+## Test Coverage Requirements
+
+### Unit Test Coverage: >95%
+- All model methods
+- All validation logic
+- All exception scenarios
+- Edge cases documented above
+
+### Integration Test Coverage: 100%
+- Field set CRUD operations
+- Field assignment/removal
+- Model-field set assignment
+- Query operations across sets
+- Migration scenarios
+
+### Performance Benchmarks
+- Field set with 100 fields: <100ms creation
+- 1000 models assignment: <5s
+- Cross-set query (3 sets): <200ms
+- Pivot view recreation: <10s for 50 fields

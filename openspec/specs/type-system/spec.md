@@ -2,9 +2,7 @@
 
 ## Purpose
 FlexyField provides a strongly-typed storage system for dynamic fields. Each value is stored in a type-specific column based on automatic type detection or explicit Shape definitions. Supported types include STRING, INTEGER, DECIMAL, DATE, DATETIME, BOOLEAN, and JSON.
-
 ## Requirements
-
 ### Requirement: Supported Field Types
 The system SHALL support multiple data types for flexy fields via the FlexyFieldType enum.
 
@@ -44,23 +42,37 @@ The system SHALL support multiple data types for flexy fields via the FlexyField
 - **AND** the value SHALL be retrievable as a JSON string
 
 ### Requirement: Type Detection and Storage
-The system SHALL automatically detect the PHP type of assigned values and store them in the appropriate column.
+The system SHALL correctly detect and store PHP values in their appropriate typed columns, maintaining type fidelity through the save/retrieve cycle.
 
-#### Scenario: Type is detected from value
-- **WHEN** a value is assigned without an explicit Shape
-- **THEN** the system SHALL detect the PHP type using is_* functions
-- **AND** the value SHALL be stored in the corresponding typed column
+#### Scenario: Boolean false is stored and retrieved correctly
+- **WHEN** a flexy field is set to boolean false
+- **THEN** it SHALL be stored in value_boolean column
+- **AND** it SHALL be retrieved as boolean false (not integer 0)
 
-#### Scenario: DateTime instances are detected
-- **WHEN** a DateTime or Carbon instance is assigned
-- **THEN** it SHALL be stored in value_datetime column
-- **AND** no other type detection SHALL occur for DateTime instances
+#### Scenario: Boolean true is stored correctly
+- **WHEN** a flexy field is set to boolean true
+- **THEN** it SHALL be stored in value_boolean column
+- **AND** it SHALL be retrieved as boolean true (not integer 1)
 
-#### Scenario: Arrays are converted to JSON
-- **WHEN** an array value is assigned
-- **THEN** it SHALL be detected as array type
-- **AND** it SHALL be JSON encoded before storage
-- **AND** it SHALL be stored in value_json column
+#### Scenario: Integer zero is stored correctly
+- **WHEN** a flexy field is set to integer 0
+- **THEN** it SHALL be stored in value_int column
+- **AND** it SHALL be retrieved as integer 0 (not boolean false)
+
+#### Scenario: Float values are stored as decimal
+- **WHEN** a flexy field is set to a float value (e.g., 19.99)
+- **THEN** it SHALL be stored in value_decimal column
+- **AND** it SHALL maintain precision when retrieved
+
+#### Scenario: Numeric strings preserve leading zeros
+- **WHEN** a flexy field is set to a numeric string with leading zeros (e.g., "00123")
+- **THEN** it SHALL be stored in value_string column
+- **AND** it SHALL preserve the exact string value including leading zeros
+
+#### Scenario: Unsupported types throw exception
+- **WHEN** a flexy field is set to an unsupported type (e.g., resource)
+- **THEN** it SHALL throw FlexyFieldTypeNotAllowedException
+- **AND** the exception message SHALL include the actual type name
 
 ### Requirement: Type Safety in Storage
 The system SHALL ensure that only one typed column is populated per value record.
@@ -74,3 +86,4 @@ The system SHALL ensure that only one typed column is populated per value record
 - **WHEN** type cannot be determined definitively
 - **THEN** the value SHALL be stored as a string
 - **AND** it SHALL use the value_string column
+
