@@ -52,7 +52,7 @@ it('creates field set with 100 fields in acceptable time', function () {
     // Verify all fields created
     $fieldCount = \AuroraWebSoftware\FlexyField\Models\SetField::where('set_code', 'large_set')->count();
     expect($fieldCount)->toBe(100);
-})->skip('Performance test - may be slow');
+});
 
 it('handles field set change on many models efficiently', function () {
     // Create two field sets
@@ -95,7 +95,7 @@ it('handles field set change on many models efficiently', function () {
     // Verify all changed
     $changedCount = ExampleFlexyModel::whereFieldSet('set2')->count();
     expect($changedCount)->toBe(1000);
-})->skip('Performance test - may be slow');
+});
 
 it('recreates pivot view efficiently with multiple field sets', function () {
     // Create 10 field sets with 20 fields each
@@ -123,7 +123,7 @@ it('recreates pivot view efficiently with multiple field sets', function () {
 
     // Should complete in less than 10 seconds
     expect($duration)->toBeLessThan(10.0);
-})->skip('Performance test - may be slow');
+});
 
 it('queries efficiently with 100 field sets', function () {
     // Create 100 field sets
@@ -156,7 +156,7 @@ it('queries efficiently with 100 field sets', function () {
     // Should complete in less than 1 second
     expect($duration)->toBeLessThan(1.0);
     expect($results)->toHaveCount(50);
-})->skip('Performance test - may be slow');
+});
 
 it('handles concurrent pivot view recreation gracefully', function () {
     $this->createFieldSetWithFields(

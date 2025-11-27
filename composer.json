@@ -61,7 +61,22 @@
             "@php vendor/bin/testbench serve"
         ],
         "analyse": "vendor/bin/phpstan analyse --memory-limit=512M",
-        "test": "vendor/bin/pest",
+        "test": [
+            "@php -r \"echo '\\n=== Testing with MySQL ===\\n';\"",
+            "@composer run test:mysql",
+            "@php -r \"echo '\\n=== Testing with PostgreSQL ===\\n';\"",
+            "@composer run test:pgsql"
+        ],
+        "test:mysql": "vendor/bin/pest --configuration=phpunit.xml.dist --exclude-filter=FieldSetPerformanceTest",
+        "test:pgsql": "vendor/bin/pest --configuration=phpunit-postgress.xml.dist --exclude-filter=FieldSetPerformanceTest",
+        "test:performance": [
+            "@php -r \"echo '\\n=== Performance Tests with MySQL ===\\n';\"",
+            "@composer run test:performance:mysql",
+            "@php -r \"echo '\\n=== Performance Tests with PostgreSQL ===\\n';\"",
+            "@composer run test:performance:pgsql"
+        ],
+        "test:performance:mysql": "vendor/bin/pest --configuration=phpunit.xml.dist tests/Feature/FieldSetPerformanceTest.php",
+        "test:performance:pgsql": "vendor/bin/pest --configuration=phpunit-postgress.xml.dist tests/Feature/FieldSetPerformanceTest.php",
         "test-coverage": "vendor/bin/pest --coverage",
         "format": "vendor/bin/pint"
     },
