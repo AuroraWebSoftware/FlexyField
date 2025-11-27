@@ -19,17 +19,19 @@ use Illuminate\Database\Schema\Blueprint;
 trait AddFieldSetCodeColumn
 {
     /**
-     * Add field_set_code column with foreign key to model table
+     * Add field_set_code column to model table
+     *
+     * Note: Foreign key constraint is not added because set_code is not unique by itself
+     * in ff_field_sets table (only ['model_type', 'set_code'] is unique).
+     * This ensures PostgreSQL compatibility. Referential integrity is maintained through
+     * application-level constraints in the FieldSet model's deleting event.
      */
     public static function add(Blueprint $table): void
     {
         $table->string('field_set_code')->nullable()->index()->after('id');
 
-        $table->foreign('field_set_code')
-            ->references('set_code')
-            ->on('ff_field_sets')
-            ->onDelete('set null')
-            ->onUpdate('cascade');
+        // Note: Foreign key removed for PostgreSQL compatibility
+        // Cascading handled in FieldSet model's deleting event
     }
 
     /**
@@ -37,7 +39,7 @@ trait AddFieldSetCodeColumn
      */
     public static function remove(Blueprint $table): void
     {
-        $table->dropForeign(['field_set_code']);
+        // Note: No foreign key to drop since it's not added
         $table->dropColumn('field_set_code');
     }
 }

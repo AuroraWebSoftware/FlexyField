@@ -47,6 +47,13 @@ class FieldSet extends Model
         // (replaces database foreign key constraint that was removed due to set_code not being unique)
         static::deleting(function (FieldSet $fieldSet) {
             $fieldSet->fields()->delete();
+
+            // Set field_set_code to null in ff_values table (cascade null)
+            // This replaces the database foreign key constraint that was removed
+            // for PostgreSQL compatibility (set_code is not unique by itself)
+            DB::table('ff_values')
+                ->where('field_set_code', $fieldSet->set_code)
+                ->update(['field_set_code' => null]);
         });
     }
 

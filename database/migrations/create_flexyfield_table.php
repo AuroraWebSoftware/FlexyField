@@ -79,12 +79,11 @@ return new class extends Migration
 
             $table->unique(['model_type', 'model_id', 'field_name']);
 
-            // Foreign key to field set (nullable for backward compatibility)
-            $table->foreign('field_set_code')
-                ->references('set_code')
-                ->on('ff_field_sets')
-                ->onDelete('set null')
-                ->onUpdate('cascade');
+            // Note: Foreign key constraint not added because set_code is not unique by itself
+            // (only ['model_type', 'set_code'] is unique in ff_field_sets table).
+            // Cascading deletes/updates are handled in FieldSet model's deleting event.
+            // This ensures PostgreSQL compatibility while maintaining referential integrity
+            // through application-level constraints.
         });
 
         Schema::dropIfExists('ff_view_schema');

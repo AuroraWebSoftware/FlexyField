@@ -149,7 +149,7 @@ DECLARE
     sql TEXT;
 BEGIN
     -- Concatenate column names using STRING_AGG for dynamic pivot column generation
-SELECT STRING_AGG(
+    SELECT STRING_AGG(
         'MAX(CASE WHEN field_name = ''' || field_name || ''' THEN ' ||
         'CASE ' ||
         'WHEN value_date IS NOT NULL THEN value_date::TEXT ' ||
@@ -163,12 +163,22 @@ SELECT STRING_AGG(
     INTO sql
     FROM (SELECT DISTINCT field_name FROM ff_values) AS distinct_fields;
 
-    -- Prepare the view creation SQL statement
+    -- Drop the view if it exists
     EXECUTE 'DROP VIEW IF EXISTS ff_values_pivot_view';
-    EXECUTE 'CREATE VIEW ff_values_pivot_view AS ' ||
-            'SELECT model_type, model_id, ' || sql || ' ' ||
-            'FROM ff_values ' ||
-            'GROUP BY model_type, model_id';
+
+    -- Create the view with dynamic columns or empty view if no columns
+    IF sql IS NOT NULL THEN
+        EXECUTE 'CREATE VIEW ff_values_pivot_view AS ' ||
+                'SELECT model_type, model_id, ' || sql || ' ' ||
+                'FROM ff_values ' ||
+                'GROUP BY model_type, model_id';
+    ELSE
+        -- Create empty view structure when no fields exist
+        EXECUTE 'CREATE VIEW ff_values_pivot_view AS ' ||
+                'SELECT model_type, model_id ' ||
+                'FROM ff_values ' ||
+                'WHERE FALSE';
+    END IF;
 END $$;
 ";
 
