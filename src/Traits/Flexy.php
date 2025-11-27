@@ -63,7 +63,7 @@ trait Flexy
 
                         $data = [$field => $value];
                         $rules = $shape?->validation_rules ? [$field => $shape->validation_rules] : [];
-                        $messages = $shape?->validation_rule ? [$field => $shape->validation_rules] : [];
+                        $messages = $shape?->validation_messages ? [$field => $shape->validation_messages] : [];
 
                         Validator::make($data, $rules, $messages)->validate();
                     }
@@ -77,16 +77,19 @@ trait Flexy
                         'value_json' => null,
                     ];
 
-                    if (is_string($value)) {
-                        $addition['value_string'] = $value;
+                    // Type detection order: most specific to least specific
+                    // IMPORTANT: Check boolean BEFORE integer to prevent true === 1 confusion
+                    // IMPORTANT: Check string BEFORE is_numeric to preserve leading zeros
+                    if (is_bool($value)) {
+                        $addition['value_boolean'] = $value;
                     } elseif (is_int($value)) {
                         $addition['value_int'] = $value;
-                    } elseif (is_numeric($value)) {
+                    } elseif (is_float($value)) {
                         $addition['value_decimal'] = $value;
                     } elseif ($value instanceof DateTime) {
                         $addition['value_datetime'] = $value;
-                    } elseif (is_bool($value)) {
-                        $addition['value_boolean'] = $value;
+                    } elseif (is_string($value)) {
+                        $addition['value_string'] = $value;
                     } elseif (is_array($value)) {
                         $addition['value_json'] = json_encode($value);
                     } else {

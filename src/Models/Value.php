@@ -11,4 +11,8 @@ class Value extends Model
     protected $guarded = [];
 
     public $timestamps = false;
+
+    protected $casts = [
+        'value_boolean' => 'boolean',
+    ];
 }
