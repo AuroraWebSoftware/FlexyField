@@ -167,10 +167,15 @@ Product::where('flexy_name', 'like', 'product%')->get();
 FlexyField creates these indexes automatically:
 
 ```sql
-ff_shapes:
+ff_field_sets:
 - INDEX (model_type)
+- INDEX (set_code)
+- UNIQUE (model_type, set_code)
+
+ff_set_fields:
+- INDEX (set_code)
 - INDEX (field_name)
-- UNIQUE (model_type, field_name)
+- UNIQUE (set_code, field_name)
 
 ff_values:
 - INDEX (model_type)

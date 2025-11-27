@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Create field sets table (replaces ff_shapes concept)
+        // Create field sets table
         Schema::dropIfExists('ff_field_sets');
         Schema::create('ff_field_sets', function (Blueprint $table) {
             $table->id();
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->unique(['model_type', 'set_code']);
         });
 
-        // Create set fields table (replaces ff_shapes)
+        // Create set fields table
         Schema::dropIfExists('ff_set_fields');
         Schema::create('ff_set_fields', function (Blueprint $table) {
             $table->id();
@@ -43,22 +43,6 @@ return new class extends Migration
             // Note: Foreign key constraint removed because set_code is not unique by itself
             // (only ['model_type', 'set_code'] is unique). Cascading is handled in
             // FieldSet model's deleting event.
-        });
-
-        // Create legacy shapes table (for migration compatibility)
-        Schema::dropIfExists('ff_shapes');
-        Schema::create('ff_shapes', function (Blueprint $table) {
-            $table->id();
-            $table->string('model_type')->index();
-            $table->string('field_name')->index();
-            $table->string('field_type')->index();
-            $table->integer('sort')->default(100);
-            $table->string('validation_rules')->nullable();
-            $table->json('validation_messages')->nullable();
-            $table->json('field_metadata')->nullable();
-            $table->timestamps();
-
-            $table->unique(['model_type', 'field_name']);
         });
 
         Schema::dropIfExists('ff_values');
@@ -103,6 +87,5 @@ return new class extends Migration
         Schema::dropIfExists('ff_values');
         Schema::dropIfExists('ff_set_fields');
         Schema::dropIfExists('ff_field_sets');
-        Schema::dropIfExists('ff_shapes');
     }
 };

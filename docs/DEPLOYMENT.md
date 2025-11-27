@@ -431,7 +431,8 @@ mysql -u username -p test_restore_db < backup.sql
 mysql -u username -p -e "
     USE test_restore_db;
     SELECT COUNT(*) as ff_values_count FROM ff_values;
-    SELECT COUNT(*) as ff_shapes_count FROM ff_shapes;
+    SELECT COUNT(*) as ff_field_sets_count FROM ff_field_sets;
+    SELECT COUNT(*) as ff_set_fields_count FROM ff_set_fields;
     SELECT COUNT(*) as ff_view_schema_count FROM ff_view_schema;
 "
 ```
@@ -474,7 +475,7 @@ else
 fi
 
 # Check FlexyField tables
-TABLES=("ff_values" "ff_shapes" "ff_view_schema")
+TABLES=("ff_values" "ff_field_sets" "ff_set_fields" "ff_view_schema")
 for table in "${TABLES[@]}"; do
     COUNT=$(php artisan tinker --execute="echo DB::table('$table')->count();")
     echo "✓ Table $table: $COUNT records"

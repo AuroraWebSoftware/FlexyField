@@ -35,7 +35,7 @@ FlexyField is a Laravel package that enables dynamic field management for Eloque
 - **Naming Conventions**:
   - Classes: PascalCase
   - Methods: camelCase
-  - Database tables: snake_case with `ff_` prefix (e.g., `ff_shapes`, `ff_values`)
+  - Database tables: snake_case with `ff_` prefix (e.g., `ff_field_sets`, `ff_values`)
   - Flexy field accessors: `flexy_` prefix (e.g., `$model->flexy_color`)
 - **Documentation**: PHPDoc blocks for all public methods, especially those with exceptions
 - **Type Hints**: Strict typing required for all parameters and return types
@@ -97,13 +97,6 @@ FlexyField is a Laravel package that enables dynamic field management for Eloque
   - Recreation command: `php artisan flexyfield:rebuild-view`
   - Implementation: `src/FlexyField.php::dropAndCreatePivotView()`
 
-*Legacy Tables (Deprecated):*
-- `ff_shapes`: Legacy table maintained for migration compatibility
-  - Columns: `id`, `model_type`, `field_name`, `field_type`, `sort`, `validation_rules`, `validation_messages` (JSON), `field_metadata` (JSON), `timestamps`
-  - Unique constraint: `(model_type, field_name)`
-  - **Status**: Deprecated, use Field Sets instead
-  - Migration: Use `php artisan flexyfield:migrate-shapes` to migrate to field sets
-  - Related model: `src/Models/Shape.php` (legacy, maintained for compatibility)
 
 **View Recreation Mechanism:**
 - View is only recreated when new fields are detected (not on every save)
@@ -146,7 +139,7 @@ FlexyField is a Laravel package that enables dynamic field management for Eloque
   - Laravel versions: 10.x, 11.x
   - Dependencies: prefer-stable and prefer-lowest
 - **Database Testing**: MySQL 8.0 service in GitHub Actions
-- **Test Models**: `ExampleFlexyModel` and `ExampleShapelyFlexyModel` for testing
+- **Test Models**: `ExampleFlexyModel` for testing
 - **Commands**:
   - Run tests: `./vendor/bin/pest`
   - Coverage: `./vendor/bin/pest --coverage`
@@ -187,10 +180,6 @@ FlexyField implements a flexible EAV pattern specifically designed for Laravel E
 - **Validation Enforcement**: When a model instance is assigned to a field set, only fields from that set can be set, and validation rules are enforced
 - **Default Sets**: One field set per model type can be marked as default, automatically assigned to new instances
 
-**Migration from Shapes:**
-- Legacy `ff_shapes` table exists for backward compatibility
-- Use `php artisan flexyfield:migrate-shapes` to migrate from shapes to field sets
-- After migration, shapes are deprecated in favor of field sets
 
 ### Field Types and Storage
 Each field type maps to a specific column in the `ff_values` table:

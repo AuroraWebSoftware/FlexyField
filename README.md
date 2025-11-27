@@ -22,7 +22,6 @@ It enables on-the-fly definition of fields, field types, validation, and value a
   - [Querying by Field Set](#querying-by-field-set)
 - [Performance Optimization](#performance-optimization)
 - [Production Readiness](#production-readiness)
-- [Migration from Legacy Shapes](#migration-from-legacy-shapes)
 - [Database Migration](#database-migration)
 - [Configuration](#configuration)
 - [Documentation](#documentation)
@@ -471,39 +470,6 @@ FlexyField is production-ready with comprehensive documentation:
 - Large: 50-100 fields, 1M-10M models (Acceptable with optimization)
 
 See the [Deployment Guide](docs/DEPLOYMENT.md) for production deployment procedures.
-
-## Migration from Legacy Shapes
-
-If you're upgrading from an older version of FlexyField that used the legacy `ff_shapes` table, you need to migrate to the new Field Sets system.
-
-### Automatic Migration
-
-Run the migration command to automatically convert shapes to field sets:
-
-```bash
-php artisan flexyfield:migrate-shapes --force
-```
-
-**What the migration does:**
-1. Creates a default field set for each model type that had shapes
-2. Migrates all shape definitions to field set fields
-3. Assigns all existing model instances to their respective default sets
-4. Updates all field values with field set context
-5. Preserves all existing data and relationships
-
-**After Migration:**
-
-Once migration is complete, you can optionally drop the legacy `ff_shapes` table:
-
-```bash
-php artisan flexyfield:migrate-shapes --force --drop-shapes
-```
-
-> **Important Notes:**
-> - The migration is **idempotent** and safe to run multiple times
-> - Always backup your database before running migrations
-> - Test the migration in a development environment first
-> - The `--force` flag is required to prevent accidental runs
 
 **Verification:**
 

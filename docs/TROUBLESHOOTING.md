@@ -23,7 +23,6 @@ This guide helps diagnose and resolve common issues with FlexyField in productio
 # Verify tables exist
 php artisan tinker --execute="
     echo 'ff_values: ' . DB::table('ff_values')->count() . PHP_EOL;
-    echo 'ff_shapes: ' . DB::table('ff_shapes')->count() . PHP_EOL;
     echo 'ff_view_schema: ' . DB::table('ff_view_schema')->count() . PHP_EOL;
 "
 
@@ -212,11 +211,18 @@ $total = $model->flexy->count + 10; // Warning!
 
 **Solution:**
 ```php
-// Enforce type validation in Shape
-use AuroraWebSoftware\FlexyField\Shapes\Shape;
+// Enforce type validation using Field Sets
+use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
-Shape::define('product', [
-    'count' => ['type' => 'integer', 'min' => 0],
+// Create field set with validation rules
+FieldSet::create([
+    'model_type' => Product::class,
+    'set_code' => 'default',
+    'label' => 'Default',
+])->fields()->create([
+    'field_name' => 'count',
+    'field_type' => FlexyFieldType::INTEGER,
+    'validation_rules' => 'required|integer|min:0',
 ]);
 
 // Or validate before using
@@ -652,8 +658,8 @@ DB::table('ff_values')
     ->where('field_name', 'old_name')
     ->update(['field_name' => 'new_name']);
 
-// Update shape definition
-DB::table('ff_shapes')
+// Update field set field definition
+DB::table('ff_set_fields')
     ->where('field_name', 'old_name')
     ->update(['field_name' => 'new_name']);
 
@@ -682,17 +688,17 @@ foreach ($values as $value) {
         ]);
 }
 
-// Update shape
-Shape::define('product', [
-    'quantity' => ['type' => 'integer'],
-]);
+// Update field set field type
+DB::table('ff_set_fields')
+    ->where('field_name', 'quantity')
+    ->update(['field_type' => FlexyFieldType::INTEGER->value]);
 ```
 
 ### Q: How do I backup only FlexyField data?
 
 **A:**
 ```bash
-mysqldump -u user -p database_name ff_values ff_shapes ff_view_schema > flexyfield_backup.sql
+mysqldump -u user -p database_name ff_values ff_field_sets ff_set_fields ff_view_schema > flexyfield_backup.sql
 ```
 
 ### Q: Can I use FlexyField with multi-tenancy?
@@ -732,7 +738,8 @@ For document databases, use native flexible schemas.
 php artisan tinker --execute="
     Schema::dropIfExists('ff_values_pivot_view');
     Schema::dropIfExists('ff_values');
-    Schema::dropIfExists('ff_shapes');
+    Schema::dropIfExists('ff_set_fields');
+    Schema::dropIfExists('ff_field_sets');
     Schema::dropIfExists('ff_view_schema');
 "
 

@@ -1,7 +1,6 @@
 <?php
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\Models\Shape;
 use AuroraWebSoftware\FlexyField\Models\Value;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesFieldSets;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
@@ -34,12 +33,6 @@ beforeEach(function () {
 it('can test', function () {
     expect(true)->toBeTrue();
 });
-
-// DEPRECATED: Old shape API removed, use field sets instead
-it('can test set, get and delete a shape for a flexy model', function () {
-    // This test uses deprecated shape API - skip for now
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
 
 it('can set and get a flexy models flexy fields', function () {
     $this->createFieldSetWithFields(
@@ -95,51 +88,6 @@ it('can get a flexy models with where condition of flexy fields', function () {
     expect(ExampleFlexyModel::where('flexy_a', 1)->where('flexy_b', 'tester2')->get())->toHaveCount(1)
         ->and(ExampleFlexyModel::where('flexy_a', 1)->get())->toHaveCount(2);
 });
-
-// DEPRECATED: Old shape API removed
-it('can get exception when shape is mandatory', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can create shape for a model and save', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can create shape for a model and validate and throws', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can create shape for a model and validate and save', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can test set, get and delete a shape for a flexy model bool', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can create shape for a model and validate and save bool', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can create shape for a model and validate and save bool - OLD', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can create shape for a model and save bool', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can create shape for a model and save json', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can get all shapes', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
-
-it('can get all shapes models field_name', function () {
-    $this->markTestSkipped('Shape API deprecated, use field sets instead');
-})->skip('Shape API deprecated');
 
 it('can delete flexy values', function () {
     $this->createFieldSetWithFields(

@@ -4,7 +4,7 @@ This guide covers recommended patterns, conventions, and practices for using Fle
 
 ## Table of Contents
 
-- [Shape Definition](#shape-definition)
+- [Field Set Definition](#field-set-definition)
 - [Field Naming Conventions](#field-naming-conventions)
 - [Validation Strategies](#validation-strategies)
 - [Data Migration Patterns](#data-migration-patterns)
@@ -12,103 +12,122 @@ This guide covers recommended patterns, conventions, and practices for using Fle
 - [Common Pitfalls](#common-pitfalls)
 - [Code Examples](#code-examples)
 
-## Shape Definition
+## Field Set Definition
 
-### Define Shapes in Seeders
+### Define Field Sets in Seeders
 
-Always define shapes in database seeders for version control and consistency:
+Always define field sets in database seeders for version control and consistency:
 
 ```php
-// database/seeders/ProductShapeSeeder.php
+// database/seeders/ProductFieldSetSeeder.php
 namespace Database\Seeders;
 
 use App\Models\Product;
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
+use AuroraWebSoftware\FlexyField\Models\FieldSet;
 use Illuminate\Database\Seeder;
 
-class ProductShapeSeeder extends Seeder
+class ProductFieldSetSeeder extends Seeder
 {
     public function run(): void
     {
-        // Enable shape enforcement
-        Product::$hasShape = true;
+        // Create default field set
+        $fieldSet = FieldSet::firstOrCreate([
+            'model_type' => Product::class,
+            'set_code' => 'default',
+        ], [
+            'label' => 'Default',
+            'description' => 'Default product field set',
+            'is_default' => true,
+        ]);
 
         // Define product fields
-        Product::setFlexyShape(
-            'color',
-            FlexyFieldType::STRING,
-            sort: 1,
-            validationRules: 'required|string|max:50',
-            validationMessages: ['color.required' => 'Product color is required'],
-            fieldMetadata: ['label' => 'Color', 'placeholder' => 'e.g., Red, Blue']
+        $fieldSet->fields()->firstOrCreate(
+            ['field_name' => 'color'],
+            [
+                'field_type' => FlexyFieldType::STRING->value,
+                'sort' => 1,
+                'validation_rules' => 'required|string|max:50',
+                'validation_messages' => ['color.required' => 'Product color is required'],
+                'field_metadata' => ['label' => 'Color', 'placeholder' => 'e.g., Red, Blue'],
+            ]
         );
 
-        Product::setFlexyShape(
-            'size',
-            FlexyFieldType::STRING,
-            sort: 2,
-            validationRules: 'required|in:XS,S,M,L,XL,XXL',
-            validationMessages: ['size.in' => 'Size must be a valid clothing size'],
-            fieldMetadata: ['label' => 'Size', 'type' => 'select']
+        $fieldSet->fields()->firstOrCreate(
+            ['field_name' => 'size'],
+            [
+                'field_type' => FlexyFieldType::STRING->value,
+                'sort' => 2,
+                'validation_rules' => 'required|in:XS,S,M,L,XL,XXL',
+                'validation_messages' => ['size.in' => 'Size must be a valid clothing size'],
+                'field_metadata' => ['label' => 'Size', 'type' => 'select'],
+            ]
         );
 
-        Product::setFlexyShape(
-            'weight_kg',
-            FlexyFieldType::DECIMAL,
-            sort: 3,
-            validationRules: 'nullable|numeric|min:0|max:1000',
-            fieldMetadata: ['label' => 'Weight (kg)', 'unit' => 'kg']
+        $fieldSet->fields()->firstOrCreate(
+            ['field_name' => 'weight_kg'],
+            [
+                'field_type' => FlexyFieldType::DECIMAL->value,
+                'sort' => 3,
+                'validation_rules' => 'nullable|numeric|min:0|max:1000',
+                'field_metadata' => ['label' => 'Weight (kg)', 'unit' => 'kg'],
+            ]
         );
 
-        Product::setFlexyShape(
-            'in_stock',
-            FlexyFieldType::BOOLEAN,
-            sort: 4,
-            validationRules: 'required|boolean',
-            fieldMetadata: ['label' => 'In Stock']
+        $fieldSet->fields()->firstOrCreate(
+            ['field_name' => 'in_stock'],
+            [
+                'field_type' => FlexyFieldType::BOOLEAN->value,
+                'sort' => 4,
+                'validation_rules' => 'required|boolean',
+                'field_metadata' => ['label' => 'In Stock'],
+            ]
         );
     }
 }
 ```
 
-### Shape Versioning
+### Field Set Versioning
 
-Version your shapes for manageable schema evolution:
+Version your field sets for manageable schema evolution:
 
 ```php
-// database/seeders/ProductShapeV2Seeder.php
-class ProductShapeV2Seeder extends Seeder
+// database/seeders/ProductFieldSetV2Seeder.php
+class ProductFieldSetV2Seeder extends Seeder
 {
     public function run(): void
     {
-        Product::$hasShape = true;
-
-        // V1 fields (keep existing)
-        // ...existing setFlexyShape calls
+        $fieldSet = FieldSet::where('model_type', Product::class)
+            ->where('set_code', 'default')
+            ->first();
 
         // V2 additions
-        Product::setFlexyShape(
-            'brand',
-            FlexyFieldType::STRING,
-            sort: 5,
-            validationRules: 'nullable|string|max:100',
-            fieldMetadata: ['label' => 'Brand', 'version' => 2]
+        $fieldSet->fields()->firstOrCreate(
+            ['field_name' => 'brand'],
+            [
+                'field_type' => FlexyFieldType::STRING->value,
+                'sort' => 5,
+                'validation_rules' => 'nullable|string|max:100',
+                'field_metadata' => ['label' => 'Brand', 'version' => 2],
+            ]
         );
 
-        Product::setFlexyShape(
-            'warranty_months',
-            FlexyFieldType::INTEGER,
-            sort: 6,
-            validationRules: 'nullable|integer|min:0|max:120',
-            fieldMetadata: ['label' => 'Warranty (months)', 'version' => 2]
+        $fieldSet->fields()->firstOrCreate(
+            ['field_name' => 'warranty_months'],
+            [
+                'field_type' => FlexyFieldType::INTEGER->value,
+                'sort' => 6,
+                'validation_rules' => 'nullable|integer|min:0|max:120',
+                'field_metadata' => ['label' => 'Warranty (months)', 'version' => 2],
+            ]
         );
     }
 }
 ```
 
-### Shape Documentation
+### Field Set Documentation
 
-Document your shapes in code:
+Document your field sets in code:
 
 ```php
 /**
@@ -124,8 +143,6 @@ Document your shapes in code:
 class Product extends Model
 {
     use Flexy;
-
-    public static bool $hasShape = true;
 
     // ...
 }
@@ -211,12 +228,18 @@ $product->flexy->preorder = false;     // Verb? Noun?
 Implement validation at multiple layers:
 
 ```php
-// Layer 1: Shape-level validation (enforced by FlexyField)
-Product::setFlexyShape(
-    'price',
-    FlexyFieldType::DECIMAL,
-    sort: 1,
-    validationRules: 'required|numeric|min:0|max:999999',
+// Layer 1: Field Set-level validation (enforced by FlexyField)
+$fieldSet = FieldSet::where('model_type', Product::class)
+    ->where('set_code', 'default')
+    ->first();
+
+$fieldSet->fields()->firstOrCreate(
+    ['field_name' => 'price'],
+    [
+        'field_type' => FlexyFieldType::DECIMAL->value,
+        'sort' => 1,
+        'validation_rules' => 'required|numeric|min:0|max:999999',
+    ]
 );
 
 // Layer 2: Model-level validation
@@ -255,15 +278,17 @@ class UpdateProductRequest extends FormRequest
 Provide clear, user-friendly messages:
 
 ```php
-Product::setFlexyShape(
-    'email',
-    FlexyFieldType::STRING,
-    sort: 10,
-    validationRules: 'required|email|max:255',
-    validationMessages: [
-        'email.required' => 'Email address is required',
-        'email.email' => 'Please enter a valid email address',
-        'email.max' => 'Email address must not exceed 255 characters',
+$fieldSet->fields()->firstOrCreate(
+    ['field_name' => 'email'],
+    [
+        'field_type' => FlexyFieldType::STRING->value,
+        'sort' => 10,
+        'validation_rules' => 'required|email|max:255',
+        'validation_messages' => [
+            'email.required' => 'Email address is required',
+            'email.email' => 'Please enter a valid email address',
+            'email.max' => 'Email address must not exceed 255 characters',
+        ],
     ]
 );
 ```
@@ -306,18 +331,22 @@ class Product extends Model
 // Migration: No database migration needed for flexy fields!
 // Just add to seeder:
 
-// database/seeders/ProductShapeSeeder.php
+// database/seeders/ProductFieldSetSeeder.php
 public function run(): void
 {
-    // ... existing fields
+    $fieldSet = FieldSet::where('model_type', Product::class)
+        ->where('set_code', 'default')
+        ->first();
 
     // New field (v2)
-    Product::setFlexyShape(
-        'eco_friendly',
-        FlexyFieldType::BOOLEAN,
-        sort: 100,
-        validationRules: 'nullable|boolean',
-        fieldMetadata: ['label' => 'Eco Friendly', 'version' => 2]
+    $fieldSet->fields()->firstOrCreate(
+        ['field_name' => 'eco_friendly'],
+        [
+            'field_type' => FlexyFieldType::BOOLEAN->value,
+            'sort' => 100,
+            'validation_rules' => 'nullable|boolean',
+            'field_metadata' => ['label' => 'Eco Friendly', 'version' => 2],
+        ]
     );
 }
 
@@ -332,7 +361,15 @@ foreach (Product::cursor() as $product) {
 
 ```php
 // Step 1: Add new field with new name
-Product::setFlexyShape('customer_email', FlexyFieldType::STRING, sort: 10);
+$fieldSet = FieldSet::where('model_type', Product::class)
+    ->where('set_code', 'default')
+    ->first();
+
+$fieldSet->fields()->create([
+    'field_name' => 'customer_email',
+    'field_type' => FlexyFieldType::STRING->value,
+    'sort' => 10,
+]);
 
 // Step 2: Copy data
 DB::statement("
@@ -352,7 +389,7 @@ DB::table('ff_values')
     ->where('model_type', Product::class)
     ->delete();
 
-Product::deleteFlexyShape('email');
+$fieldSet->fields()->where('field_name', 'email')->delete();
 ```
 
 ### Changing Field Type
@@ -361,7 +398,15 @@ Product::deleteFlexyShape('email');
 // Example: Change 'price' from STRING to DECIMAL
 
 // Step 1: Create new field with correct type
-Product::setFlexyShape('price_new', FlexyFieldType::DECIMAL, sort: 1);
+$fieldSet = FieldSet::where('model_type', Product::class)
+    ->where('set_code', 'default')
+    ->first();
+
+$fieldSet->fields()->create([
+    'field_name' => 'price_new',
+    'field_type' => FlexyFieldType::DECIMAL->value,
+    'sort' => 1,
+]);
 
 // Step 2: Convert and copy data
 foreach (Product::cursor() as $product) {
@@ -374,7 +419,7 @@ foreach (Product::cursor() as $product) {
 // Step 3: Rename in application code
 
 // Step 4: Clean up old field
-Product::deleteFlexyShape('price');
+$fieldSet->fields()->where('field_name', 'price')->delete();
 ```
 
 ### Data Cleanup
@@ -388,8 +433,12 @@ DB::table('ff_values')
     ->whereNotIn('model_id', $validModelIds)
     ->delete();
 
-// Remove unused fields (not in any shape)
-$validFields = Product::getAllFlexyShapes()->pluck('field_name')->toArray();
+// Remove unused fields (not in any field set)
+$fieldSet = FieldSet::where('model_type', Product::class)
+    ->where('set_code', 'default')
+    ->first();
+
+$validFields = $fieldSet->fields()->pluck('field_name')->toArray();
 
 DB::table('ff_values')
     ->where('model_type', Product::class)
@@ -488,9 +537,22 @@ class ProductTest extends TestCase
 
     public function test_validates_required_flexy_fields()
     {
-        Product::$hasShape = true;
+        $fieldSet = FieldSet::firstOrCreate([
+            'model_type' => Product::class,
+            'set_code' => 'default',
+        ], [
+            'label' => 'Default',
+            'is_default' => true,
+        ]);
+
+        $fieldSet->fields()->create([
+            'field_name' => 'size',
+            'field_type' => FlexyFieldType::STRING->value,
+            'validation_rules' => 'required',
+        ]);
 
         $product = Product::factory()->create();
+        $product->assignToFieldSet('default');
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
@@ -574,24 +636,21 @@ $product->flexy->quantity = 0;         // For integer fields
 $product->flexy->code = '0';           // For string fields (like '007')
 ```
 
-### 3. Missing Shape Enforcement
+### 3. Missing Field Set Assignment
 
 ```php
-// ❌ Dangerous: No validation
+// ❌ Dangerous: No field set assignment
 class Product extends Model
 {
     use Flexy;
-    // $hasShape not set - any field allowed!
+    // No field set assigned - any field allowed!
 }
 
 $product->flexy->random_typo_field = 'value'; // Silently accepted!
 
-// ✅ Safe: Enable shape enforcement
-class Product extends Model
-{
-    use Flexy;
-    public static bool $hasShape = true; // Enforce defined fields only
-}
+// ✅ Safe: Assign to field set
+$product = Product::create(['name' => 'Test']);
+$product->assignToFieldSet('default'); // Enforce defined fields only
 ```
 
 ### 4. N+1 Query Problem
