@@ -105,8 +105,9 @@ it('throws exception when assigning then deleting field set', function () {
     $model->assignToFieldSet('temp');
     expect($model->field_set_code)->toBe('temp');
 
-    // Delete the field set (triggers application-level cascade delete)
-    \AuroraWebSoftware\FlexyField\Models\FieldSet::where('set_code', 'temp')->delete();
+    // Delete the field set using Eloquent (triggers application-level cascade delete)
+    $fieldSet = \AuroraWebSoftware\FlexyField\Models\FieldSet::where('set_code', 'temp')->first();
+    $fieldSet->delete(); // Important: Use Eloquent delete, not query builder delete!
 
     // Verify field_set_code was set to null by application-level cascade
     $model->refresh();
