@@ -54,6 +54,7 @@ class FieldSet extends Model
      * Get the fields that belong to this field set
      *
      * @return HasMany<SetField, FieldSet>
+     *
      * @phpstan-return HasMany<SetField, $this>
      */
     public function fields(): HasMany
@@ -65,7 +66,7 @@ class FieldSet extends Model
     /**
      * Scope to filter by model type
      *
-     * @param \Illuminate\Database\Eloquent\Builder<static> $query
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
      * @return \Illuminate\Database\Eloquent\Builder<static>
      */
     public function scopeForModel($query, string $modelType)
@@ -76,7 +77,7 @@ class FieldSet extends Model
     /**
      * Scope to get default field set for model type
      *
-     * @param \Illuminate\Database\Eloquent\Builder<static> $query
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
      * @return \Illuminate\Database\Eloquent\Builder<static>
      */
     public function scopeDefault($query, string $modelType)
@@ -100,7 +101,7 @@ class FieldSet extends Model
     /**
      * Get count of models using this field set
      *
-     * @param class-string<\Illuminate\Database\Eloquent\Model> $modelClass
+     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $modelClass
      */
     public function getUsageCount(string $modelClass): int
     {
@@ -116,7 +117,7 @@ class FieldSet extends Model
     /**
      * Check if this field set is in use by any models
      *
-     * @param class-string<\Illuminate\Database\Eloquent\Model> $modelClass
+     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $modelClass
      */
     public function isInUse(string $modelClass): bool
     {

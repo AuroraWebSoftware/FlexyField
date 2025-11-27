@@ -48,6 +48,7 @@ class SetField extends Model
      * Get the field set that owns this field
      *
      * @return BelongsTo<FieldSet, SetField>
+     *
      * @phpstan-return BelongsTo<FieldSet, $this>
      */
     public function fieldSet(): BelongsTo

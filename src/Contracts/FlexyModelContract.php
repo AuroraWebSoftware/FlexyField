@@ -19,7 +19,7 @@ interface FlexyModelContract
     /**
      * Create a new field set for this model type
      *
-     * @param array<string, mixed>|null $metadata
+     * @param  array<string, mixed>|null  $metadata
      */
     public static function createFieldSet(
         string $setCode,
@@ -51,8 +51,8 @@ interface FlexyModelContract
     /**
      * Add a field to a field set
      *
-     * @param array<string, string>|null $validationMessages
-     * @param array<string, mixed>|null $fieldMetadata
+     * @param  array<string, string>|null  $validationMessages
+     * @param  array<string, mixed>|null  $fieldMetadata
      */
     public static function addFieldToSet(
         string $setCode,

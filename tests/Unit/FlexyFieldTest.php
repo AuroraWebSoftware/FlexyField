@@ -97,13 +97,13 @@ it('recreateViewIfNeeded returns true and recreates view when new fields exist',
 
     // Add new field to set (this will trigger recreateViewIfNeeded automatically)
     ExampleFlexyModel::addFieldToSet('default', 'new_field', FlexyFieldType::STRING);
-    
+
     // Check that new_field was already tracked by addFieldToSet
     $alreadyTracked = DB::table('ff_view_schema')->where('field_name', 'new_field')->exists();
-    
+
     // Now test recreateViewIfNeeded with the new field (should return false since it's already tracked)
     $result = FlexyField::recreateViewIfNeeded(['new_field']);
-    
+
     // If it was already tracked, result should be false; otherwise true
     if ($alreadyTracked) {
         expect($result)->toBeFalse();
@@ -113,7 +113,7 @@ it('recreateViewIfNeeded returns true and recreates view when new fields exist',
         $tracked = DB::table('ff_view_schema')->where('field_name', 'new_field')->exists();
         expect($tracked)->toBeTrue();
     }
-    
+
     // Set new field value and save
     $model->flexy->new_field = 'new_value';
     $model->save();

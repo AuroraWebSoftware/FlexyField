@@ -21,6 +21,7 @@ class Value extends Model
      * Get the field set this value belongs to
      *
      * @return BelongsTo<FieldSet, Value>
+     *
      * @phpstan-return BelongsTo<FieldSet, $this>
      */
     public function fieldSet(): BelongsTo

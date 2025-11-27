@@ -7,7 +7,7 @@ use Exception;
 class FieldNotInSetException extends Exception
 {
     /**
-     * @param array<string> $availableFields
+     * @param  array<string>  $availableFields
      */
     public static function forField(string $fieldName, string $setCode, array $availableFields): self
     {

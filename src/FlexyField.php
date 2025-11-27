@@ -137,7 +137,7 @@ class FlexyField
         self::dropAndCreatePivotView();
     }
 
-    //TODO BOOLEAN values will be checked
+    // TODO BOOLEAN values will be checked
     /**
      * @throws Exception
      */

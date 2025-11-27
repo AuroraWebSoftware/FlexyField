@@ -178,7 +178,7 @@ describe('Reading flexy fields via ->flexy accessor', function () {
         if (is_string($jsonField)) {
             $jsonField = json_decode($jsonField, true);
         }
-        
+
         expect($fresh->flexy->text_field)->toBe('test')
             ->and($fresh->flexy->int_field)->toBe(123)
             ->and((float) $fresh->flexy->decimal_field)->toBe(45.67)
