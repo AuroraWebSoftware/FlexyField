@@ -2,11 +2,9 @@ name: Tests
 
 on:
   push:
-    branches:
-      - main
+    # Her commit'te ve PR merge edildiğinde çalışır
   pull_request:
-    branches:
-      - main
+    # Her PR'da çalışır
 
 jobs:
   test:
