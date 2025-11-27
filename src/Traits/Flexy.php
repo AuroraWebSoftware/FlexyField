@@ -214,7 +214,7 @@ trait Flexy
 
                 $this->fields->setRawAttributes($this->fields->getAttributes(), true);
 
-                //$this->fields->syncOriginal();
+                // $this->fields->syncOriginal();
                 return $this->fields;
             },
 

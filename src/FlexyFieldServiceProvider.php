@@ -28,7 +28,7 @@ class FlexyFieldServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasCommand(RebuildFlexyViewCommand::class);
         // ->hasViews()
-        //->hasMigration('create_flexyfield_table')
+        // ->hasMigration('create_flexyfield_table')
         // ->hasCommand(FlexyFieldCommand::class)
     }
 }

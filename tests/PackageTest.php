@@ -61,7 +61,7 @@ it('can set and get a flexy models flexy fields', function () {
 
     expect($flexyModel1->flexy->b)->toBe('1');
 
-    //dd(ExampleFlexyModel::where('flexy_a', 2)->get());
+    // dd(ExampleFlexyModel::where('flexy_a', 2)->get());
 
 });
 
@@ -209,7 +209,7 @@ it('can create shape for a model and save json', function () {
 
     expect(ExampleShapelyFlexyModel::getFlexyShape('a'))->toBeInstanceOf(Shape::class);
 
-    //dd(ExampleShapelyFlexyModel::whereName('ExampleFlexyModel 1')->first()->flexy->a);
+    // dd(ExampleShapelyFlexyModel::whereName('ExampleFlexyModel 1')->first()->flexy->a);
 
     expect(json_decode(ExampleShapelyFlexyModel::whereName('ExampleFlexyModel 1')->first()->flexy_a))->toBe(['a', 'b']);
     expect(json_decode(ExampleShapelyFlexyModel::whereName('ExampleFlexyModel 1')->first()->flexy->a))->toBe(['a', 'b']);

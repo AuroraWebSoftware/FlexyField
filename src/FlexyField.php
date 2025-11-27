@@ -68,7 +68,7 @@ class FlexyField
     /**
      * Recreate view only if new fields are detected
      *
-     * @param array $fieldNames Array of field names to check
+     * @param  array  $fieldNames  Array of field names to check
      * @return bool True if view was recreated, false if no recreation needed
      */
     public static function recreateViewIfNeeded(array $fieldNames): bool
@@ -109,8 +109,6 @@ class FlexyField
 
     /**
      * Force recreation of the pivot view and rebuild schema tracking
-     *
-     * @return void
      */
     public static function forceRecreateView(): void
     {
@@ -125,7 +123,7 @@ class FlexyField
             ->toArray();
 
         // Insert all fields into tracking table
-        if (!empty($allFields)) {
+        if (! empty($allFields)) {
             $timestamp = now();
             $insertData = array_map(function ($fieldName) use ($timestamp) {
                 return [
@@ -141,7 +139,7 @@ class FlexyField
         self::dropAndCreatePivotView();
     }
 
-    //TODO BOOLEAN values will be checked
+    // TODO BOOLEAN values will be checked
     /**
      * @throws Exception
      */
