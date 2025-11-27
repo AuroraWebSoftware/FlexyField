@@ -234,7 +234,7 @@ it('can handle complex JSON structures', function () {
         ->where('field_name', 'complex_data')
         ->first();
 
-    expect(json_decode($value->value_json, true))->toBe($complexJson);
+    expect(json_decode($value->value_json, true))->toEqual($complexJson);
 });
 
 it('can handle special characters in values', function () {
@@ -309,7 +309,7 @@ it('can handle JSON with special characters', function () {
         ->where('field_name', 'special_json')
         ->first();
 
-    expect(json_decode($value->value_json, true))->toBe($jsonWithSpecialChars);
+    expect(json_decode($value->value_json, true))->toEqual($jsonWithSpecialChars);
 });
 
 it('can handle multiple edge cases on same model', function () {

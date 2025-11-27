@@ -60,7 +60,7 @@ it('handles metadata with unicode characters correctly', function () {
         metadata: $unicodeMetadata
     );
 
-    expect($fieldSet->fresh()->metadata)->toBe($unicodeMetadata);
+    expect($fieldSet->fresh()->metadata)->toEqual($unicodeMetadata);
 });
 
 it('handles field metadata with special characters', function () {

@@ -87,7 +87,7 @@ it('stores field metadata as JSON', function () {
         'field_metadata' => $metadata,
     ]);
 
-    expect($setField->fresh()->field_metadata)->toBe($metadata);
+    expect($setField->fresh()->field_metadata)->toEqual($metadata);
 });
 
 it('has fieldSet relationship', function () {

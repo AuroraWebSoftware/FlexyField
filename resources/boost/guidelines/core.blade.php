@@ -71,7 +71,7 @@ $product->save();
 
 ### Access Flexy Fields
 
-Access fields via `flexy` attribute or `flexy_` prefix:
+Access fields via `flexy` attribute. The `flexy_` prefix is used for querying, not direct attribute access:
 
 @verbatim
 <code-snippet name="Access Flexy Fields" lang="php">
@@ -83,8 +83,8 @@ $product->save();
 
 // Retrieve values
 echo $product->flexy->color;        // 'blue'
-echo $product->flexy_color;         // 'blue' (alternative syntax)
-echo $product->flexy->price;         // 49.90
+echo $product->flexy->price;        // 49.90
+echo $product->flexy->in_stock;     // true
 </code-snippet>
 @endverbatim
 
@@ -118,7 +118,7 @@ Supported types: STRING, INTEGER, DECIMAL, DATE, DATETIME, BOOLEAN, JSON:
 @verbatim
 <code-snippet name="Field Types" lang="php">
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use Carbon\Carbon;
+use DateTime;
 
 // String
 $product->flexy->name = 'Product Name';
@@ -132,8 +132,9 @@ $product->flexy->price = 49.90;
 // Boolean
 $product->flexy->in_stock = true;
 
-// Date/DateTime (use Carbon)
-$product->flexy->published_at = Carbon::now();
+// Date/DateTime (DateTime or Carbon instances)
+$product->flexy->published_at = new DateTime('2024-01-15 10:30:00');
+// Carbon also works: $product->flexy->published_at = Carbon::now();
 
 // JSON (arrays/objects)
 $product->flexy->tags = ['summer', 'sale'];
@@ -174,20 +175,30 @@ try {
 @verbatim
 <code-snippet name="E-commerce Pattern" lang="php">
 // Footwear set
-Product::createFieldSet('footwear', 'Footwear Products');
+Product::createFieldSet(
+    setCode: 'footwear',
+    label: 'Footwear Products'
+);
 Product::addFieldToSet('footwear', 'size', FlexyFieldType::INTEGER, 
+    sort: 1,
     validationRules: 'required|numeric'
 );
 Product::addFieldToSet('footwear', 'color', FlexyFieldType::STRING, 
+    sort: 2,
     validationRules: 'required|string'
 );
 
 // Books set
-Product::createFieldSet('books', 'Book Products');
+Product::createFieldSet(
+    setCode: 'books',
+    label: 'Book Products'
+);
 Product::addFieldToSet('books', 'isbn', FlexyFieldType::STRING, 
+    sort: 1,
     validationRules: 'required|string|size:13'
 );
 Product::addFieldToSet('books', 'author', FlexyFieldType::STRING, 
+    sort: 2,
     validationRules: 'required|string|max:255'
 );
 </code-snippet>
@@ -221,8 +232,11 @@ return new class extends Migration
 ### Important Notes
 
 - Models must implement `FlexyModelContract` and use `Flexy` trait
-- Field set assignment is required before setting flexy values
+- Field set assignment is required before setting flexy values (or create a default field set)
 - Validation uses Laravel's standard validation rules
-- Query performance is optimized via database views
+- Query performance is optimized via database views (`ff_values_pivot_view`)
 - Field types are strongly typed (separate columns per type)
+- The `flexy_` prefix is used in queries (e.g., `where('flexy_color', 'blue')`), not for direct attribute access
+- Use `$model->flexy->fieldname` for reading/writing values
+- Use `where('flexy_fieldname', value)` or `whereFlexyFieldname(value)` for querying
 
