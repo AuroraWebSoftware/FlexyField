@@ -20,11 +20,11 @@ beforeEach(function () {
         $table->string('field_set_code')->nullable()->index();
         $table->timestamps();
 
-// REMOVED FOR PGSQL:         $table->foreign('field_set_code')
-// REMOVED FOR PGSQL:             ->references('set_code')
-// REMOVED FOR PGSQL:             ->on('ff_field_sets')
-// REMOVED FOR PGSQL:             ->onDelete('set null')
-// REMOVED FOR PGSQL:             ->onUpdate('cascade');
+        // REMOVED FOR PGSQL:         $table->foreign('field_set_code')
+        // REMOVED FOR PGSQL:             ->references('set_code')
+        // REMOVED FOR PGSQL:             ->on('ff_field_sets')
+        // REMOVED FOR PGSQL:             ->onDelete('set null')
+        // REMOVED FOR PGSQL:             ->onUpdate('cascade');
     });
 });
 
