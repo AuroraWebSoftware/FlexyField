@@ -169,7 +169,12 @@ class FlexyField
         $columns = [];
         foreach ($fieldNames as $fieldName) {
             $fieldType = $fieldTypes[$fieldName] ?? 'STRING';
-            $fieldTypeStr = is_object($fieldType) ? $fieldType->value : (string) $fieldType;
+            // field_type is stored as string in database, but handle enum case if needed
+            if ($fieldType instanceof \BackedEnum) {
+                $fieldTypeStr = (string) $fieldType->value;
+            } else {
+                $fieldTypeStr = (string) $fieldType;
+            }
 
             // Build CASE statement based on field type
             switch (strtoupper($fieldTypeStr)) {
