@@ -156,44 +156,130 @@ New request?
 
 ### Proposal Structure
 
-1. **Create directory:** `changes/[change-id]/` (kebab-case, verb-led, unique)
+**Step 1: Create directory**
+```bash
+mkdir -p openspec/changes/add-new-feature/specs/capability-name
+```
+- Use kebab-case, verb-led naming: `add-`, `update-`, `remove-`, `refactor-`
+- Ensure uniqueness: check `openspec list` first
+- Create `specs/[capability]/` subdirectory for each affected capability
 
-2. **Write proposal.md:**
+**Step 2: Write proposal.md**
 ```markdown
 # Change: [Brief description of change]
 
 ## Why
 [1-2 sentences on problem/opportunity]
+- Explain the motivation clearly
+- Reference related issues or requirements if applicable
 
 ## What Changes
 - [Bullet list of changes]
 - [Mark breaking changes with **BREAKING**]
+- Be specific about what files/systems are affected
 
 ## Impact
-- Affected specs: [list capabilities]
-- Affected code: [key files/systems]
+- Affected specs: [list capabilities, e.g., "field-validation, type-system"]
+- Affected code: [key files/systems, e.g., "src/Traits/Flexy.php, database migrations"]
+- Breaking changes: [list if any, e.g., "Removes deprecated method X"]
 ```
 
-3. **Create spec deltas:** `specs/[capability]/spec.md`
+**Example proposal.md:**
+```markdown
+# Change: Add File Field Type
+
+## Why
+Users need to store file references (paths, URLs) as flexy fields. Currently only basic types (STRING, INTEGER, etc.) are supported. Adding FILE type enables file management use cases.
+
+## What Changes
+- Add FILE to FlexyFieldType enum
+- Add value_file column to ff_values table
+- Update type detection logic to handle file paths
+- Add file validation rules support
+
+## Impact
+- Affected specs: type-system, dynamic-field-storage, field-validation
+- Affected code: src/Enums/FlexyFieldType.php, database/migrations/create_flexyfield_table.php, src/Traits/Flexy.php
+- Breaking changes: None
+```
+
+**Step 3: Create spec deltas**
+
+For each affected capability, create `specs/[capability]/spec.md`:
+
 ```markdown
 ## ADDED Requirements
-### Requirement: New Feature
-The system SHALL provide...
+### Requirement: New Feature Name
+The system SHALL provide [clear description of capability].
 
-#### Scenario: Success case
-- **WHEN** user performs action
-- **THEN** expected result
+#### Scenario: Success case name
+- **WHEN** [trigger condition]
+- **THEN** [expected outcome]
+- **AND** [additional outcome if needed]
 
 ## MODIFIED Requirements
-### Requirement: Existing Feature
-[Complete modified requirement]
+### Requirement: Existing Feature Name
+[Complete modified requirement - copy entire requirement from openspec/specs/<capability>/spec.md and edit]
+
+#### Scenario: Updated scenario name
+- **WHEN** [updated condition]
+- **THEN** [updated outcome]
 
 ## REMOVED Requirements
-### Requirement: Old Feature
-**Reason**: [Why removing]
-**Migration**: [How to handle]
+### Requirement: Old Feature Name
+**Reason**: [Why removing - be specific]
+**Migration**: [How to handle - provide clear migration path]
+
+## RENAMED Requirements
+- FROM: `### Requirement: Old Name`
+- TO: `### Requirement: New Name`
 ```
-If multiple capabilities are affected, create multiple delta files under `changes/[change-id]/specs/<capability>/spec.md`—one per capability.
+
+**Important:** If multiple capabilities are affected, create multiple delta files:
+```
+changes/add-feature/
+├── proposal.md
+├── tasks.md
+└── specs/
+    ├── type-system/
+    │   └── spec.md   # ADDED: New field type
+    └── field-validation/
+        └── spec.md   # MODIFIED: Validation rules
+```
+
+**Example spec delta (ADDED):**
+```markdown
+## ADDED Requirements
+### Requirement: File Field Type Support
+The system SHALL support FILE field type for storing file references (paths, URLs) in flexy fields.
+
+#### Scenario: File path is stored
+- **WHEN** a file path string is assigned to a FILE type flexy field
+- **THEN** it SHALL be stored in the value_file column
+- **AND** it SHALL be retrieved as a string
+
+#### Scenario: File validation rules are applied
+- **WHEN** a FILE field has validation rules defined in its field set
+- **THEN** validation SHALL be applied using Laravel's file validation rules
+- **AND** validation errors SHALL be thrown as ValidationException
+```
+
+**Example spec delta (MODIFIED):**
+```markdown
+## MODIFIED Requirements
+### Requirement: Supported Field Types
+The system SHALL support multiple data types for flexy fields via the FlexyFieldType enum, with type safety enforced through field set definitions. Supported types include STRING, INTEGER, DECIMAL, DATE, DATETIME, BOOLEAN, JSON, and FILE.
+
+#### Scenario: String type is supported
+- **WHEN** a string value is assigned to a flexy field
+- **THEN** it SHALL be stored in the value_string column
+- **AND** the value SHALL be retrieved as a string
+
+#### Scenario: File type is supported
+- **WHEN** a file path is assigned to a FILE type flexy field
+- **THEN** it SHALL be stored in the value_file column
+- **AND** the value SHALL be retrieved as a string
+```
 
 4. **Create tasks.md:**
 ```markdown
@@ -267,9 +353,53 @@ Every requirement MUST have at least one scenario.
 Headers matched with `trim(header)` - whitespace ignored.
 
 #### When to use ADDED vs MODIFIED
-- ADDED: Introduces a new capability or sub-capability that can stand alone as a requirement. Prefer ADDED when the change is orthogonal (e.g., adding "Slash Command Configuration") rather than altering the semantics of an existing requirement.
-- MODIFIED: Changes the behavior, scope, or acceptance criteria of an existing requirement. Always paste the full, updated requirement content (header + all scenarios). The archiver will replace the entire requirement with what you provide here; partial deltas will drop previous details.
-- RENAMED: Use when only the name changes. If you also change behavior, use RENAMED (name) plus MODIFIED (content) referencing the new name.
+
+**ADDED** - Use when:
+- Introducing a new capability or sub-capability that can stand alone
+- Adding orthogonal functionality (e.g., "Slash Command Configuration" alongside existing config)
+- Creating a new requirement that doesn't alter existing behavior
+- **Example**: Adding FILE field type to type-system capability
+  ```markdown
+  ## ADDED Requirements
+  ### Requirement: File Field Type Support
+  The system SHALL support FILE field type...
+  ```
+
+**MODIFIED** - Use when:
+- Changing the behavior, scope, or acceptance criteria of an existing requirement
+- Updating existing requirement text (must include full requirement)
+- Altering semantics of existing capability
+- **Critical**: Always paste the full, updated requirement content (header + all scenarios)
+- **Warning**: Partial deltas will drop previous details at archive time
+- **Example**: Updating supported field types list
+  ```markdown
+  ## MODIFIED Requirements
+  ### Requirement: Supported Field Types
+  The system SHALL support multiple data types: STRING, INTEGER, DECIMAL, DATE, DATETIME, BOOLEAN, JSON, and FILE.
+  [Include all existing scenarios plus new FILE scenario]
+  ```
+
+**REMOVED** - Use when:
+- Deprecating a feature or requirement
+- Removing obsolete functionality
+- Must include reason and migration path
+- **Example**: Removing legacy shapes support
+  ```markdown
+  ## REMOVED Requirements
+  ### Requirement: Shapes System
+  **Reason**: Replaced by Field Sets which provide better instance-level field configuration
+  **Migration**: Use `php artisan flexyfield:migrate-shapes` to migrate existing shapes to field sets
+  ```
+
+**RENAMED** - Use when:
+- Only the name changes (no behavior change)
+- If behavior also changes, use RENAMED (name) plus MODIFIED (content) referencing new name
+- **Example**: Renaming "Shapes" to "Field Sets"
+  ```markdown
+  ## RENAMED Requirements
+  - FROM: `### Requirement: Shapes System`
+  - TO: `### Requirement: Field Sets System`
+  ```
 
 Common pitfall: Using MODIFIED to add a new concern without including the previous text. This causes loss of detail at archive time. If you aren’t explicitly changing the existing requirement, add a new requirement under ADDED instead.
 
@@ -288,19 +418,89 @@ Example for RENAMED:
 
 ## Troubleshooting
 
-### Common Errors
+### Common Errors and Solutions
 
 **"Change must have at least one delta"**
-- Check `changes/[name]/specs/` exists with .md files
-- Verify files have operation prefixes (## ADDED Requirements)
+- **Problem**: No spec delta files found or files don't have operation prefixes
+- **Solution**: 
+  - Check `changes/[name]/specs/` directory exists with .md files
+  - Verify files start with `## ADDED Requirements`, `## MODIFIED Requirements`, etc.
+  - Ensure files are in `specs/[capability]/spec.md` structure
+- **Debug**: `openspec show [change] --json --deltas-only` to see what's detected
 
 **"Requirement must have at least one scenario"**
-- Check scenarios use `#### Scenario:` format (4 hashtags)
-- Don't use bullet points or bold for scenario headers
+- **Problem**: Requirement block doesn't have scenarios or scenarios are malformed
+- **Solution**:
+  - Every requirement MUST have at least one `#### Scenario:` (4 hashtags, not 3)
+  - Don't use bullet points (`- **Scenario:**`) or bold (`**Scenario:**`) for headers
+  - Use exact format: `#### Scenario: Descriptive Name`
+- **Example of CORRECT format:**
+  ```markdown
+  ### Requirement: Feature Name
+  The system SHALL do something.
+  
+  #### Scenario: Success case
+  - **WHEN** condition
+  - **THEN** outcome
+  ```
 
-**Silent scenario parsing failures**
-- Exact format required: `#### Scenario: Name`
-- Debug with: `openspec show [change] --json --deltas-only`
+**"Silent scenario parsing failures"**
+- **Problem**: Scenarios exist but aren't being parsed
+- **Solution**:
+  - Exact format required: `#### Scenario: Name` (4 hashtags, colon, space, name)
+  - No extra formatting in header line
+  - Ensure WHEN/THEN are indented with `- **WHEN**` and `- **THEN**`
+- **Debug**: `openspec show [change] --json --deltas-only | jq '.deltas[].requirements[].scenarios'`
+
+**"Requirement header mismatch"**
+- **Problem**: MODIFIED requirement header doesn't match existing requirement
+- **Solution**:
+  - Copy exact header text from `openspec/specs/<capability>/spec.md`
+  - Header matching is whitespace-insensitive but text must match exactly
+  - Use `openspec show <spec> --type spec` to see current requirement headers
+
+**"Delta operation not recognized"**
+- **Problem**: Operation header not in expected format
+- **Solution**:
+  - Must be exactly: `## ADDED Requirements`, `## MODIFIED Requirements`, `## REMOVED Requirements`, or `## RENAMED Requirements`
+  - Case-sensitive, must use plural "Requirements"
+  - No extra text or formatting
+
+### Common AI Assistant Pitfalls
+
+**Pitfall 1: Using MODIFIED to add new concerns**
+- **Problem**: Adding new functionality under MODIFIED without including previous requirement text
+- **Solution**: Use ADDED for new orthogonal capabilities, or include full previous requirement text in MODIFIED
+- **Example**: Adding "Slash Command Configuration" should be ADDED, not MODIFIED to "Configuration"
+
+**Pitfall 2: Partial requirement updates**
+- **Problem**: Only updating part of a requirement in MODIFIED, causing loss of detail
+- **Solution**: Always copy entire requirement block (header + all scenarios) before modifying
+- **Process**: 
+  1. Read `openspec/specs/<capability>/spec.md`
+  2. Copy full requirement block
+  3. Paste under `## MODIFIED Requirements`
+  4. Edit to reflect changes
+  5. Ensure at least one scenario remains
+
+**Pitfall 3: Incorrect scenario formatting**
+- **Problem**: Using wrong header level or format for scenarios
+- **Solution**: 
+  - Always use `#### Scenario:` (4 hashtags)
+  - Never use `### Scenario:` (3 hashtags) or `- **Scenario:**` (bullet)
+  - Always include WHEN and THEN clauses
+
+**Pitfall 4: Missing validation**
+- **Problem**: Not running validation before sharing proposal
+- **Solution**: Always run `openspec validate [change-id] --strict` before requesting approval
+- **Check**: All errors must be resolved before implementation
+
+**Pitfall 5: Creating duplicate capabilities**
+- **Problem**: Creating new capability when existing one should be modified
+- **Solution**: 
+  - Always check `openspec list --specs` first
+  - Use `openspec show <spec>` to review existing capabilities
+  - Prefer MODIFIED over ADDED when extending existing capability
 
 ### Validation Tips
 
@@ -393,15 +593,48 @@ Only add complexity with:
 - Link related changes and PRs
 
 ### Capability Naming
-- Use verb-noun: `user-auth`, `payment-capture`
-- Single purpose per capability
-- 10-minute understandability rule
-- Split if description needs "AND"
+- **Format**: Use verb-noun pattern in kebab-case
+- **Examples**: 
+  - ✅ `user-auth` (authentication capability)
+  - ✅ `payment-capture` (payment processing)
+  - ✅ `field-validation` (field validation rules)
+  - ✅ `dynamic-field-storage` (EAV storage)
+  - ❌ `auth` (too vague)
+  - ❌ `user-authentication-and-authorization` (needs "AND" - split into two)
+- **Rules**:
+  - Single purpose per capability (10-minute understandability rule)
+  - Split if description needs "AND" (indicates multiple concerns)
+  - Be specific but concise
+  - Check existing capabilities: `openspec list --specs`
+
+**Current FlexyField capabilities:**
+- `documentation` - Documentation requirements
+- `dynamic-field-storage` - EAV storage implementation
+- `field-set-management` - Field set CRUD operations
+- `field-validation` - Validation rules and enforcement
+- `query-integration` - Query builder integration
+- `testing` - Testing requirements and strategies
+- `type-system` - Field type definitions and storage
 
 ### Change ID Naming
-- Use kebab-case, short and descriptive: `add-two-factor-auth`
-- Prefer verb-led prefixes: `add-`, `update-`, `remove-`, `refactor-`
-- Ensure uniqueness; if taken, append `-2`, `-3`, etc.
+- **Format**: kebab-case, verb-led, short and descriptive
+- **Prefixes**: Prefer verb-led prefixes: `add-`, `update-`, `remove-`, `refactor-`, `improve-`, `fix-`
+- **Examples**:
+  - ✅ `add-file-field-type` (adds new FILE type)
+  - ✅ `update-validation-rules` (updates validation)
+  - ✅ `remove-legacy-shapes` (removes deprecated feature)
+  - ✅ `refactor-view-recreation` (refactors existing code)
+  - ✅ `improve-documentation-for-ai-and-developers` (improves docs)
+  - ❌ `file-type` (missing verb prefix)
+  - ❌ `add-file-field-type-support` (too verbose)
+  - ❌ `new_feature` (wrong format, use kebab-case)
+- **Uniqueness**: 
+  - Check existing: `openspec list`
+  - If taken, append `-2`, `-3`, etc.: `add-feature-2`
+- **Best Practices**:
+  - Be specific about what's changing
+  - Keep under 50 characters when possible
+  - Use present tense verbs (add, not adding)
 
 ## Tool Selection Guide
 
@@ -451,6 +684,83 @@ openspec list              # What's in progress?
 openspec show [item]       # View details
 openspec validate --strict # Is it correct?
 openspec archive <change-id> [--yes|-y]  # Mark complete (add --yes for automation)
+```
+
+## Quick Reference for AI Assistants
+
+### When to Create a Proposal
+- ✅ New feature or capability
+- ✅ Breaking changes (API, schema)
+- ✅ Architecture changes
+- ✅ Performance optimizations that change behavior
+- ✅ Security pattern updates
+- ❌ Bug fixes (restore intended behavior)
+- ❌ Typos, formatting, comments
+- ❌ Non-breaking dependency updates
+- ❌ Configuration changes
+- ❌ Tests for existing behavior
+
+### Proposal Creation Checklist
+- [ ] Read `openspec/project.md` for context
+- [ ] Run `openspec list` and `openspec list --specs` to check existing work
+- [ ] Choose unique verb-led change-id (kebab-case)
+- [ ] Create `proposal.md` with Why/What/Impact
+- [ ] Create `tasks.md` with implementation checklist
+- [ ] Create `design.md` only if needed (cross-cutting, new patterns, security)
+- [ ] Create spec deltas in `specs/[capability]/spec.md` for each affected capability
+- [ ] Run `openspec validate [change-id] --strict`
+- [ ] Fix all validation errors
+- [ ] Request approval before implementation
+
+### Spec Delta Format Quick Reference
+
+**ADDED** (new capability):
+```markdown
+## ADDED Requirements
+### Requirement: Feature Name
+Description of what the system SHALL do.
+
+#### Scenario: Case name
+- **WHEN** condition
+- **THEN** outcome
+```
+
+**MODIFIED** (change existing):
+```markdown
+## MODIFIED Requirements
+### Requirement: Existing Feature Name
+[Full updated requirement text - copy from spec and edit]
+
+#### Scenario: Updated case
+- **WHEN** updated condition
+- **THEN** updated outcome
+```
+
+**REMOVED** (deprecate):
+```markdown
+## REMOVED Requirements
+### Requirement: Old Feature Name
+**Reason**: Why removing
+**Migration**: How to handle
+```
+
+**RENAMED** (name change only):
+```markdown
+## RENAMED Requirements
+- FROM: `### Requirement: Old Name`
+- TO: `### Requirement: New Name`
+```
+
+### Validation Commands
+```bash
+# Comprehensive validation
+openspec validate [change-id] --strict
+
+# Debug delta parsing
+openspec show [change-id] --json --deltas-only | jq '.deltas'
+
+# Check specific requirement
+openspec show [spec] --type spec --json | jq '.requirements[] | select(.header == "Requirement: Name")'
 ```
 
 Remember: Specs are truth. Changes are proposals. Keep them in sync.

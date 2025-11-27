@@ -1,33 +1,34 @@
 # Field Validation
 
 ## Purpose
-FlexyField provides a Shape-based validation system where field definitions include Laravel validation rules and custom error messages. Validation is performed before values are persisted to the database, ensuring data integrity for flexy fields.
+FlexyField provides a Field Set-based validation system where field definitions include Laravel validation rules and custom error messages. Validation is performed before values are persisted to the database, ensuring data integrity for flexy fields.
 ## Requirements
-### Requirement: Shape Definition
-The system SHALL allow defining field shapes that specify type, validation rules, and sort order.
+### Requirement: Field Set Definition
+The system SHALL allow defining fields within field sets that specify type, validation rules, and sort order.
 
-#### Scenario: Shape is defined with validation rules
-- **WHEN** setFlexyShape() is called on a model
-- **THEN** a Shape record SHALL be created in ff_shapes table
-- **AND** the shape SHALL include field_name, field_type, sort_order, validation_rule, and validation_messages
+#### Scenario: Field is defined with validation rules in field set
+- **WHEN** addFieldToSet() is called with validation_rules
+- **THEN** a SetField record SHALL be created in ff_set_fields table
+- **AND** the field SHALL include field_name, field_type, sort, validation_rules, and validation_messages
+- **AND** the field SHALL be scoped to the specified set_code
 
-#### Scenario: Shape type matches FlexyFieldType enum
-- **WHEN** a shape is defined with a field_type
+#### Scenario: Field type matches FlexyFieldType enum
+- **WHEN** a field is added to a field set with a field_type
 - **THEN** the field_type SHALL be one of the FlexyFieldType enum values
-- **AND** the type SHALL be stored in the ff_shapes table
+- **AND** the type SHALL be stored in the ff_set_fields table
 
-#### Scenario: Shapes can be deleted
-- **WHEN** deleteFlexyShape() is called for a field
-- **THEN** the corresponding Shape record SHALL be removed from ff_shapes
-- **AND** existing values SHALL remain in ff_values
+#### Scenario: Fields can be removed from field sets
+- **WHEN** removeFieldFromSet() is called for a field
+- **THEN** the corresponding SetField record SHALL be removed from ff_set_fields
+- **AND** existing values SHALL remain in ff_values but become inaccessible for new assignments
 
 ### Requirement: Validation Rule Enforcement
-The system SHALL validate flexy field values against their Shape validation rules before saving.
+The system SHALL validate flexy field values against their SetField validation rules before saving, only for fields in the assigned field set.
 
-#### Scenario: Values are validated when Shape exists
-- **WHEN** a flexy field has a defined Shape
+#### Scenario: Values are validated when SetField exists
+- **WHEN** a flexy field has a defined SetField in the assigned field set
 - **AND** the field value is modified
-- **THEN** Laravel validation SHALL be performed using the Shape's validation_rule
+- **THEN** Laravel validation SHALL be performed using the SetField's validation_rules
 - **AND** the field value SHALL be validated before being saved
 
 #### Scenario: Invalid values are rejected
@@ -42,45 +43,71 @@ The system SHALL validate flexy field values against their Shape validation rule
 - **AND** the value SHALL be persisted to ff_values
 
 ### Requirement: Custom Validation Messages
-The system SHALL support custom validation error messages defined in Shape validation_messages property.
+The system SHALL support custom validation error messages defined in SetField validation_messages property.
 
 #### Scenario: Custom validation messages are displayed
-- **WHEN** a Shape has custom validation_messages defined
+- **WHEN** a SetField has custom validation_messages defined
 - **AND** validation fails for that field
 - **THEN** the custom error message SHALL be displayed to the user
 - **AND** the default Laravel validation message SHALL NOT be shown
 
 #### Scenario: Validation messages property is correctly accessed
-- **WHEN** the system validates a field with a Shape
+- **WHEN** the system validates a field with a SetField
 - **THEN** it SHALL read from the validation_messages property
-- **AND** it SHALL NOT attempt to read from validation_rule property
+- **AND** it SHALL NOT attempt to read from validation_rules property
 
-### Requirement: Validation with Shapes Optional
-The system SHALL allow flexy fields to be used without predefined Shapes.
+### Requirement: Field Set Enforcement
+The system SHALL enforce that only fields from the assigned field set can be set.
 
-#### Scenario: Fields without Shapes are not validated
-- **WHEN** a flexy field does not have a defined Shape
-- **AND** the field value is modified
-- **THEN** no validation SHALL be performed
-- **AND** the value SHALL be saved directly based on type detection
+#### Scenario: Field not in set is rejected
+- **WHEN** a model has an assigned field_set_code
+- **AND** a flexy field is set that is not in the assigned field set
+- **THEN** FieldNotInSetException SHALL be thrown
+- **AND** the field SHALL NOT be saved
+- **AND** the exception message SHALL include the field name, set code, and available fields
 
-#### Scenario: Shape enforcement can be enabled per model
-- **WHEN** a model sets $hasShape = true
-- **THEN** only fields with defined Shapes SHALL be allowed
-- **AND** attempting to set undefined fields SHALL throw FlexyFieldIsNotInShape exception
-
-### Requirement: Field Existence Validation
-The system SHALL enforce Shape requirements when strict mode is enabled.
-
-#### Scenario: Strict mode requires Shape for all fields
-- **WHEN** ExampleModel::$hasShape is true
-- **AND** a flexy field is set without a corresponding Shape
-- **THEN** FlexyFieldIsNotInShape exception SHALL be thrown
+#### Scenario: Field set assignment is required
+- **WHEN** a model attempts to set a flexy field
+- **AND** the model has no field_set_code assigned
+- **THEN** FieldSetNotFoundException SHALL be thrown
 - **AND** the field SHALL NOT be saved
 
-#### Scenario: Non-strict mode allows ad-hoc fields
-- **WHEN** ExampleModel::$hasShape is false or not set
-- **AND** a flexy field is set without a corresponding Shape
+### Requirement: Validation Edge Cases
+The system SHALL handle validation edge cases correctly.
+
+#### Scenario: Null values are validated correctly
+- **WHEN** a field has 'required' validation rule
+- **AND** the field value is null
+- **THEN** ValidationException SHALL be thrown
+
+#### Scenario: Nullable fields allow null
+- **WHEN** a field has 'nullable' validation rule
+- **AND** the field value is null
 - **THEN** no exception SHALL be thrown
-- **AND** the field SHALL be saved using type detection
+- **AND** the null value SHALL be stored
+
+#### Scenario: Empty strings are validated correctly
+- **WHEN** a field has 'required' validation rule
+- **AND** the field value is empty string
+- **THEN** ValidationException SHALL be thrown (empty string fails 'required')
+
+#### Scenario: Validation with special characters
+- **WHEN** validation_messages contains special characters
+- **THEN** the messages SHALL be properly JSON encoded and decoded
+- **AND** special characters SHALL be preserved
+
+### Requirement: Field Set Field Enforcement
+The system SHALL enforce that only fields defined in the instance's field set can be modified.
+
+#### Scenario: Field not in assigned field set is rejected
+- **WHEN** a model instance is assigned to a field set
+- **AND** a flexy field is set that is not defined in the field set
+- **THEN** FieldNotInSetException SHALL be thrown
+- **AND** the field SHALL NOT be saved
+
+#### Scenario: Unassigned instance cannot set fields
+- **WHEN** a model instance has no field_set_code assigned
+- **AND** a flexy field is set
+- **THEN** FieldSetNotFoundException SHALL be thrown
+- **AND** the field SHALL NOT be saved
 

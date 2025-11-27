@@ -1,12 +1,15 @@
 <?php
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
+use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\Models\Value;
+use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesFieldSets;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
-use AuroraWebSoftware\FlexyField\Tests\Models\ExampleShapelyFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
+
+uses(CreatesFieldSets::class);
 
 beforeEach(function () {
     Artisan::call('migrate:fresh');
@@ -14,8 +17,32 @@ beforeEach(function () {
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
+        $table->string('field_set_code')->nullable()->index();
         $table->timestamps();
+
+        $table->foreign('field_set_code')
+            ->references('set_code')
+            ->on('ff_field_sets')
+            ->onDelete('set null')
+            ->onUpdate('cascade');
     });
+
+    // Create default field set with all boolean test fields
+    $this->createFieldSetWithFields(
+        modelClass: ExampleFlexyModel::class,
+        setCode: 'default',
+        fields: [
+            'is_active' => ['type' => FlexyFieldType::BOOLEAN],
+            'bool_field' => ['type' => FlexyFieldType::BOOLEAN],
+            'int_field' => ['type' => FlexyFieldType::INTEGER],
+            'is_verified' => ['type' => FlexyFieldType::BOOLEAN],
+            'is_premium' => ['type' => FlexyFieldType::BOOLEAN],
+        ],
+        isDefault: true
+    );
+
+    // Create initial empty view
+    FlexyField::dropAndCreatePivotView();
 });
 
 it('can store and retrieve boolean false value', function () {
@@ -51,6 +78,9 @@ it('can query models by boolean false value', function () {
     $model2->flexy->is_active = true;
     $model2->save();
 
+    // Recreate view to include the new field
+    FlexyField::forceRecreateView();
+
     $inactive = ExampleFlexyModel::where('flexy_is_active', false)->get();
 
     expect($inactive)->toHaveCount(1)
@@ -65,6 +95,9 @@ it('can query models by boolean true value', function () {
     $model2 = ExampleFlexyModel::create(['name' => 'Active']);
     $model2->flexy->is_active = true;
     $model2->save();
+
+    // Recreate view to include the new field
+    FlexyField::forceRecreateView();
 
     $active = ExampleFlexyModel::where('flexy_is_active', true)->get();
 
@@ -118,11 +151,17 @@ it('distinguishes boolean true from integer 1 in storage', function () {
         ->and($intValue->value_boolean)->toBeNull();
 });
 
-it('can validate boolean fields with shapes', function () {
-    ExampleShapelyFlexyModel::$hasShape = true;
-    ExampleShapelyFlexyModel::setFlexyShape('is_verified', FlexyFieldType::BOOLEAN, 1, 'required|boolean');
+it('can validate boolean fields with field sets', function () {
+    // Check if field already exists, if not add it
+    $existingField = \AuroraWebSoftware\FlexyField\Models\SetField::where('set_code', 'default')
+        ->where('field_name', 'is_verified')
+        ->first();
 
-    $model = ExampleShapelyFlexyModel::create(['name' => 'Test Model']);
+    if (! $existingField) {
+        ExampleFlexyModel::addFieldToSet('default', 'is_verified', FlexyFieldType::BOOLEAN, 1, 'required|boolean');
+    }
+
+    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
     $model->flexy->is_verified = true;
     $model->save();
 

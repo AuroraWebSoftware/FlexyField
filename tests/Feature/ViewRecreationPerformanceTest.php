@@ -1,11 +1,15 @@
 <?php
 
+use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\FlexyField;
+use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesFieldSets;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+
+uses(CreatesFieldSets::class);
 
 beforeEach(function () {
     Artisan::call('migrate:fresh');
@@ -13,11 +17,30 @@ beforeEach(function () {
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
+        $table->string('field_set_code')->nullable()->index();
         $table->timestamps();
+
+        $table->foreign('field_set_code')
+            ->references('set_code')
+            ->on('ff_field_sets')
+            ->onDelete('set null')
+            ->onUpdate('cascade');
     });
+
+    // Create default field set - fields will be added dynamically in tests
+    $this->createFieldSetWithFields(
+        modelClass: ExampleFlexyModel::class,
+        setCode: 'default',
+        fields: [],
+        isDefault: true
+    );
 });
 
 it('only recreates view when new fields are added', function () {
+    // Add color field to set
+    ExampleFlexyModel::addFieldToSet('default', 'color', FlexyFieldType::STRING);
+    ExampleFlexyModel::addFieldToSet('default', 'size', FlexyFieldType::STRING);
+
     $model = ExampleFlexyModel::create(['name' => 'Test Model']);
 
     // First save - new field 'color', should recreate view
@@ -50,6 +73,9 @@ it('only recreates view when new fields are added', function () {
 });
 
 it('handles bulk updates efficiently', function () {
+    // Add status field to set
+    ExampleFlexyModel::addFieldToSet('default', 'status', FlexyFieldType::STRING);
+
     // Create 100 models and set the same field
     for ($i = 1; $i <= 100; $i++) {
         $model = ExampleFlexyModel::create(['name' => "Model $i"]);
@@ -63,6 +89,11 @@ it('handles bulk updates efficiently', function () {
 });
 
 it('tracks multiple different fields correctly', function () {
+    // Add fields to set
+    ExampleFlexyModel::addFieldToSet('default', 'field1', FlexyFieldType::STRING);
+    ExampleFlexyModel::addFieldToSet('default', 'field2', FlexyFieldType::STRING);
+    ExampleFlexyModel::addFieldToSet('default', 'field3', FlexyFieldType::STRING);
+
     $model = ExampleFlexyModel::create(['name' => 'Test Model']);
 
     // Add multiple different fields
@@ -89,6 +120,10 @@ it('tracks multiple different fields correctly', function () {
 });
 
 it('forceRecreateView rebuilds schema tracking from actual data', function () {
+    // Add fields to set
+    ExampleFlexyModel::addFieldToSet('default', 'color', FlexyFieldType::STRING);
+    ExampleFlexyModel::addFieldToSet('default', 'size', FlexyFieldType::STRING);
+
     // Create some models with fields
     $model1 = ExampleFlexyModel::create(['name' => 'Model 1']);
     $model1->flexy->color = 'red';
@@ -114,6 +149,9 @@ it('forceRecreateView rebuilds schema tracking from actual data', function () {
 });
 
 it('recreateViewIfNeeded returns false when no new fields', function () {
+    // Add color field to set
+    ExampleFlexyModel::addFieldToSet('default', 'color', FlexyFieldType::STRING);
+
     $model = ExampleFlexyModel::create(['name' => 'Test Model']);
 
     // First save - new field

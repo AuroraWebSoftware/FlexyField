@@ -10,3 +10,6 @@ parameters:
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true
+    ignoreErrors:
+        # Traits are used in test models, but tests directory is not analyzed
+        - '#Trait .* is used zero times and is not analysed#'

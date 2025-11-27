@@ -68,7 +68,7 @@ class FlexyField
     /**
      * Recreate view only if new fields are detected
      *
-     * @param array $fieldNames Array of field names to check
+     * @param  array<string>  $fieldNames  Array of field names to check
      * @return bool True if view was recreated, false if no recreation needed
      */
     public static function recreateViewIfNeeded(array $fieldNames): bool
@@ -90,16 +90,14 @@ class FlexyField
             return false;
         }
 
-        // Insert new fields into tracking table
+        // Insert new fields into tracking table (ignore duplicates)
         $timestamp = now();
-        $insertData = array_map(function ($fieldName) use ($timestamp) {
-            return [
+        foreach ($newFields as $fieldName) {
+            DB::table('ff_view_schema')->insertOrIgnore([
                 'field_name' => $fieldName,
                 'added_at' => $timestamp,
-            ];
-        }, $newFields);
-
-        DB::table('ff_view_schema')->insert($insertData);
+            ]);
+        }
 
         // Recreate the view
         self::dropAndCreatePivotView();
@@ -109,8 +107,6 @@ class FlexyField
 
     /**
      * Force recreation of the pivot view and rebuild schema tracking
-     *
-     * @return void
      */
     public static function forceRecreateView(): void
     {
@@ -125,7 +121,7 @@ class FlexyField
             ->toArray();
 
         // Insert all fields into tracking table
-        if (!empty($allFields)) {
+        if (! empty($allFields)) {
             $timestamp = now();
             $insertData = array_map(function ($fieldName) use ($timestamp) {
                 return [

@@ -2,11 +2,13 @@
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\Models\Value;
+use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesFieldSets;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
-use AuroraWebSoftware\FlexyField\Tests\Models\ExampleShapelyFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
+
+uses(CreatesFieldSets::class);
 
 beforeEach(function () {
     Artisan::call('migrate:fresh');
@@ -14,8 +16,32 @@ beforeEach(function () {
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
+        $table->string('field_set_code')->nullable()->index();
         $table->timestamps();
+
+        $table->foreign('field_set_code')
+            ->references('set_code')
+            ->on('ff_field_sets')
+            ->onDelete('set null')
+            ->onUpdate('cascade');
     });
+
+    // Create default field set for all tests
+    $this->createFieldSetWithFields(
+        modelClass: ExampleFlexyModel::class,
+        setCode: 'default',
+        fields: [
+            'birth_date' => ['type' => FlexyFieldType::DATE],
+            'created_at_custom' => ['type' => FlexyFieldType::DATETIME],
+            'event_date' => ['type' => FlexyFieldType::DATE],
+            'morning_time' => ['type' => FlexyFieldType::DATETIME],
+            'evening_time' => ['type' => FlexyFieldType::DATETIME],
+            'updated_date' => ['type' => FlexyFieldType::DATE],
+            'past_date' => ['type' => FlexyFieldType::DATE],
+            'future_date' => ['type' => FlexyFieldType::DATE],
+        ],
+        isDefault: true
+    );
 });
 
 it('can store and retrieve date value', function () {
@@ -60,6 +86,9 @@ it('can query models by date value', function () {
     $model2->flexy->event_date = new DateTime('2024-02-20');
     $model2->save();
 
+    // Recreate view to include the field
+    \AuroraWebSoftware\FlexyField\FlexyField::forceRecreateView();
+
     $results = ExampleFlexyModel::where('flexy_event_date', '>=', '2024-02-01')->get();
 
     expect($results)->toHaveCount(1)
@@ -79,16 +108,17 @@ it('can query date range', function () {
     $model3->flexy->event_date = new DateTime('2024-03-10');
     $model3->save();
 
+    // Recreate view to include the field
+    \AuroraWebSoftware\FlexyField\FlexyField::forceRecreateView();
+
     $results = ExampleFlexyModel::whereBetween('flexy_event_date', ['2024-01-01', '2024-02-28'])->get();
 
     expect($results)->toHaveCount(2);
 });
 
-it('can validate date fields with shapes', function () {
-    ExampleShapelyFlexyModel::$hasShape = true;
-    ExampleShapelyFlexyModel::setFlexyShape('birth_date', FlexyFieldType::DATE, 1, 'required|date');
-
-    $model = ExampleShapelyFlexyModel::create(['name' => 'Test Model']);
+it('can validate date fields with field sets', function () {
+    // birth_date field already exists in default set from beforeEach
+    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
     $model->flexy->birth_date = new DateTime('1990-05-15');
     $model->save();
 

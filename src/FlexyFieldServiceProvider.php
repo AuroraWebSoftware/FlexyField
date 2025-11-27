@@ -3,6 +3,7 @@
 namespace AuroraWebSoftware\FlexyField;
 
 use AuroraWebSoftware\FlexyField\Commands\FlexyFieldCommand;
+use AuroraWebSoftware\FlexyField\Commands\MigrateShapesToFieldSetsCommand;
 use AuroraWebSoftware\FlexyField\Commands\RebuildFlexyViewCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -26,7 +27,10 @@ class FlexyFieldServiceProvider extends PackageServiceProvider
         $package
             ->name('flexyfield')
             ->hasConfigFile()
-            ->hasCommand(RebuildFlexyViewCommand::class);
+            ->hasCommands([
+                RebuildFlexyViewCommand::class,
+                MigrateShapesToFieldSetsCommand::class,
+            ]);
         // ->hasViews()
         //->hasMigration('create_flexyfield_table')
         // ->hasCommand(FlexyFieldCommand::class)

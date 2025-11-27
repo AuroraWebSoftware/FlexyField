@@ -1,10 +1,14 @@
 <?php
 
+use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\Models\Value;
+use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesFieldSets;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
+
+uses(CreatesFieldSets::class);
 
 beforeEach(function () {
     Artisan::call('migrate:fresh');
@@ -12,8 +16,49 @@ beforeEach(function () {
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
+        $table->string('field_set_code')->nullable()->index();
         $table->timestamps();
+
+        $table->foreign('field_set_code')
+            ->references('set_code')
+            ->on('ff_field_sets')
+            ->onDelete('set null')
+            ->onUpdate('cascade');
     });
+
+    // Create default field set with all edge case test fields
+    $this->createFieldSetWithFields(
+        modelClass: ExampleFlexyModel::class,
+        setCode: 'default',
+        fields: [
+            'test_field' => ['type' => FlexyFieldType::STRING],
+            'empty_field' => ['type' => FlexyFieldType::STRING],
+            'long_text' => ['type' => FlexyFieldType::STRING],
+            'emoji_field' => ['type' => FlexyFieldType::STRING],
+            'chinese_field' => ['type' => FlexyFieldType::STRING],
+            'arabic_field' => ['type' => FlexyFieldType::STRING],
+            'mixed_field' => ['type' => FlexyFieldType::STRING],
+            'zip_code' => ['type' => FlexyFieldType::STRING],
+            'phone' => ['type' => FlexyFieldType::STRING],
+            'large_amount' => ['type' => FlexyFieldType::DECIMAL],
+            'temperature' => ['type' => FlexyFieldType::INTEGER],
+            'balance' => ['type' => FlexyFieldType::DECIMAL],
+            'complex_data' => ['type' => FlexyFieldType::JSON],
+            'special_field' => ['type' => FlexyFieldType::STRING],
+            'multiline_field' => ['type' => FlexyFieldType::STRING],
+            'int_zero' => ['type' => FlexyFieldType::INTEGER],
+            'float_zero' => ['type' => FlexyFieldType::DECIMAL],
+            'string_zero' => ['type' => FlexyFieldType::STRING],
+            'tiny_amount' => ['type' => FlexyFieldType::DECIMAL],
+            'special_json' => ['type' => FlexyFieldType::JSON],
+            'empty' => ['type' => FlexyFieldType::STRING],
+            'zero' => ['type' => FlexyFieldType::INTEGER],
+            'negative' => ['type' => FlexyFieldType::INTEGER],
+            'unicode' => ['type' => FlexyFieldType::STRING],
+            'long' => ['type' => FlexyFieldType::STRING],
+        ],
+        isDefault: true
+    );
 });
 
 it('can handle updating to different values', function () {
@@ -284,4 +329,72 @@ it('can handle multiple edge cases on same model', function () {
         ->and($fresh->flexy->negative)->toBe(-100)
         ->and($fresh->flexy->unicode)->toBe('🎉')
         ->and(strlen($fresh->flexy->long))->toBe(200);
+});
+
+it('can access field before model saved (in-memory value)', function () {
+    $model = new ExampleFlexyModel(['name' => 'New Model']);
+
+    // Assign field set first (this will save the model)
+    $model->assignToFieldSet('default');
+
+    // Set field before explicit save
+    $model->flexy->test_field = 'in-memory value';
+
+    // Should be accessible before explicit save
+    expect($model->flexy->test_field)->toBe('in-memory value');
+
+    // Save and verify it persists
+    $model->save();
+    expect($model->fresh()->flexy->test_field)->toBe('in-memory value');
+});
+
+it('can set field value to same value without unnecessary update', function () {
+    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
+    $model->flexy->test_field = 'value';
+    $model->save();
+
+    $firstSaveTime = $model->fresh()->updated_at;
+
+    // Set to same value
+    $model->flexy->test_field = 'value';
+    $model->save();
+
+    // Should still have the value
+    expect($model->fresh()->flexy->test_field)->toBe('value');
+});
+
+it('can set field value then unset with null assignment', function () {
+    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
+    $model->flexy->test_field = 'value';
+    $model->save();
+
+    expect($model->fresh()->flexy->test_field)->toBe('value');
+
+    // Unset by setting to null
+    $model->flexy->test_field = null;
+    $model->save();
+
+    expect($model->fresh()->flexy->test_field)->toBeNull();
+});
+
+it('throws ValidationException when field exceeds max length', function () {
+    $this->createFieldSetWithFields(
+        modelClass: ExampleFlexyModel::class,
+        setCode: 'limited',
+        fields: [
+            'limited_field' => [
+                'type' => FlexyFieldType::STRING,
+                'rules' => 'max:10',
+            ],
+        ],
+        isDefault: false
+    );
+
+    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
+    $model->assignToFieldSet('limited');
+
+    // Try to set value exceeding max length
+    $model->flexy->limited_field = str_repeat('A', 11);
+
+    expect(fn () => $model->save())->toThrow(\Illuminate\Validation\ValidationException::class);
 });
