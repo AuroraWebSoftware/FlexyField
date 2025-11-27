@@ -28,7 +28,6 @@ jobs:
 
     services:
       mysql:
-        if: matrix.database == 'mysql'
         image: mysql:8.0
         ports:
           - 3306
@@ -37,14 +36,9 @@ jobs:
           MYSQL_PASSWORD: flexyfield
           MYSQL_USER: flexyfield
           MYSQL_DATABASE: flexyfield
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
       postgres:
-        if: matrix.database == 'pgsql'
         image: postgres:16
         ports:
           - 5432
@@ -52,11 +46,7 @@ jobs:
           POSTGRES_USER: flexyfield
           POSTGRES_PASSWORD: flexyfield
           POSTGRES_DB: flexyfield
-        options: >-
-          --health-cmd="pg_isready -U flexyfield"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+        options: --health-cmd="pg_isready -U flexyfield" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
       - name: Checkout code
