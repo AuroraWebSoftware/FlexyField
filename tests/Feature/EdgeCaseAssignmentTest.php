@@ -103,13 +103,18 @@ it('throws exception when assigning then deleting field set', function () {
 
     $model = ExampleFlexyModel::create(['name' => 'Test']);
     $model->assignToFieldSet('temp');
+    expect($model->field_set_code)->toBe('temp');
 
-    // Delete the field set
+    // Delete the field set (triggers application-level cascade delete)
     \AuroraWebSoftware\FlexyField\Models\FieldSet::where('set_code', 'temp')->delete();
 
-    // Try to set a field
+    // Verify field_set_code was set to null by application-level cascade
+    $model->refresh();
+    expect($model->field_set_code)->toBeNull();
+
+    // Try to set a field - should throw because no field set assigned
     $model->flexy->field1 = 'value';
-    expect(fn () => $model->save())->toThrow(\Exception::class);
+    expect(fn () => $model->save())->toThrow(\AuroraWebSoftware\FlexyField\Exceptions\FieldSetNotFoundException::class);
 });
 
 it('allows assigning same field set twice (idempotent)', function () {
