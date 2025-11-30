@@ -9,14 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ff_schema_fields', function (Blueprint $table) {
-            $table->string('label')->nullable()->after('name');
+            if (! Schema::hasColumn('ff_schema_fields', 'label')) {
+                $table->string('label')->nullable()->after('name');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('ff_schema_fields', function (Blueprint $table) {
-            $table->dropColumn('label');
+            if (Schema::hasColumn('ff_schema_fields', 'label')) {
+                $table->dropColumn('label');
+            }
         });
     }
 };
