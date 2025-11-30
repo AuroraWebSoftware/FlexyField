@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Artisan;
 uses(CreatesSchemas::class);
 
 beforeEach(function () {
-    Artisan::call('migrate:fresh');
 });
 
 it('can instantiate Flexy model', function () {

@@ -11,9 +11,9 @@ use Illuminate\Validation\ValidationException;
 uses(CreatesSchemas::class);
 
 beforeEach(function () {
-
-    Artisan::call('migrate:fresh');
-
+    // Don't call migrate:fresh - it doesn't run package migrations
+    // TestCase already handles migrations via runMigrations()
+    
     Schema::dropIfExists('ff_example_flexy_models');
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
@@ -21,6 +21,9 @@ beforeEach(function () {
         $table->string('schema_code')->nullable();
         $table->timestamps();
     });
+    
+    // Clean up test data
+    $this->cleanupTestData();
 });
 
 it('creates field set with fields', function () {

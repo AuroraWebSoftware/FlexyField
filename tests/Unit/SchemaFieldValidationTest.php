@@ -7,7 +7,6 @@ use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Support\Facades\Artisan;
 
 beforeEach(function () {
-    Artisan::call('migrate:fresh');
 });
 
 it('throws exception for invalid field type', function () {

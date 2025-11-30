@@ -5,6 +5,7 @@ namespace AuroraWebSoftware\FlexyField\Tests;
 use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\FlexyFieldServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
@@ -101,10 +102,16 @@ class TestCase extends Orchestra
     protected function cleanupTestData()
     {
         // Clean up in the right order to avoid foreign key constraints
-        \Illuminate\Support\Facades\DB::table('ff_field_values')->delete();
-        \Illuminate\Support\Facades\DB::table('ff_schema_fields')->delete();
-        \Illuminate\Support\Facades\DB::table('ff_schemas')->delete();
-
+        // Values first, then fields, then schemas
+        if (Schema::hasTable('ff_field_values')) {
+            \Illuminate\Support\Facades\DB::table('ff_field_values')->delete();
+        }
+        if (Schema::hasTable('ff_schema_fields')) {
+            \Illuminate\Support\Facades\DB::table('ff_schema_fields')->delete();
+        }
+        if (Schema::hasTable('ff_schemas')) {
+            \Illuminate\Support\Facades\DB::table('ff_schemas')->delete();
+        }
     }
 
     /**

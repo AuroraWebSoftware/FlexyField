@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Schema;
 uses(CreatesSchemas::class);
 
 beforeEach(function () {
-    Artisan::call('migrate:fresh');
 
     Schema::dropIfExists('ff_example_flexy_models');
     Schema::create('ff_example_flexy_models', function ($table) {
