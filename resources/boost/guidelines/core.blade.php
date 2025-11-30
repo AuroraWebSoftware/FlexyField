@@ -154,6 +154,75 @@ $product->flexy->metadata = ['featured' => true, 'priority' => 1];
 </code-snippet>
 @endverbatim
 
+### Select Options
+
+Restrict field values to predefined options using metadata. Supports both single and multi-select:
+
+@verbatim
+<code-snippet name="Single Select Options" lang="php">
+use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
+
+// Indexed array (values are both keys and labels)
+Product::addFieldToSchema(
+    'electronics',
+    'size',
+    FlexyFieldType::STRING,
+    100,
+    null,
+    null,
+    ['options' => ['S', 'M', 'L', 'XL']]
+);
+
+// Associative array (keys stored, values for display)
+Product::addFieldToSchema(
+    'electronics',
+    'color',
+    FlexyFieldType::STRING,
+    100,
+    null,
+    null,
+    ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
+);
+
+// Usage
+$product->flexy->color = 'blue';  // Valid
+$product->flexy->color = 'yellow'; // ValidationException: not in options
+</code-snippet>
+@endverbatim
+
+@verbatim
+<code-snippet name="Multi-Select Options" lang="php">
+use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
+
+// Multi-select requires FlexyFieldType::JSON
+Product::addFieldToSchema(
+    'electronics',
+    'features',
+    FlexyFieldType::JSON, // MUST be JSON type
+    100,
+    null,
+    null,
+    [
+        'options' => ['wifi', '5g', 'nfc', 'bluetooth'],
+        'multiple' => true  // Enable multi-select
+    ]
+);
+
+// Usage
+$product->flexy->features = ['wifi', '5g'];      // Valid array
+$product->flexy->features = [];                  // Valid empty array
+$product->flexy->features = 'wifi';              // ValidationException: not an array
+$product->flexy->features = ['wifi', 'invalid']; // ValidationException: 'invalid' not in options
+</code-snippet>
+@endverbatim
+
+**Important Rules:**
+- Multi-select fields MUST use `FlexyFieldType::JSON` type
+- Options validation works automatically when `options` metadata is present
+- Empty `options` array or missing `options` key means no restrictions
+- For indexed arrays, values are used for both storage and validation
+- For associative arrays, keys are used for storage and validation
+
 ### Validation
 
 Validation is enforced when saving. Models must be assigned to schema first:
@@ -332,6 +401,44 @@ php artisan flexyfield:rebuild-view
 4. **Keep schemas focused**: 20-50 fields per schema is optimal for performance
 5. **Index model tables**: Add index on `schema_code` column for better query performance
 6. **Use proper validation**: Define validation rules in schema for data integrity
+7. **Always include tests**: Every proposal must include comprehensive testing requirements
+8. **Always update documentation**: Every proposal must include documentation updates for README.md and Laravel Boost core.blade.php
+
+### Testing Requirements for New Features
+
+All new features must include comprehensive tests:
+
+@verbatim
+<code-snippet name="Testing Example" lang="php">
+// Unit test example
+it('can create a schema with fields', function () {
+    $schema = Product::createSchema('test', 'Test Schema');
+    Product::addFieldToSchema('test', 'name', FlexyFieldType::STRING);
+    
+    expect($schema->fields)->toHaveCount(1);
+    expect($schema->fields->first()->name)->toBe('name');
+});
+
+// Feature test example
+it('can assign and retrieve flexy field values', function () {
+    $product = Product::create(['name' => 'Test Product']);
+    $product->assignToSchema('test');
+    $product->flexy->name = 'Test Name';
+    $product->save();
+    
+    expect($product->flexy->name)->toBe('Test Name');
+});
+</code-snippet>
+@endverbatim
+
+### Documentation Requirements for New Features
+
+All new features must update documentation:
+
+1. **README.md**: Add feature documentation with examples
+2. **Laravel Boost**: Update this file with AI guidance
+3. **Code Examples**: Provide practical, tested examples
+4. **Changelog**: Document breaking changes and new features
 
 ### Common Patterns
 
