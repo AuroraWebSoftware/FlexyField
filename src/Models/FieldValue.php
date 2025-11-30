@@ -5,6 +5,21 @@ namespace AuroraWebSoftware\FlexyField\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property string $model_type
+ * @property int $model_id
+ * @property string $name
+ * @property string|null $schema_code
+ * @property int|null $schema_id
+ * @property \Illuminate\Support\Carbon|null $value_date
+ * @property \Illuminate\Support\Carbon|null $value_datetime
+ * @property string|null $value_decimal
+ * @property int|null $value_int
+ * @property string|null $value_string
+ * @property bool|null $value_boolean
+ * @property array<string, mixed>|null $value_json
+ */
 class FieldValue extends Model
 {
     protected $table = 'ff_field_values';

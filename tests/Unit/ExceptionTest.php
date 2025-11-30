@@ -1,9 +1,9 @@
 <?php
 
 use AuroraWebSoftware\FlexyField\Exceptions\FieldNotInSchemaException;
+use AuroraWebSoftware\FlexyField\Exceptions\FlexyFieldTypeNotAllowedException;
 use AuroraWebSoftware\FlexyField\Exceptions\SchemaInUseException;
 use AuroraWebSoftware\FlexyField\Exceptions\SchemaNotFoundException;
-use AuroraWebSoftware\FlexyField\Exceptions\FlexyFieldTypeNotAllowedException;
 
 it('SchemaNotFoundException forSchemaCode creates correct message', function () {
     $exception = SchemaNotFoundException::forSchemaCode('test_schema', 'App\\Models\\Product');

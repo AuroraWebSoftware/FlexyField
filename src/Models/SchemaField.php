@@ -36,7 +36,7 @@ class SchemaField extends Model
         // Validate type enum values
         static::creating(function (SchemaField $schemaField) {
             self::validateFieldType($schemaField->type);
-            
+
             // Auto-populate schema_id from schema_code if not set
             if (! $schemaField->schema_id && $schemaField->schema_code) {
                 $schema = FieldSchema::where('schema_code', $schemaField->schema_code)->first();
@@ -50,7 +50,7 @@ class SchemaField extends Model
             if ($schemaField->isDirty('type')) {
                 self::validateFieldType($schemaField->type);
             }
-            
+
             // Auto-update schema_id if schema_code changed
             if ($schemaField->isDirty('schema_code') && $schemaField->schema_code) {
                 $schema = FieldSchema::where('schema_code', $schemaField->schema_code)->first();

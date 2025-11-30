@@ -46,7 +46,7 @@ it('reassigns model to different schema correctly', function () {
     );
 
     $model = ExampleFlexyModel::create(['name' => 'Test']);
-    
+
     // Assign to first schema
     $model->assignToSchema('schema1');
     $model->save();
@@ -56,7 +56,7 @@ it('reassigns model to different schema correctly', function () {
     $model->assignToSchema('schema2');
     $model->save();
     expect($model->schema_code)->toBe('schema2');
-    
+
     // Refresh and verify
     $model->refresh();
     expect($model->schema_code)->toBe('schema2');
@@ -64,7 +64,7 @@ it('reassigns model to different schema correctly', function () {
 
 it('throws exception when assigning to non-existent schema', function () {
     $model = ExampleFlexyModel::create(['name' => 'Test']);
-    
+
     $model->assignToSchema('non_existent_schema');
 })->throws(SchemaNotFoundException::class);
 
@@ -79,7 +79,7 @@ it('prevents assigning schema from different model type', function () {
     );
 
     $model = ExampleFlexyModel::create(['name' => 'Test']);
-    
+
     // Try to assign a non-existent schema (simulates wrong model type scenario)
     expect(fn () => $model->assignToSchema('schema_from_other_model'))
         ->toThrow(SchemaNotFoundException::class);
@@ -98,7 +98,7 @@ it('automatically assigns new instances to default schema', function () {
 
     // Create new model - should auto-assign to default
     $model = ExampleFlexyModel::create(['name' => 'Test']);
-    
+
     expect($model->schema_code)->toBe('default');
     expect($model->getSchemaCode())->toBe('default');
 });
@@ -126,7 +126,7 @@ it('does not override explicit schema assignment with default', function () {
     $model = new ExampleFlexyModel(['name' => 'Test']);
     $model->assignToSchema('custom');
     $model->save();
-    
+
     expect($model->schema_code)->toBe('custom');
     expect($model->getSchemaCode())->toBe('custom');
 });
@@ -143,26 +143,26 @@ it('allows unsetting schema assignment', function () {
     $model = ExampleFlexyModel::create(['name' => 'Test']);
     $model->assignToSchema('test');
     $model->save();
-    
+
     expect($model->schema_code)->toBe('test');
-    
+
     // Unset schema
     $model->schema_code = null;
     $model->save();
-    
+
     expect($model->schema_code)->toBeNull();
     expect($model->getSchemaCode())->toBeNull();
 });
 
 it('validates schema exists before setting field values', function () {
     $model = ExampleFlexyModel::create(['name' => 'Test']);
-    
+
     // Try to set flexy field without schema assignment
     $closure = function () use ($model) {
         $model->flexy->field1 = 'value';
         $model->save();
     };
-    
+
     expect($closure)->toThrow(SchemaNotFoundException::class);
 });
 
@@ -178,12 +178,12 @@ it('maintains schema assignment across model refresh', function () {
     $model = ExampleFlexyModel::create(['name' => 'Test']);
     $model->assignToSchema('test');
     $model->save();
-    
+
     $modelId = $model->id;
-    
+
     // Refresh from database
     $freshModel = ExampleFlexyModel::find($modelId);
-    
+
     expect($freshModel->schema_code)->toBe('test');
     expect($freshModel->getSchemaCode())->toBe('test');
 });

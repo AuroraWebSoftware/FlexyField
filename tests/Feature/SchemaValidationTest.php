@@ -6,7 +6,6 @@ use AuroraWebSoftware\FlexyField\Exceptions\SchemaNotFoundException;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
@@ -14,7 +13,8 @@ uses(CreatesSchemas::class);
 
 beforeEach(function () {
 
-    Schema::dropIfExists('ff_example_flexy_models'); Schema::create('ff_example_flexy_models', function (Blueprint $table) {
+    Schema::dropIfExists('ff_example_flexy_models');
+    Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
         $table->string('schema_code')->nullable()->index();
@@ -437,12 +437,12 @@ it('rejects invalid field types', function () {
 
     // Test invalid field types
     try {
-        $model->flexy->string_field = new \stdClass();
+        $model->flexy->string_field = new \stdClass;
         $model->save();
     } catch (\Throwable $e) {
         expect($e)->toBeInstanceOf(\Throwable::class);
     }
-    
+
     // Add a dummy assertion to avoid risky test warning if no exception is thrown
     expect(true)->toBeTrue();
 });
@@ -621,9 +621,9 @@ it('validates datetime validation rules', function () {
     // Test with valid datetime
     $model->flexy->datetime_field = '2020-01-01 12:00:01';
     $model->save();
-    
+
     $model->refresh();
-    
+
     expect($model->flexy->datetime_field)->toBeInstanceOf(\Carbon\Carbon::class);
 
     // Test with invalid datetime (before minimum)

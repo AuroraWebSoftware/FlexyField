@@ -4,14 +4,12 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 uses(CreatesSchemas::class);
 
-beforeEach(function () {
-});
+beforeEach(function () {});
 
 it('measures view recreation performance', function () {
     // Create a schema with many fields
@@ -19,7 +17,7 @@ it('measures view recreation performance', function () {
     for ($i = 1; $i <= 100; $i++) {
         $fields["field_{$i}"] = ['type' => FlexyFieldType::STRING];
     }
-    
+
     $this->createSchemaWithFields(
         modelClass: ExampleFlexyModel::class,
         schemaCode: 'test',
@@ -40,7 +38,7 @@ it('measures view recreation performance', function () {
     $subsequentTimes = [];
     for ($i = 0; $i < 10; $i++) {
         $startTime = microtime(true);
-        $model->flexy->field_1 = "value_" . ($i + 2);
+        $model->flexy->field_1 = 'value_'.($i + 2);
         $model->save();
         $subsequentTimes[] = microtime(true) - $startTime;
     }
@@ -92,7 +90,7 @@ it('only recreates view when new field is added', function () {
     // Check that view columns count increased
     $finalColumns = $this->getViewColumns('ff_values_pivot_view');
     $finalColumnCount = count($finalColumns);
-    
+
     // Allow for some flexibility in column count due to test environment differences
     expect($finalColumnCount)->toBeGreaterThanOrEqual($initialColumnCount);
     expect($finalColumnCount)->toBeGreaterThan($initialColumnCount - 1); // Allow for off-by-one

@@ -6,14 +6,14 @@ use AuroraWebSoftware\FlexyField\Models\SchemaField;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 uses(CreatesSchemas::class);
 
 beforeEach(function () {
 
-    Schema::dropIfExists('ff_example_flexy_models'); Schema::create('ff_example_flexy_models', function (Blueprint $table) {
+    Schema::dropIfExists('ff_example_flexy_models');
+    Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
         $table->string('schema_code')->nullable()->index();
@@ -136,7 +136,7 @@ it('throws exception when deleting schema in use', function () {
         description: 'Test schema description',
         isDefault: false
     );
-    
+
     // Add field to schema
     ExampleFlexyModel::addFieldToSchema('test', 'field1', FlexyFieldType::STRING);
 

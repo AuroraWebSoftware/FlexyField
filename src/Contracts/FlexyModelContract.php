@@ -105,7 +105,7 @@ interface FlexyModelContract
     /**
      * Get flexy fields accessor
      *
-     * @return Attribute<\auroraWebSoftware\FlexyField\Models\Flexy, never>
+     * @return Attribute<\AuroraWebSoftware\FlexyField\Models\Flexy, never>
      */
     public function flexy(): Attribute;
 }

@@ -83,16 +83,16 @@ return new class extends Migration
         // Add foreign key constraints after creating all tables
         Schema::table('ff_schema_fields', function (Blueprint $table) {
             $table->foreign('schema_id')
-                  ->references('id')
-                  ->on('ff_schemas')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('ff_schemas')
+                ->onDelete('cascade');
         });
 
         Schema::table('ff_field_values', function (Blueprint $table) {
             $table->foreign('schema_id')
-                  ->references('id')
-                  ->on('ff_schemas')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('ff_schemas')
+                ->onDelete('set null');
         });
 
         // Populate schema_id columns after creating tables
@@ -120,8 +120,10 @@ return new class extends Migration
             // Populate schema_id in ff_schema_fields
             $schemaFields = DB::table('ff_schema_fields')->get();
             foreach ($schemaFields as $field) {
+                /** @var object{id: int, schema_code: string} $field */
                 $schema = DB::table('ff_schemas')->where('schema_code', $field->schema_code)->first();
                 if ($schema) {
+                    /** @var object{id: int} $schema */
                     DB::table('ff_schema_fields')
                         ->where('id', $field->id)
                         ->update(['schema_id' => $schema->id]);
@@ -131,9 +133,11 @@ return new class extends Migration
             // Populate schema_id in ff_field_values
             $fieldValues = DB::table('ff_field_values')->get();
             foreach ($fieldValues as $value) {
+                /** @var object{id: int, schema_code: string|null} $value */
                 if ($value->schema_code) {
                     $schema = DB::table('ff_schemas')->where('schema_code', $value->schema_code)->first();
                     if ($schema) {
+                        /** @var object{id: int} $schema */
                         DB::table('ff_field_values')
                             ->where('id', $value->id)
                             ->update(['schema_id' => $schema->id]);
@@ -143,22 +147,22 @@ return new class extends Migration
         } else {
             // For MySQL/PostgreSQL, use database-specific syntax
             $driver = DB::getDriverName();
-            
+
             if ($driver === 'pgsql') {
                 // PostgreSQL uses UPDATE ... FROM syntax
-                DB::statement("
+                DB::statement('
                     UPDATE ff_schema_fields AS sf
                     SET schema_id = s.id
                     FROM ff_schemas AS s
                     WHERE sf.schema_code = s.schema_code
-                ");
-                
-                DB::statement("
+                ');
+
+                DB::statement('
                     UPDATE ff_field_values AS fv
                     SET schema_id = s.id
                     FROM ff_schemas AS s
                     WHERE fv.schema_code = s.schema_code
-                ");
+                ');
             } else {
                 // MySQL uses UPDATE ... JOIN syntax
                 DB::table('ff_schema_fields as sf')

@@ -1,18 +1,17 @@
 <?php
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\Models\FieldValue;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 uses(CreatesSchemas::class);
 
 beforeEach(function () {
 
-    Schema::dropIfExists('ff_example_flexy_models'); Schema::create('ff_example_flexy_models', function (Blueprint $table) {
+    Schema::dropIfExists('ff_example_flexy_models');
+    Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
         $table->string('schema_code')->nullable()->index();
@@ -76,13 +75,13 @@ it('stores boolean field values correctly', function () {
     // Refresh model and check retrieval for each value
     $model->refresh();
     expect($model->flexy->bool_field)->toBeNull();
-    
+
     // Set and check true value
     $model->flexy->bool_field = true;
     $model->save();
     $model->refresh();
     expect($model->flexy->bool_field)->toBeTrue();
-    
+
     // Set and check false value
     $model->flexy->bool_field = false;
     $model->save();
@@ -148,7 +147,7 @@ it('handles boolean field validation correctly', function () {
     // Test valid boolean values
     $model->flexy->bool_field = true;
     $model->save();
-    
+
     $model->flexy->bool_field = false;
     $model->save();
 

@@ -9,7 +9,6 @@ use AuroraWebSoftware\FlexyField\Models\FieldValue;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -18,7 +17,8 @@ uses(CreatesSchemas::class);
 
 beforeEach(function () {
 
-    Schema::dropIfExists('ff_example_flexy_models'); Schema::create('ff_example_flexy_models', function (Blueprint $table) {
+    Schema::dropIfExists('ff_example_flexy_models');
+    Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
         $table->string('schema_code')->nullable()->index();
@@ -635,7 +635,8 @@ uses(CreatesSchemas::class);
 
 beforeEach(function () {
 
-    Schema::dropIfExists('ff_example_flexy_models'); Schema::create('ff_example_flexy_models', function (Blueprint $table) {
+    Schema::dropIfExists('ff_example_flexy_models');
+    Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
         $table->string('schema_code')->nullable()->index();
@@ -872,10 +873,10 @@ it('handles schema field deletion correctly', function () {
 // Tests from EdgeCaseTest
 // ============================================
 
-
 beforeEach(function () {
 
-    Schema::dropIfExists('ff_example_flexy_models'); Schema::create('ff_example_flexy_models', function (Blueprint $table) {
+    Schema::dropIfExists('ff_example_flexy_models');
+    Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
         $table->string('schema_code')->nullable()->index();
@@ -1432,13 +1433,13 @@ it('handles schema changes correctly', function () {
     // Refresh and check accessibility
     $model->refresh();
     // Check that old value is inaccessible (strict schema enforcement)
-    expect(fn() => $model->flexy->field1)->toThrow(FieldNotInSchemaException::class);
+    expect(fn () => $model->flexy->field1)->toThrow(FieldNotInSchemaException::class);
     expect($model->flexy->field2)->toBe(42); // Accessible in new schema
 });
 
 it('handles invalid field types gracefully', function () {
     $this->createDefaultSchema(ExampleFlexyModel::class);
-    
+
     // Add invalid_field to schema so we can test type validation
     ExampleFlexyModel::addFieldToSchema('default', 'invalid_field', FlexyFieldType::STRING);
 
@@ -1446,14 +1447,14 @@ it('handles invalid field types gracefully', function () {
     $model->assignToSchema('default');
 
     // Try to set invalid field type (object) - validation happens on save
-    expect(fn() => $model->flexy->invalid_field = new \stdClass())->not->toThrow(\Exception::class);
-    // But saving should fail or it might be cast to string? 
+    expect(fn () => $model->flexy->invalid_field = new \stdClass)->not->toThrow(\Exception::class);
+    // But saving should fail or it might be cast to string?
     // Actually, setting object to string field might throw string conversion error immediately or on save
     // Let's assume it throws on save if not castable
-    
+
     // For resource, it definitely fails
-    expect(fn() => $model->flexy->invalid_field = fopen('php://memory', 'r'))->not->toThrow(\Exception::class);
-    
+    expect(fn () => $model->flexy->invalid_field = fopen('php://memory', 'r'))->not->toThrow(\Exception::class);
+
     // Closure
-    expect(fn() => $model->flexy->invalid_field = function () {})->not->toThrow(\Exception::class);
+    expect(fn () => $model->flexy->invalid_field = function () {})->not->toThrow(\Exception::class);
 });

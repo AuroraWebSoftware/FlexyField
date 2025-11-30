@@ -3,11 +3,9 @@
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\Exceptions\FieldNotInSchemaException;
 use AuroraWebSoftware\FlexyField\Exceptions\SchemaNotFoundException;
-use AuroraWebSoftware\FlexyField\Models\FieldValue;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -15,7 +13,8 @@ uses(CreatesSchemas::class);
 
 beforeEach(function () {
 
-    Schema::dropIfExists('ff_example_flexy_models'); Schema::create('ff_example_flexy_models', function (Blueprint $table) {
+    Schema::dropIfExists('ff_example_flexy_models');
+    Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
         $table->string('schema_code')->nullable()->index();
@@ -260,7 +259,7 @@ it('handles concurrent access correctly', function () {
     foreach ($models as $model) {
         $model->refresh();
         $index = (int) str_replace('Test ', '', $model->name);
-        expect($model->flexy->field1)->toBe("value " . $index);
+        expect($model->flexy->field1)->toBe('value '.$index);
     }
 });
 

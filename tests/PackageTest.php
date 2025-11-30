@@ -1,7 +1,6 @@
 <?php
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\Models\FieldValue;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
@@ -170,7 +169,7 @@ it('handles json fields', function () {
     $this->createDefaultSchema(ExampleFlexyModel::class);
     // Add json field to the default schema - ALREADY ADDED IN createDefaultSchema
     // ExampleFlexyModel::addFieldToSchema('default', 'json_field', FlexyFieldType::JSON);
-    
+
     $model = ExampleFlexyModel::create(['name' => 'Test Product']);
     $model->assignToSchema('default');
 
@@ -280,7 +279,7 @@ it('handles date and datetime fields', function () {
     // Add date and datetime fields to the default schema - ALREADY ADDED IN createDefaultSchema
     // ExampleFlexyModel::addFieldToSchema('default', 'date_field', FlexyFieldType::DATE);
     // ExampleFlexyModel::addFieldToSchema('default', 'datetime_field', FlexyFieldType::DATETIME);
-    
+
     $model = ExampleFlexyModel::create(['name' => 'Test Product']);
     $model->assignToSchema('default');
 

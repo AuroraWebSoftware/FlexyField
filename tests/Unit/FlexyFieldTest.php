@@ -2,8 +2,6 @@
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\FlexyField;
-use AuroraWebSoftware\FlexyField\Models\FieldSchema;
-use AuroraWebSoftware\FlexyField\Models\FieldValue;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Support\Facades\Artisan;
@@ -45,7 +43,7 @@ it('creates pivot view with all fields', function () {
 
     // Check that view was created with all fields
     $viewColumns = $this->getViewColumns('ff_values_pivot_view');
-    $columnNames = array_map(fn($col) => $col->Field, $viewColumns);
+    $columnNames = array_map(fn ($col) => $col->Field, $viewColumns);
 
     expect($columnNames)->toContain('flexy_field1')
         ->and($columnNames)->toContain('flexy_field2')
@@ -70,7 +68,7 @@ it('recreates view when new field is added', function () {
 
     // Get initial view columns
     $initialColumns = $this->getViewColumns('ff_values_pivot_view');
-    $initialColumnNames = array_map(fn($col) => $col->Field, $initialColumns);
+    $initialColumnNames = array_map(fn ($col) => $col->Field, $initialColumns);
 
     expect($initialColumnNames)->toContain('flexy_field1')
         ->and($initialColumnNames)->not->toContain('flexy_field2');
@@ -86,7 +84,7 @@ it('recreates view when new field is added', function () {
 
     // Check that view was recreated with new field
     $updatedColumns = $this->getViewColumns('ff_values_pivot_view');
-    $updatedColumnNames = array_map(fn($col) => $col->Field, $updatedColumns);
+    $updatedColumnNames = array_map(fn ($col) => $col->Field, $updatedColumns);
 
     expect($updatedColumnNames)->toContain('flexy_field1')
         ->and($updatedColumnNames)->toContain('flexy_field2');
@@ -112,7 +110,7 @@ it('does not recreate view when existing field is updated', function () {
 
     // Get initial view columns
     $initialColumns = $this->getViewColumns('ff_values_pivot_view');
-    $initialColumnNames = array_map(fn($col) => $col->Field, $initialColumns);
+    $initialColumnNames = array_map(fn ($col) => $col->Field, $initialColumns);
 
     // Update existing field value (should not trigger view recreation)
     $model->flexy->field1 = 'updated value';
@@ -120,7 +118,7 @@ it('does not recreate view when existing field is updated', function () {
 
     // Check that view columns are unchanged
     $updatedColumns = $this->getViewColumns('ff_values_pivot_view');
-    $updatedColumnNames = array_map(fn($col) => $col->Field, $updatedColumns);
+    $updatedColumnNames = array_map(fn ($col) => $col->Field, $updatedColumns);
 
     expect($updatedColumnNames)->toEqual($initialColumnNames);
 });

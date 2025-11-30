@@ -7,12 +7,10 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\Exceptions\FieldNotInSchemaException;
 use AuroraWebSoftware\FlexyField\Exceptions\SchemaInUseException;
 use AuroraWebSoftware\FlexyField\Exceptions\SchemaNotFoundException;
-use AuroraWebSoftware\FlexyField\Exceptions\FlexyFieldTypeNotAllowedException;
 use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\Models\FieldSchema;
-use AuroraWebSoftware\FlexyField\Models\SchemaField;
 use AuroraWebSoftware\FlexyField\Models\FieldValue;
-use DateTime;
+use AuroraWebSoftware\FlexyField\Models\SchemaField;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -76,7 +74,7 @@ trait Flexy
 
                 // Prepare data for validation (all current values + dirty values)
                 $validationData = $flexyModelContract->flexy->getAttributes();
-                
+
                 foreach ($dirtyFields as $field => $value) {
                     // Check if field exists in assigned schema
                     if (! $schemaFields->has($field)) {
@@ -112,12 +110,12 @@ trait Flexy
                     } elseif ($schemaField->type === FlexyFieldType::DATETIME) {
                         $addition['value_datetime'] = $value;
                     } elseif ($schemaField->type === FlexyFieldType::BOOLEAN) {
-                         // Handle boolean casting explicitly, including empty strings
-                         if ($value === null) {
-                             $addition['value_boolean'] = null;
-                         } else {
-                             $addition['value_boolean'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
-                         }
+                        // Handle boolean casting explicitly, including empty strings
+                        if ($value === null) {
+                            $addition['value_boolean'] = null;
+                        } else {
+                            $addition['value_boolean'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                        }
                     } elseif ($schemaField->type === FlexyFieldType::INTEGER) {
                         $addition['value_int'] = $value !== null ? (int) $value : null;
                     } elseif ($schemaField->type === FlexyFieldType::DECIMAL) {
@@ -264,7 +262,7 @@ trait Flexy
         ?array $fieldMetadata = null
     ): SchemaField {
         $modelType = static::getModelType();
-        
+
         // Get schema_id from schema_code for foreign key
         $schema = FieldSchema::where('model_type', $modelType)
             ->where('schema_code', $schemaCode)
@@ -386,12 +384,12 @@ trait Flexy
             get: function ($value, $attributes) {
                 if ($this->fields == null) {
                     $schemaCode = $this->getSchemaCode();
-                    
+
                     $this->fields = new \AuroraWebSoftware\FlexyField\Models\Flexy;
                     $this->fields->_model_type = static::getModelType();
                     $this->fields->_model_id = $attributes['id'] ?? $this->getKey();
                     $this->fields->_schema_code = $schemaCode;
-                    
+
                     // Query for values, optionally filtered by schema_code
                     $valuesQuery = FieldValue::where([
                         'ff_field_values.model_type' => static::getModelType(),
@@ -416,15 +414,15 @@ trait Flexy
                     $values->each(function ($value) {
                         // Initialize fieldValue from specific columns based on type or fallback
                         $fieldValue = null;
-                        
+
                         // Cast based on schema field type
                         // Note: $value->type can be either an enum value or a string from the database
                         $typeValue = is_string($value->type) ? strtolower($value->type) : $value->type->value;
-                        
+
                         if ($typeValue === FlexyFieldType::DATE->value) {
                             $fieldValue = $value->value_date ? \Carbon\Carbon::parse($value->value_date) : null;
                         } elseif ($typeValue === FlexyFieldType::DATETIME->value) {
-                             $fieldValue = $value->value_datetime ? \Carbon\Carbon::parse($value->value_datetime) : null;
+                            $fieldValue = $value->value_datetime ? \Carbon\Carbon::parse($value->value_datetime) : null;
                         } elseif ($typeValue === FlexyFieldType::DECIMAL->value) {
                             $fieldValue = $value->value_decimal !== null ? (float) $value->value_decimal : null;
                         } elseif ($typeValue === FlexyFieldType::INTEGER->value) {
@@ -435,7 +433,7 @@ trait Flexy
                             // String or default
                             $fieldValue = $value->value_string;
                         }
-                        
+
                         // Decode JSON if present (value_json is stored as JSON string in database)
                         if ($value->value_json !== null && $fieldValue === null) {
                             $fieldValue = json_decode($value->value_json, true);
@@ -443,7 +441,7 @@ trait Flexy
 
                         $this->fields->setAttribute($value->name, $fieldValue);
                     });
-                    
+
                     // Ensure schema code is synced (in case it was initialized before schema assignment)
                     if ($this->fields && $this->fields->_schema_code !== $this->getSchemaCode()) {
                         $this->fields->_schema_code = $this->getSchemaCode();
@@ -491,10 +489,10 @@ trait Flexy
     public function scopeWhereDefaultSchema(Builder $query): Builder
     {
         $modelType = static::getModelType();
-        
+
         return $query->whereHas('schema', function ($query) use ($modelType) {
             $query->where('model_type', $modelType)
-                  ->where('is_default', true);
+                ->where('is_default', true);
         });
     }
 
@@ -526,6 +524,7 @@ trait Flexy
     public function refresh()
     {
         $this->fields = null;
+
         return parent::refresh();
     }
 
@@ -536,6 +535,7 @@ trait Flexy
     {
         $attributes = parent::getAttributes();
         unset($attributes['flexy']);
+
         return $attributes;
     }
 
@@ -546,6 +546,7 @@ trait Flexy
     {
         $dirty = parent::getDirty();
         unset($dirty['flexy']);
+
         return $dirty;
     }
 }

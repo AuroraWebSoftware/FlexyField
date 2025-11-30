@@ -2,8 +2,11 @@
 
 namespace AuroraWebSoftware\FlexyField\Exceptions;
 
-class FieldNotInSchemaException extends \Exception 
+class FieldNotInSchemaException extends \Exception
 {
+    /**
+     * @param array<string> $availableFields
+     */
     public static function forField(string $field, string $schemaCode, array $availableFields): self
     {
         if (empty($availableFields)) {
@@ -11,6 +14,7 @@ class FieldNotInSchemaException extends \Exception
         } else {
             $available = implode(', ', $availableFields);
         }
+
         return new self("Field '{$field}' is not defined in schema '{$schemaCode}'. Available fields: {$available}");
     }
 }
