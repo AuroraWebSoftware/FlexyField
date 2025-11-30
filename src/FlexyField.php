@@ -22,47 +22,69 @@ class FlexyField
 
     public static function dropAndCreatePivotViewForMysql(): void
     {
-        $columnsSql = "
-            SET @sql = NULL;
-            SELECT
-                GROUP_CONCAT(
-                    DISTINCT
-                    CONCAT(
-                        'MAX(CASE WHEN field_name = ''',
-                        field_name,
-                        ''' THEN COALESCE(value_date, value_datetime, value_decimal, value_int, value_string, value_boolean, value_json,  NULL) END) AS `flexy_',
-                        field_name,
-                        '`'
-                    )
-                ) INTO @sql
-            FROM ff_values;
-        ";
+        // Get all distinct field names from actual values
+        $fieldNames = DB::table('ff_field_values')
+            ->select('name')
+            ->distinct()
+            ->pluck('name')
+            ->toArray();
 
-        $createViewSql = "
-            -- Drop the view if it exists
-            DROP VIEW IF EXISTS ff_values_pivot_view;
+        if (empty($fieldNames)) {
+            // Create empty view structure when no fields exist
+            DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
+            DB::statement('CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_field_values WHERE 1=0');
 
-            -- Create the view with dynamic columns or empty view if no columns
-            SET @create_view_sql = IF(
-                @sql IS NOT NULL,
-                CONCAT(
-                    'CREATE VIEW ff_values_pivot_view AS ',
-                    'SELECT model_type, model_id, ', @sql, ' ',
-                    'FROM ff_values ',
-                    'GROUP BY model_type, model_id'
-                ),
-                'CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_values WHERE 1=0'
-            );
+            return;
+        }
 
-            PREPARE stmt FROM @create_view_sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
-        ";
+        // Build column definitions
+        $columns = [];
+        foreach ($fieldNames as $fieldName) {
+            $columns[] = "MAX(CASE WHEN name = '{$fieldName}' THEN COALESCE(value_date, value_datetime, value_decimal, value_int, value_string, value_boolean, value_json, NULL) END) AS `flexy_{$fieldName}`";
+        }
 
-        // Execute SQL statements
-        DB::unprepared($columnsSql);
-        DB::unprepared($createViewSql);
+        $columnsSql = implode(', ', $columns);
 
+        // Drop and create view
+        DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
+        DB::statement("CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id, {$columnsSql} FROM ff_field_values GROUP BY model_type, model_id");
+    }
+
+    /**
+     * Get field names currently in the pivot view from database metadata
+     *
+     * @return array<string> Array of field names (without flexy_ prefix)
+     */
+    private static function getViewColumns(): array
+    {
+        $viewName = 'ff_values_pivot_view';
+
+        if (config('database.default') === 'pgsql') {
+            $results = DB::select("
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                AND table_name = ?
+                AND column_name LIKE 'flexy_%'
+             ", [$viewName]);
+
+            $columns = array_column($results, 'column_name');
+        } else {
+            $dbName = DB::connection()->getDatabaseName();
+            $results = DB::select("
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = ?
+                AND TABLE_NAME = ?
+                AND COLUMN_NAME LIKE 'flexy_%'
+             ", [$dbName, $viewName]);
+
+            $columns = array_column($results, 'COLUMN_NAME');
+        }
+
+        return array_map(function ($col) {
+            return substr($col, 6); // Remove 'flexy_' prefix
+        }, $columns);
     }
 
     /**
@@ -77,26 +99,15 @@ class FlexyField
             return false;
         }
 
-        // Get existing fields from schema tracking table
-        $existingFields = DB::table('ff_view_schema')
-            ->pluck('field_name')
-            ->toArray();
+        // Get existing fields from database metadata
+        $existingFields = self::getViewColumns();
 
-        // Find new fields that don't exist in schema
+        // Find new fields that don't exist in view
         $newFields = array_diff($fieldNames, $existingFields);
 
         if (empty($newFields)) {
             // No new fields, skip recreation
             return false;
-        }
-
-        // Insert new fields into tracking table (ignore duplicates)
-        $timestamp = now();
-        foreach ($newFields as $fieldName) {
-            DB::table('ff_view_schema')->insertOrIgnore([
-                'field_name' => $fieldName,
-                'added_at' => $timestamp,
-            ]);
         }
 
         // Recreate the view
@@ -106,70 +117,46 @@ class FlexyField
     }
 
     /**
-     * Force recreation of the pivot view and rebuild schema tracking
+     * Force recreation of the pivot view
      */
     public static function forceRecreateView(): void
     {
-        // Truncate schema tracking table
-        DB::table('ff_view_schema')->truncate();
-
-        // Get all distinct field names from ff_values
-        $allFields = DB::table('ff_values')
-            ->select('field_name')
-            ->distinct()
-            ->pluck('field_name')
-            ->toArray();
-
-        // Insert all fields into tracking table
-        if (! empty($allFields)) {
-            $timestamp = now();
-            $insertData = array_map(function ($fieldName) use ($timestamp) {
-                return [
-                    'field_name' => $fieldName,
-                    'added_at' => $timestamp,
-                ];
-            }, $allFields);
-
-            DB::table('ff_view_schema')->insert($insertData);
-        }
-
         // Recreate the view
         self::dropAndCreatePivotView();
     }
 
-    // TODO BOOLEAN values will be checked
     /**
      * @throws Exception
      */
     public static function dropAndCreatePivotViewForPostgres(): void
     {
-        // Get distinct field names from values
-        $fieldNames = DB::table('ff_values')
-            ->select('field_name')
+        // Get all distinct field names from actual values
+        $fieldNames = DB::table('ff_field_values')
+            ->select('name')
             ->distinct()
-            ->pluck('field_name')
+            ->pluck('name')
             ->toArray();
 
         if (empty($fieldNames)) {
             // Create empty view structure when no fields exist
-            DB::unprepared('DROP VIEW IF EXISTS ff_values_pivot_view');
-            DB::unprepared('CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_values WHERE FALSE');
+            DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
+            DB::statement('CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_field_values WHERE FALSE');
 
             return;
         }
 
-        // Get field types from ff_set_fields
-        $fieldTypes = DB::table('ff_set_fields')
-            ->select('field_name', 'field_type')
-            ->whereIn('field_name', $fieldNames)
-            ->pluck('field_type', 'field_name')
+        // Get field types from ff_schema_fields
+        $fieldTypes = DB::table('ff_schema_fields')
+            ->select('name', 'type')
+            ->whereIn('name', $fieldNames)
+            ->pluck('type', 'name')
             ->toArray();
 
         // Build column definitions for each field
         $columns = [];
         foreach ($fieldNames as $fieldName) {
             $fieldType = $fieldTypes[$fieldName] ?? 'STRING';
-            // field_type is stored as string in database, but handle enum case if needed
+            // type is stored as string in database, but handle enum case if needed
             if ($fieldType instanceof \BackedEnum) {
                 $fieldTypeStr = (string) $fieldType->value;
             } else {
@@ -180,28 +167,28 @@ class FlexyField
             switch (strtoupper($fieldTypeStr)) {
                 case 'BOOLEAN':
                     // Cast boolean to integer for MAX(), then cast back to boolean
-                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_boolean::INTEGER END)::BOOLEAN";
+                    $columnExpr = "MAX(CASE WHEN name = '{$fieldName}' THEN value_boolean::INTEGER END)::BOOLEAN";
                     break;
                 case 'DATE':
-                    // DATE fields are stored in value_datetime column, keep as TIMESTAMP for proper date comparisons
-                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_datetime END)";
+                    // DATE fields are stored in value_date column
+                    $columnExpr = "MAX(CASE WHEN name = '{$fieldName}' THEN value_date END)";
                     break;
                 case 'DATETIME':
                     // Keep as TIMESTAMP type for proper datetime comparisons
-                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_datetime END)";
+                    $columnExpr = "MAX(CASE WHEN name = '{$fieldName}' THEN value_datetime END)";
                     break;
                 case 'DECIMAL':
-                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_decimal::TEXT END)";
+                    $columnExpr = "MAX(CASE WHEN name = '{$fieldName}' THEN value_decimal::TEXT END)";
                     break;
                 case 'INTEGER':
-                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_int::TEXT END)";
+                    $columnExpr = "MAX(CASE WHEN name = '{$fieldName}' THEN value_int::TEXT END)";
                     break;
                 case 'JSON':
-                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN value_json::TEXT END)";
+                    $columnExpr = "MAX(CASE WHEN name = '{$fieldName}' THEN value_json::TEXT END)";
                     break;
                 default:
                     // For STRING or unknown types, use COALESCE to get the first non-null value
-                    $columnExpr = "MAX(CASE WHEN field_name = '{$fieldName}' THEN COALESCE(value_string, value_date::TEXT, value_datetime::TEXT, value_decimal::TEXT, value_int::TEXT, value_json::TEXT, CASE WHEN value_boolean IS NOT NULL THEN CASE WHEN value_boolean THEN 'true' ELSE 'false' END ELSE NULL END) END)";
+                    $columnExpr = "MAX(CASE WHEN name = '{$fieldName}' THEN COALESCE(value_string, value_date::TEXT, value_datetime::TEXT, value_decimal::TEXT, value_int::TEXT, value_json::TEXT, CASE WHEN value_boolean IS NOT NULL THEN CASE WHEN value_boolean THEN 'true' ELSE 'false' END ELSE NULL END) END)";
                     break;
             }
 
@@ -211,7 +198,7 @@ class FlexyField
         $columnsSql = implode(', ', $columns);
 
         // Drop and create view
-        DB::unprepared('DROP VIEW IF EXISTS ff_values_pivot_view');
-        DB::unprepared("CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id, {$columnsSql} FROM ff_values GROUP BY model_type, model_id");
+        DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
+        DB::statement("CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id, {$columnsSql} FROM ff_field_values GROUP BY model_type, model_id");
     }
 }

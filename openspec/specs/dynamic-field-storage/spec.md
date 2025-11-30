@@ -92,36 +92,22 @@ The system SHALL maintain a database view that pivots EAV data into a queryable 
 - **THEN** the pivot view SHALL be dropped and recreated
 - **AND** all existing and new fields SHALL be included in the view
 
-### Requirement: Data Migration from Shapes to Field Sets
-The system SHALL provide a migration path from the legacy ff_shapes table to field sets.
-
-#### Scenario: Legacy shapes are migrated to default field sets
-- **WHEN** the field set migration is executed
-- **AND** ff_shapes table contains shape definitions
-- **THEN** a default field set SHALL be created for each model_type
-- **AND** all shapes for a model_type SHALL be migrated to ff_set_fields
-- **AND** existing ff_values SHALL be updated with field_set_code from model instances
-
-#### Scenario: Model instances are assigned to default sets
-- **WHEN** the field set migration is executed
-- **THEN** all existing model instances SHALL have field_set_code set to 'default'
-- **AND** the assignment SHALL be performed for all models using Flexy trait
-
-#### Scenario: Legacy shapes table is dropped
-- **WHEN** the migration is completed
-- **THEN** the ff_shapes table SHALL be dropped
-- **AND** no data loss SHALL occur during the migration
-
 ### Requirement: Foreign Key Cascading
-The system SHALL handle cascading deletions when field sets or fields are removed.
+The system SHALL handle cascading deletions and nullifications using proper database foreign key constraints.
 
-#### Scenario: Deleting field set cascades to fields
-- **WHEN** a field set is deleted
-- **THEN** all SetField records for the set SHALL be cascade deleted via foreign key
-- **AND** no orphaned field records SHALL remain
+#### Scenario: Deleting schema cascades to schema fields
+- **WHEN** a schema is deleted from ff_schemas
+- **THEN** all SchemaField records SHALL be cascade deleted via FK constraint on schema_id
+- **AND** no orphaned field records SHALL remain in ff_schema_fields
 
-#### Scenario: Deleting field set nullifies model references
-- **WHEN** a field set is deleted
-- **THEN** all model instances with field_set_code SHALL have it set to NULL via foreign key
-- **AND** accessing flexy fields on these instances SHALL throw FieldSetNotFoundException
+#### Scenario: Deleting schema nullifies field value references
+- **WHEN** a schema is deleted from ff_schemas
+- **THEN** all FieldValue records SHALL have schema_id set to NULL via FK constraint
+- **AND** schema_code SHALL remain for reference but schema relationship will be broken
+- **AND** accessing flexy fields on these instances SHALL handle null schema gracefully
+
+#### Scenario: FK constraints prevent invalid references
+- **WHEN** attempting to create a SchemaField with non-existent schema_id
+- **THEN** the database SHALL reject the insert via FK constraint
+- **AND** an appropriate database error SHALL be raised
 

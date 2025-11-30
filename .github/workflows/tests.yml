@@ -46,7 +46,12 @@ jobs:
           POSTGRES_USER: flexyfield
           POSTGRES_PASSWORD: flexyfield
           POSTGRES_DB: flexyfield
-        options: --health-cmd="pg_isready -U flexyfield" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="pg_isready -U flexyfield"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+          --health-retries=3
 
     steps:
       - name: Checkout code

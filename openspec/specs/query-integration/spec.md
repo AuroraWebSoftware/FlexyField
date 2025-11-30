@@ -4,13 +4,13 @@
 FlexyField seamlessly integrates with Laravel's Eloquent query builder, allowing developers to query models by their flexy field values using standard Eloquent methods. This is achieved through a database pivot view and global scopes that automatically join the view to model queries.
 ## Requirements
 ### Requirement: Eloquent Query Builder Integration
-The system SHALL enable querying models by flexy field values using Eloquent's where methods, with support for field set filtering.
+The system SHALL enable querying models by flexy field values using Eloquent's where methods, with support for schema filtering.
 
 #### Scenario: Query by flexy field using where clause
 - **WHEN** a query uses where('flexy_fieldname', 'value')
 - **THEN** the query SHALL filter models by that flexy field value
 - **AND** results SHALL only include models where the field matches the value
-- **AND** the query SHALL work across all field sets
+- **AND** the query SHALL work across all schemas
 
 #### Scenario: Query by flexy field using dynamic where methods
 - **WHEN** a query uses whereFlexyFieldname('value')
@@ -22,19 +22,19 @@ The system SHALL enable querying models by flexy field values using Eloquent's w
 - **THEN** the query SHALL filter models using the comparison operator
 - **AND** numeric comparisons SHALL work correctly on typed columns
 
-#### Scenario: Query by field set code
-- **WHEN** a query uses whereFieldSet('set_code')
-- **THEN** the query SHALL filter models by field_set_code
-- **AND** results SHALL only include models assigned to that field set
+#### Scenario: Query by schema code
+- **WHEN** a query uses whereSchema('schema_code')
+- **THEN** the query SHALL filter models by schema_code
+- **AND** results SHALL only include models assigned to that schema
 
-#### Scenario: Query by multiple field sets
-- **WHEN** a query uses whereFieldSetIn(['set1', 'set2'])
-- **THEN** the query SHALL filter models by multiple field_set_code values
-- **AND** results SHALL include models from any of the specified sets
+#### Scenario: Query by multiple schemas
+- **WHEN** a query uses whereInSchema(['schema1', 'schema2'])
+- **THEN** the query SHALL filter models by multiple schema_code values
+- **AND** results SHALL include models from any of the specified schemas
 
-#### Scenario: Query models without field set
-- **WHEN** a query uses whereFieldSetNull()
-- **THEN** the query SHALL filter models where field_set_code is NULL
+#### Scenario: Query models without schema
+- **WHEN** a query uses whereDoesntHaveSchema()
+- **THEN** the query SHALL filter models where schema_code is NULL
 - **AND** results SHALL only include unassigned models
 
 ### Requirement: Global Scope for View Joining
@@ -57,26 +57,26 @@ The system SHALL automatically join the pivot view to model queries via a global
 - **AND** flexy fields SHALL NOT be accessible via attributes
 
 ### Requirement: Field Value Retrieval
-The system SHALL provide multiple ways to access flexy field values, scoped to the assigned field set.
+The system SHALL provide multiple ways to access flexy field values, scoped to the assigned schema.
 
 #### Scenario: Values accessible via flexy magic accessor
-- **WHEN** accessing $model->flexy->field_name
-- **THEN** the value SHALL be retrieved from the ff_values table
-- **AND** the value SHALL be filtered by the model's field_set_code
+- **WHEN** accessing $model->flexy->name
+- **THEN** the value SHALL be retrieved from the ff_field_values table
+- **AND** the value SHALL be filtered by the model's schema_code
 - **AND** the correct typed value SHALL be returned
 
 #### Scenario: Values accessible via model attributes
-- **WHEN** accessing $model->flexy_field_name
+- **WHEN** accessing $model->flexy_name
 - **THEN** the value SHALL be retrieved from the joined pivot view
 - **AND** the value type SHALL match the storage type
 
 #### Scenario: All flexy fields are loaded with model
 - **WHEN** a model is loaded from the database
-- **THEN** all flexy field values for the assigned field set SHALL be joined via the pivot view
+- **THEN** all flexy field values for the assigned schema SHALL be joined via the pivot view
 - **AND** no additional queries SHALL be needed to access flexy fields
 
 ### Requirement: Pivot View Management
-The system SHALL maintain a database view that makes flexy fields queryable across all field sets.
+The system SHALL maintain a database view that makes flexy fields queryable across all schemas.
 
 #### Scenario: View creation generates columns for all fields
 - **WHEN** dropAndCreatePivotView() is called
@@ -90,7 +90,7 @@ The system SHALL maintain a database view that makes flexy fields queryable acro
 - **AND** filtering by model_type SHALL separate model-specific fields
 
 #### Scenario: View columns use correct field names
-- **WHEN** a field is added to any field set
+- **WHEN** a field is added to any schema
 - **THEN** the view SHALL include a column named flexy_{field_name}
 - **AND** the column SHALL aggregate values using MAX() function
 - **AND** NULL values SHALL be used for models without that field
@@ -128,52 +128,52 @@ The system SHALL provide an API for batch operations that defers view recreation
 - **AND** the exception SHALL be re-thrown
 - **AND** the system SHALL remain in a consistent state
 
-### Requirement: Field Set Filtering
-The system SHALL allow querying models by their assigned field set.
+### Requirement: Schema Filtering
+The system SHALL allow querying models by their assigned schema.
 
-#### Scenario: Filter by field set code
-- **WHEN** whereFieldSet('set_code') is called
-- **THEN** the query SHALL filter by field_set_code column
-- **AND** only models assigned to the specified set SHALL be returned
+#### Scenario: Filter by schema code
+- **WHEN** whereSchema('schema_code') is called
+- **THEN** the query SHALL filter by schema_code column
+- **AND** only models assigned to the specified schema SHALL be returned
 
-#### Scenario: Filter by multiple field sets
-- **WHEN** whereFieldSetIn(['set1', 'set2']) is called
-- **THEN** the query SHALL filter by field_set_code using IN clause
-- **AND** models assigned to any of the specified sets SHALL be returned
+#### Scenario: Filter by multiple schemas
+- **WHEN** whereInSchema(['schema1', 'schema2']) is called
+- **THEN** the query SHALL filter by schema_code using IN clause
+- **AND** models assigned to any of the specified schemas SHALL be returned
 
-#### Scenario: Query models without field set
-- **WHEN** whereFieldSetNull() is called
-- **THEN** the query SHALL filter for null field_set_code
+#### Scenario: Query models without schema
+- **WHEN** whereDoesntHaveSchema() is called
+- **THEN** the query SHALL filter for null schema_code
 - **AND** only unassigned models SHALL be returned
 
-### Requirement: Cross-Field-Set Queries
-The system SHALL handle queries that span multiple field sets.
+### Requirement: Cross-Schema Queries
+The system SHALL handle queries that span multiple schemas.
 
-#### Scenario: Query field present in multiple sets
+#### Scenario: Query field present in multiple schemas
 - **WHEN** where('flexy_color', 'red') is called
-- **AND** 'color' field exists in multiple field sets
-- **THEN** the query SHALL return models from all sets containing the field
-- **AND** models SHALL match regardless of their field_set_code
+- **AND** 'color' field exists in multiple schemas
+- **THEN** the query SHALL return models from all schemas containing the field
+- **AND** models SHALL match regardless of their schema_code
 
-#### Scenario: Query field not in model's set returns correctly
+#### Scenario: Query field not in model's schema returns correctly
 - **WHEN** where('flexy_fieldname', 'value') is called
-- **AND** the queried models are assigned to a set without that field
+- **AND** the queried models are assigned to a schema without that field
 - **THEN** those models SHALL NOT be returned
-- **AND** only models with the field in their set SHALL match
+- **AND** only models with the field in their schema SHALL match
 
-### Requirement: Eager Loading with Field Sets
-The system SHALL support efficient eager loading of flexy fields with field set context.
+### Requirement: Eager Loading with Schemas
+The system SHALL support efficient eager loading of flexy fields with schema context.
 
-#### Scenario: Flexy fields are eager loaded with set context
+#### Scenario: Flexy fields are eager loaded with schema context
 - **WHEN** a collection of models is loaded
-- **THEN** flexy field values SHALL be eager loaded from ff_values
+- **THEN** flexy field values SHALL be eager loaded from ff_field_values
 - **AND** the eager load SHALL filter by model_type and model_id
 - **AND** N+1 query problems SHALL be avoided
 
-#### Scenario: Field set definitions are eager loadable
-- **WHEN** with('fieldSet') is called on a model query
-- **THEN** the FieldSet relation SHALL be eager loaded
-- **AND** the field set's fields SHALL be available
+#### Scenario: Schema definitions are eager loadable
+- **WHEN** with('schema') is called on a model query
+- **THEN** the FieldSchema relation SHALL be eager loaded
+- **AND** the schema's fields SHALL be available
 - **AND** no additional queries SHALL be executed per model
 
 ### Requirement: Query Edge Cases
@@ -189,10 +189,15 @@ The system SHALL handle query edge cases correctly.
 - **THEN** the query SHALL filter models where the field is NULL
 - **AND** results SHALL include models without that field value
 
-#### Scenario: Cross-field-set queries work correctly
-- **WHEN** multiple field sets have fields with the same name
+#### Scenario: Cross-schema queries work correctly
+- **WHEN** multiple schemas have fields with the same name
 - **AND** a query filters by that field name
-- **THEN** results SHALL include models from all field sets with matching values
+- **THEN** results SHALL include models from all schemas with matching values
+
+#### Scenario: Order by flexy field works correctly
+- **WHEN** a query uses orderBy('flexy_fieldname', 'asc')
+- **THEN** results SHALL be ordered by the flexy field value
+- **AND** ordering SHALL work across different schemas
 
 ### Requirement: Query Edge Cases
 The system SHALL handle query edge cases correctly.
@@ -207,13 +212,13 @@ The system SHALL handle query edge cases correctly.
 - **THEN** the query SHALL filter models where the field is NULL
 - **AND** results SHALL include models without that field value
 
-#### Scenario: Cross-field-set queries work correctly
-- **WHEN** multiple field sets have fields with the same name
+#### Scenario: Cross-schema queries work correctly
+- **WHEN** multiple schemas have fields with the same name
 - **AND** a query filters by that field name
-- **THEN** results SHALL include models from all field sets with matching values
+- **THEN** results SHALL include models from all schemas with matching values
 
 #### Scenario: Order by flexy field works correctly
 - **WHEN** a query uses orderBy('flexy_fieldname', 'asc')
 - **THEN** results SHALL be ordered by the flexy field value
-- **AND** ordering SHALL work across different field sets
+- **AND** ordering SHALL work across different schemas
 

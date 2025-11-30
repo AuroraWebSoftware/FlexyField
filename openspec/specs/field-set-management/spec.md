@@ -1,141 +1,158 @@
-# field-set-management Specification
+# Schema Management Specification
 
 ## Purpose
-TBD - created by archiving change add-attribute-sets. Update Purpose after archive.
+This specification defines the requirements for creating, managing, and assigning schemas (formerly field sets) to model instances. Schemas allow different instances of the same model to have different field configurations, enabling flexible data structures without database schema changes.
 ## Requirements
-### Requirement: Field Set Creation and Management
-The system SHALL allow creating and managing field sets for model types.
+### Requirement: Schema Creation and Management
+The system SHALL allow creating and managing schemas for model types.
 
-#### Scenario: Field set is created for a model type
-- **WHEN** createFieldSet() is called with set_code, label, and model_type
-- **THEN** a FieldSet record SHALL be created in ff_field_sets table
-- **AND** the set SHALL be scoped to the specified model_type
-- **AND** the set_code SHALL be unique within the model_type
-- **AND** the set SHALL include label, description, and metadata fields
+#### Scenario: Schema is created for a model type
+- **WHEN** createSchema() is called with schema_code, label, and model_type
+- **THEN** a FieldSchema record SHALL be created in ff_schemas table
+- **AND** the schema SHALL be scoped to the specified model_type
+- **AND** the schema_code SHALL be unique within the model_type
+- **AND** the schema SHALL include label, description, and metadata fields
 
-#### Scenario: Default field set is designated
-- **WHEN** a field set is created with is_default = true
-- **THEN** the set SHALL be marked as the default set for the model type
-- **AND** new model instances SHALL automatically be assigned to this set
-- **AND** only one set per model_type SHALL be marked as default
+#### Scenario: Default schema is designated
+- **WHEN** a schema is created with is_default = true
+- **THEN** the schema SHALL be marked as the default schema for the model type
+- **AND** new model instances SHALL automatically be assigned to this schema
+- **AND** only one schema per model_type SHALL be marked as default
 
-#### Scenario: Field set is retrieved
-- **WHEN** getFieldSet() is called with a set_code
-- **THEN** the corresponding FieldSet SHALL be returned
-- **AND** the set SHALL include all metadata and configuration
+#### Scenario: Schema is retrieved
+- **WHEN** getSchema() is called with a schema_code
+- **THEN** the corresponding FieldSchema SHALL be returned
+- **AND** the schema SHALL include all metadata and configuration
 
-#### Scenario: All field sets for a model are listed
-- **WHEN** getAllFieldSets() is called on a model
-- **THEN** all FieldSet records for that model_type SHALL be returned
-- **AND** sets SHALL be ordered by label
+#### Scenario: All schemas for a model are listed
+- **WHEN** getAllSchemas() is called on a model
+- **THEN** all FieldSchema records for that model_type SHALL be returned
+- **AND** schemas SHALL be ordered by label
 
-#### Scenario: Field set is deleted
-- **WHEN** deleteFieldSet() is called with a set_code
-- **AND** no model instances are assigned to the set
-- **THEN** the FieldSet record SHALL be deleted
-- **AND** all associated fields SHALL be cascade deleted via foreign key
+#### Scenario: Schema is deleted
+- **WHEN** deleteSchema() is called with a schema_code
+- **AND** no model instances are assigned to the schema
+- **THEN** the FieldSchema record SHALL be deleted
+- **AND** all associated SchemaField records SHALL be cascade deleted via foreign key
 
-#### Scenario: Field set deletion is prevented when in use
-- **WHEN** deleteFieldSet() is called for a set
-- **AND** model instances exist with field_set_code referencing the set
-- **THEN** FieldSetInUseException SHALL be thrown
-- **AND** the set SHALL NOT be deleted
+#### Scenario: Schema deletion is prevented when in use
+- **WHEN** deleteSchema() is called for a schema
+- **AND** model instances exist with schema_code referencing the schema
+- **THEN** SchemaInUseException SHALL be thrown
+- **AND** the schema SHALL NOT be deleted
 
-### Requirement: Field Management Within Sets
-The system SHALL allow adding and managing fields within field sets.
+### Requirement: Field Management Within Schemas
+The system SHALL allow adding and managing fields within schemas.
 
-#### Scenario: Field is added to field set
-- **WHEN** addFieldToSet() is called with set_code, field_name, and field_type
-- **THEN** a SetField record SHALL be created in ff_set_fields
-- **AND** the field SHALL be scoped to the specified set_code
-- **AND** field_name SHALL be unique within the set
-- **AND** the field SHALL include validation_rules, sort order, and field_metadata
+#### Scenario: Field is added to schema
+- **WHEN** addFieldToSchema() is called with schema_code, name, and type
+- **THEN** a SchemaField record SHALL be created in ff_schema_fields
+- **AND** the field SHALL be scoped to the specified schema_code
+- **AND** the field's schema_id SHALL reference the parent schema's id via FK
+- **AND** name SHALL be unique within the schema
+- **AND** the field SHALL include validation_rules, sort order, and metadata
 
-#### Scenario: Field is removed from field set
-- **WHEN** removeFieldFromSet() is called with set_code and field_name
-- **THEN** the SetField record SHALL be deleted
-- **AND** existing values for that field SHALL remain in ff_values
-- **AND** future assignments to that field SHALL be rejected for instances using the set
+#### Scenario: Field is removed from schema
+- **WHEN** removeFieldFromSchema() is called with schema_code and name
+- **THEN** the SchemaField record SHALL be deleted
+- **AND** existing FieldValue records for that field SHALL remain in ff_field_values
+- **AND** future assignments to that field SHALL be rejected for instances using the schema
 
-#### Scenario: All fields for a set are retrieved
-- **WHEN** getFieldsForSet() is called with a set_code
-- **THEN** all SetField records for the set SHALL be returned
+#### Scenario: All fields for a schema are retrieved
+- **WHEN** getFieldsForSchema() is called with a schema_code
+- **THEN** all SchemaField records for the schema SHALL be returned
 - **AND** fields SHALL be ordered by sort order
 
 ### Requirement: Model Instance Assignment
-The system SHALL allow assigning model instances to specific field sets.
+The system SHALL allow assigning model instances to specific schemas.
 
-#### Scenario: Model instance is assigned to field set
-- **WHEN** assignToFieldSet() is called on a model instance with set_code
-- **THEN** the instance's field_set_code column SHALL be set to the set_code
-- **AND** the set_code SHALL reference a valid FieldSet for the model_type
-- **AND** only fields from the assigned set SHALL be accessible
+#### Scenario: Model instance is assigned to schema
+- **WHEN** assignToSchema() is called on a model instance with schema_code
+- **THEN** the instance's schema_code column SHALL be set to the schema_code
+- **AND** the instance's schema_id column SHALL be set to the schema's id
+- **AND** the schema_code SHALL reference a valid FieldSchema for the model_type
+- **AND** only fields from the assigned schema SHALL be accessible
 
-#### Scenario: Model instance field set is retrieved
-- **WHEN** getFieldSetCode() is called on a model instance
-- **THEN** the current field_set_code value SHALL be returned
-- **AND** null SHALL be returned if no set is assigned
+#### Scenario: Model instance schema is retrieved
+- **WHEN** getSchemaCode() is called on a model instance
+- **THEN** the current schema_code value SHALL be returned
+- **AND** null SHALL be returned if no schema is assigned
 
 #### Scenario: Available fields are retrieved for instance
 - **WHEN** getAvailableFields() is called on a model instance
-- **THEN** all SetField records for the instance's field_set_code SHALL be returned
+- **THEN** all SchemaField records for the instance's schema_code SHALL be returned
 - **AND** fields SHALL be ordered by sort order
 
-### Requirement: Field Set Metadata
-The system SHALL support rich metadata for field sets.
+### Requirement: Schema Metadata
+The system SHALL support rich metadata for schemas.
 
-#### Scenario: Field set has metadata
-- **WHEN** a field set is created with metadata array
+#### Scenario: Schema has metadata
+- **WHEN** a schema is created with metadata array
 - **THEN** the metadata SHALL be stored as JSON
 - **AND** metadata MAY include icon, color, description, or custom properties
-- **AND** metadata SHALL be retrievable with the field set
+- **AND** metadata SHALL be retrievable with the schema
 
 #### Scenario: Field has metadata
-- **WHEN** a field is added with field_metadata array
-- **THEN** the metadata SHALL be stored as JSON
+- **WHEN** a field is added with metadata array
+- **THEN** the metadata SHALL be stored as JSON in the metadata column (not field_metadata)
 - **AND** metadata MAY include help text, placeholder, or custom properties
 - **AND** metadata SHALL be retrievable with the field definition
+
+### Requirement: Foreign Key Integrity
+The system SHALL maintain referential integrity using proper foreign key constraints.
+
+#### Scenario: Schema field references schema via FK
+- **WHEN** a SchemaField is created
+- **THEN** its schema_id SHALL reference a valid ff_schemas.id via FK constraint
+- **AND** deleting the parent schema SHALL cascade delete all related SchemaField records
+- **AND** orphan SchemaField records SHALL NOT exist in the database
+
+#### Scenario: Field value references schema via FK
+- **WHEN** a FieldValue is created with a schema
+- **THEN** its schema_id SHALL reference a valid ff_schemas.id via FK constraint (nullable)
+- **AND** deleting the schema SHALL set schema_id to NULL in related FieldValue records
+- **AND** the FieldValue SHALL remain in the database (not cascade deleted)
 
 ### Requirement: Edge Case Handling
 The system SHALL handle edge cases gracefully with appropriate errors and warnings.
 
-#### Scenario: Concurrent field set creation with same set_code
-- **WHEN** two users create field sets with identical model_type and set_code simultaneously
+#### Scenario: Concurrent schema creation with same code
+- **WHEN** two users create schemas with identical model_type and schema_code simultaneously
 - **THEN** the database unique constraint SHALL prevent duplicates
 - **AND** the second request SHALL receive a unique constraint violation error
 
-#### Scenario: Delete field set that is in use
-- **WHEN** deleteFieldSet() is called for a set
-- **AND** model instances reference the set via field_set_code
-- **THEN** FieldSetInUseException SHALL be thrown
-- **AND** the exception message SHALL include the count of instances using the set
+#### Scenario: Delete schema that is in use
+- **WHEN** deleteSchema() is called for a schema
+- **AND** model instances reference the schema via schema_code
+- **THEN** SchemaInUseException SHALL be thrown
+- **AND** the exception message SHALL include the count of instances using the schema
 
-#### Scenario: Assign non-existent field set to model
-- **WHEN** assignToFieldSet() is called with a non-existent set_code
+#### Scenario: Assign non-existent schema to model
+- **WHEN** assignToSchema() is called with a non-existent schema_code
 - **THEN** a database foreign key constraint violation SHALL occur
-- **AND** the model's field_set_code SHALL NOT be updated
+- **AND** the model's schema_code SHALL NOT be updated
 
-#### Scenario: Assign field set from different model type
-- **WHEN** assignToFieldSet() is called with a set_code
-- **AND** the set belongs to a different model_type
-- **THEN** FieldSetNotFoundException SHALL be thrown
+#### Scenario: Assign schema from different model type
+- **WHEN** assignToSchema() is called with a schema_code
+- **AND** the schema belongs to a different model_type
+- **THEN** SchemaNotFoundException SHALL be thrown
 - **AND** the exception message SHALL indicate model type mismatch
 
-#### Scenario: Change field set after setting field values
-- **WHEN** a model has field values in one field set
-- **AND** the model is assigned to a different field set
-- **THEN** the old field values SHALL remain in ff_values but become inaccessible
-- **AND** only fields from the new field set SHALL be accessible
+#### Scenario: Change schema after setting field values
+- **WHEN** a model has field values in one schema
+- **AND** the model is assigned to a different schema
+- **THEN** the old field values SHALL remain in ff_field_values but become inaccessible
+- **AND** only fields from the new schema SHALL be accessible
 
 #### Scenario: Metadata contains invalid JSON
-- **WHEN** createFieldSet() is called with metadata that cannot be JSON encoded
+- **WHEN** createSchema() is called with metadata that cannot be JSON encoded
 - **THEN** an exception SHALL be thrown before database storage
-- **AND** no field set record SHALL be created
+- **AND** no schema record SHALL be created
 
-#### Scenario: Delete default field set
-- **WHEN** deleteFieldSet() is called for a set where is_default=true
-- **AND** no model instances reference the set
-- **THEN** the set SHALL be deleted successfully
-- **AND** the model_type SHALL have no default field set
-- **AND** new model instances SHALL have null field_set_code
+#### Scenario: Delete default schema
+- **WHEN** deleteSchema() is called for a schema where is_default=true
+- **AND** no model instances reference the schema
+- **THEN** the schema SHALL be deleted successfully
+- **AND** the model_type SHALL have no default schema
+- **AND** new model instances SHALL have null schema_code
 

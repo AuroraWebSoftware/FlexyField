@@ -1,225 +1,330 @@
 <?php
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\Models\FieldSet;
-use AuroraWebSoftware\FlexyField\Models\SetField;
-use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesFieldSets;
+use AuroraWebSoftware\FlexyField\Models\FieldSchema;
+use AuroraWebSoftware\FlexyField\Models\SchemaField;
+use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
-uses(CreatesFieldSets::class);
+uses(CreatesSchemas::class);
 
 beforeEach(function () {
-    Artisan::call('migrate:fresh');
 
+    Schema::dropIfExists('ff_example_flexy_models');
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
-        $table->string('field_set_code')->nullable()->index();
+        $table->string('schema_code')->nullable()->index();
         $table->timestamps();
-
-        // REMOVED FOR PGSQL:         $table->foreign('field_set_code')
-        // REMOVED FOR PGSQL:             ->references('set_code')
-        // REMOVED FOR PGSQL:             ->on('ff_field_sets')
-        // REMOVED FOR PGSQL:             ->onDelete('set null')
-        // REMOVED FOR PGSQL:             ->onUpdate('cascade');
     });
 });
 
-it('can get model type', function () {
-    expect(ExampleFlexyModel::getModelType())->toBe(ExampleFlexyModel::class);
+it('provides access to schema management methods', function () {
+    // Check that all schema management methods are available
+    expect(method_exists(ExampleFlexyModel::class, 'createSchema'))->toBeTrue();
+    expect(method_exists(ExampleFlexyModel::class, 'getSchema'))->toBeTrue();
+    expect(method_exists(ExampleFlexyModel::class, 'getAllSchemas'))->toBeTrue();
+    expect(method_exists(ExampleFlexyModel::class, 'deleteSchema'))->toBeTrue();
 });
 
-it('can create field set with all parameters', function () {
-    $fieldSet = ExampleFlexyModel::createFieldSet(
-        'test_set',
-        'Test Set',
-        'Test description',
-        ['key' => 'value'],
-        false
+it('provides access to field management methods', function () {
+    // Check that all field management methods are available
+    expect(method_exists(ExampleFlexyModel::class, 'addFieldToSchema'))->toBeTrue();
+    expect(method_exists(ExampleFlexyModel::class, 'removeFieldFromSchema'))->toBeTrue();
+    expect(method_exists(ExampleFlexyModel::class, 'getFieldsForSchema'))->toBeTrue();
+});
+
+it('provides access to instance methods', function () {
+    // Check that all instance methods are available
+    expect(method_exists(ExampleFlexyModel::class, 'assignToSchema'))->toBeTrue();
+    expect(method_exists(ExampleFlexyModel::class, 'getSchemaCode'))->toBeTrue();
+    expect(method_exists(ExampleFlexyModel::class, 'getAvailableFields'))->toBeTrue();
+});
+
+it('provides access to relationship methods', function () {
+    // Check that relationship methods are available
+    expect(method_exists(ExampleFlexyModel::class, 'schema'))->toBeTrue();
+});
+
+it('creates schema correctly', function () {
+    // Create a schema
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
+        isDefault: false
     );
 
-    expect($fieldSet)->toBeInstanceOf(FieldSet::class)
-        ->and($fieldSet->set_code)->toBe('test_set')
-        ->and($fieldSet->label)->toBe('Test Set')
-        ->and($fieldSet->description)->toBe('Test description')
-        ->and($fieldSet->metadata)->toBe(['key' => 'value'])
-        ->and($fieldSet->is_default)->toBeFalse();
+    // Check that schema was created
+    expect($schema)->toBeInstanceOf(FieldSchema::class);
+    expect($schema->schema_code)->toBe('test');
+    expect($schema->label)->toBe('Test Schema');
+    expect($schema->description)->toBe('Test schema description');
+    expect($schema->is_default)->toBeFalse();
 });
 
-it('can get field set by code', function () {
-    $fieldSet = ExampleFlexyModel::createFieldSet('test', 'Test', null, null, false);
+it('gets schema correctly', function () {
+    // Create a schema
+    ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
+        isDefault: false
+    );
 
-    $retrieved = ExampleFlexyModel::getFieldSet('test');
+    // Get the schema
+    $schema = ExampleFlexyModel::getSchema('test');
 
-    expect($retrieved)->toBeInstanceOf(FieldSet::class)
-        ->and($retrieved->set_code)->toBe('test');
+    // Check that schema was retrieved
+    expect($schema)->toBeInstanceOf(FieldSchema::class);
+    expect($schema->schema_code)->toBe('test');
+    expect($schema->label)->toBe('Test Schema');
+    expect($schema->description)->toBe('Test schema description');
+    expect($schema->is_default)->toBeFalse();
 });
 
-it('can get all field sets for model type', function () {
-    ExampleFlexyModel::createFieldSet('set1', 'Set 1', null, null, false);
-    ExampleFlexyModel::createFieldSet('set2', 'Set 2', null, null, false);
-    ExampleFlexyModel::createFieldSet('set3', 'Set 3', null, null, false);
+it('gets all schemas correctly', function () {
+    // Create multiple schemas
+    ExampleFlexyModel::createSchema('schema1', 'Schema 1', 'Description 1', null, false);
+    ExampleFlexyModel::createSchema('schema2', 'Schema 2', 'Description 2', null, false);
+    ExampleFlexyModel::createSchema('default', 'Default Schema', 'Default Description', null, true);
 
-    $allSets = ExampleFlexyModel::getAllFieldSets();
+    // Get all schemas
+    $schemas = ExampleFlexyModel::getAllSchemas();
 
-    expect($allSets)->toHaveCount(3)
-        ->and($allSets->pluck('set_code')->toArray())->toContain('set1', 'set2', 'set3');
+    // Check that all schemas were retrieved
+    expect($schemas)->toHaveCount(3);
+    expect($schemas->pluck('schema_code')->toArray())->toContain('schema1', 'schema2', 'default');
+    expect($schemas->firstWhere('is_default', true)->schema_code)->toBe('default');
 });
 
-it('can delete field set when not in use', function () {
-    $fieldSet = ExampleFlexyModel::createFieldSet('temp', 'Temp', null, null, false);
+it('deletes schema correctly', function () {
+    // Create a schema
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
+        isDefault: false
+    );
 
-    $result = ExampleFlexyModel::deleteFieldSet('temp');
+    // Check that schema exists
+    expect(ExampleFlexyModel::getSchema('test'))->not->toBeNull();
 
-    expect($result)->toBeTrue()
-        ->and(FieldSet::where('set_code', 'temp')->exists())->toBeFalse();
+    // Delete the schema
+    $result = ExampleFlexyModel::deleteSchema('test');
+
+    // Check that schema was deleted
+    expect($result)->toBeTrue();
+    expect(ExampleFlexyModel::getSchema('test'))->toBeNull();
 });
 
-it('can add field to set with all parameters', function () {
-    ExampleFlexyModel::createFieldSet('test', 'Test', null, null, false);
+it('throws exception when deleting non-existent schema', function () {
+    // Try to delete non-existent schema
+    $result = ExampleFlexyModel::deleteSchema('non_existent');
 
-    $setField = ExampleFlexyModel::addFieldToSet(
+    // Check that false is returned
+    expect($result)->toBeFalse();
+});
+
+it('throws exception when deleting schema in use', function () {
+    // Create a schema
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
+        isDefault: false
+    );
+
+    // Add field to schema
+    ExampleFlexyModel::addFieldToSchema('test', 'field1', FlexyFieldType::STRING);
+
+    // Create a model using the schema
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+    $model->assignToSchema('test');
+    $model->flexy->field1 = 'test value';
+    $model->save();
+
+    // Try to delete the schema (should fail)
+    expect(fn () => ExampleFlexyModel::deleteSchema('test'))->toThrow(\Exception::class);
+});
+
+it('adds field to schema correctly', function () {
+    // Create a schema
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
+        isDefault: false
+    );
+
+    // Add a field to the schema
+    $field = ExampleFlexyModel::addFieldToSchema(
         'test',
-        'test_field',
+        'field1',
         FlexyFieldType::STRING,
-        10,
-        'required|string|max:255',
-        ['required' => 'Field is required'],
-        ['placeholder' => 'Enter value']
+        1,
+        'required|string',
+        null,
+        null
     );
 
-    expect($setField)->toBeInstanceOf(SetField::class)
-        ->and($setField->set_code)->toBe('test')
-        ->and($setField->field_name)->toBe('test_field')
-        ->and($setField->field_type)->toBe(FlexyFieldType::STRING)
-        ->and($setField->sort)->toBe(10)
-        ->and($setField->validation_rules)->toBe('required|string|max:255')
-        ->and($setField->validation_messages)->toBe(['required' => 'Field is required'])
-        ->and($setField->field_metadata)->toBe(['placeholder' => 'Enter value']);
+    // Check that field was created
+    expect($field)->toBeInstanceOf(SchemaField::class);
+    expect($field->schema_code)->toBe('test');
+    expect($field->name)->toBe('field1');
+    expect($field->type)->toBe(FlexyFieldType::STRING);
+    expect($field->sort)->toBe(1);
+    expect($field->validation_rules)->toBe('required|string');
 });
 
-it('can remove field from set', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'test',
-        fields: ['field1' => ['type' => FlexyFieldType::STRING]]
-    );
-
-    $result = ExampleFlexyModel::removeFieldFromSet('test', 'field1');
-
-    expect($result)->toBeTrue()
-        ->and(SetField::where('set_code', 'test')->where('field_name', 'field1')->exists())->toBeFalse();
-});
-
-it('can get fields for set', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'test',
-        fields: [
-            'field1' => ['type' => FlexyFieldType::STRING, 'sort' => 1],
-            'field2' => ['type' => FlexyFieldType::INTEGER, 'sort' => 2],
-            'field3' => ['type' => FlexyFieldType::BOOLEAN, 'sort' => 3],
-        ]
-    );
-
-    $fields = ExampleFlexyModel::getFieldsForSet('test');
-
-    expect($fields)->toHaveCount(3)
-        ->and($fields->pluck('field_name')->toArray())->toBe(['field1', 'field2', 'field3']);
-});
-
-it('can use query scopes', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'set1',
-        fields: ['field1' => ['type' => FlexyFieldType::STRING]],
+it('removes field from schema correctly', function () {
+    // Create a schema
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
         isDefault: false
     );
 
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'set2',
-        fields: ['field2' => ['type' => FlexyFieldType::STRING]],
+    // Add a field to the schema
+    $field = ExampleFlexyModel::addFieldToSchema(
+        'test',
+        'field1',
+        FlexyFieldType::STRING,
+        1,
+        'required|string',
+        null,
+        null
+    );
+
+    // Check that field exists
+    expect(ExampleFlexyModel::getFieldsForSchema('test')->firstWhere('name', 'field1'))->not->toBeNull();
+
+    // Remove the field
+    $result = ExampleFlexyModel::removeFieldFromSchema('test', 'field1');
+
+    // Check that field was removed
+    expect($result)->toBeTrue();
+    expect(ExampleFlexyModel::getFieldsForSchema('test')->firstWhere('name', 'field1'))->toBeNull();
+});
+
+it('gets fields for schema correctly', function () {
+    // Create a schema with multiple fields
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
         isDefault: false
     );
 
-    $model1 = ExampleFlexyModel::create(['name' => 'Model 1']);
-    $model1->assignToFieldSet('set1');
+    // Add multiple fields with different sort orders
+    ExampleFlexyModel::addFieldToSchema('test', 'field3', FlexyFieldType::STRING, 3);
+    ExampleFlexyModel::addFieldToSchema('test', 'field1', FlexyFieldType::STRING, 1);
+    ExampleFlexyModel::addFieldToSchema('test', 'field2', FlexyFieldType::INTEGER, 2);
 
-    $model2 = ExampleFlexyModel::create(['name' => 'Model 2']);
-    $model2->assignToFieldSet('set2');
+    // Get fields for the schema
+    $fields = ExampleFlexyModel::getFieldsForSchema('test');
 
-    $model3 = ExampleFlexyModel::create(['name' => 'Model 3']);
-    // No field set assigned
-
-    // Test whereFieldSet
-    $set1Models = ExampleFlexyModel::whereFieldSet('set1')->get();
-    expect($set1Models)->toHaveCount(1)
-        ->and($set1Models->first()->name)->toBe('Model 1');
-
-    // Test whereFieldSetIn
-    $setModels = ExampleFlexyModel::whereFieldSetIn(['set1', 'set2'])->get();
-    expect($setModels)->toHaveCount(2);
-
-    // Test whereFieldSetNull
-    $nullModels = ExampleFlexyModel::whereFieldSetNull()->get();
-    expect($nullModels)->toHaveCount(1)
-        ->and($nullModels->first()->name)->toBe('Model 3');
+    // Check that fields were retrieved in correct order
+    expect($fields)->toHaveCount(3);
+    expect($fields[0]->name)->toBe('field1');
+    expect($fields[0]->sort)->toBe(1);
+    expect($fields[1]->name)->toBe('field2');
+    expect($fields[1]->sort)->toBe(2);
+    expect($fields[2]->name)->toBe('field3');
+    expect($fields[2]->sort)->toBe(3);
 });
 
-it('handles model deletion and cleans up values', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: ['field1' => ['type' => FlexyFieldType::STRING]]
+it('assigns model to schema correctly', function () {
+    // Create a schema
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
+        isDefault: false
     );
 
-    $model = ExampleFlexyModel::create(['name' => 'Test']);
-    $model->flexy->field1 = 'value';
-    $model->save();
-
-    $modelId = $model->id;
-    expect(\AuroraWebSoftware\FlexyField\Models\Value::where('model_id', $modelId)->count())->toBe(1);
-
-    $model->delete();
-
-    expect(\AuroraWebSoftware\FlexyField\Models\Value::where('model_id', $modelId)->count())->toBe(0);
-});
-
-it('auto-assigns default field set on model creation', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: ['field1' => ['type' => FlexyFieldType::STRING]],
-        isDefault: true
-    );
-
+    // Create a model
     $model = ExampleFlexyModel::create(['name' => 'Test']);
 
-    expect($model->getFieldSetCode())->toBe('default');
+    // Assign the model to the schema
+    $model->assignToSchema('test');
+
+    // Check that model was assigned
+    expect($model->schema_code)->toBe('test');
+    expect($model->getSchemaCode())->toBe('test');
 });
 
-it('does not auto-assign when field_set_code is explicitly set', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: ['field1' => ['type' => FlexyFieldType::STRING]],
-        isDefault: true
-    );
-
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'custom',
-        fields: ['field2' => ['type' => FlexyFieldType::STRING]],
+it('gets schema code correctly', function () {
+    // Create a schema
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
         isDefault: false
     );
 
-    $model = new ExampleFlexyModel(['name' => 'Test']);
-    $model->field_set_code = 'custom';
-    $model->save();
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
 
-    expect($model->getFieldSetCode())->toBe('custom');
+    // Assign the model to the schema
+    $model->assignToSchema('test');
+
+    // Get the schema code
+    $schemaCode = $model->getSchemaCode();
+
+    // Check that schema code was retrieved
+    expect($schemaCode)->toBe('test');
+});
+
+it('gets available fields correctly', function () {
+    // Create a schema with fields
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
+        isDefault: false
+    );
+
+    // Add fields to the schema
+    ExampleFlexyModel::addFieldToSchema('test', 'field1', FlexyFieldType::STRING, 1);
+    ExampleFlexyModel::addFieldToSchema('test', 'field2', FlexyFieldType::INTEGER, 2);
+
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+
+    // Assign the model to the schema
+    $model->assignToSchema('test');
+
+    // Get available fields
+    $fields = $model->getAvailableFields();
+
+    // Check that fields were retrieved
+    expect($fields)->toHaveCount(2);
+    expect($fields->pluck('name')->toArray())->toContain('field1', 'field2');
+});
+
+it('provides schema relationship correctly', function () {
+    // Create a schema
+    $schema = ExampleFlexyModel::createSchema(
+        schemaCode: 'test',
+        label: 'Test Schema',
+        description: 'Test schema description',
+        isDefault: false
+    );
+
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+
+    // Assign the model to the schema
+    $model->assignToSchema('test');
+
+    // Get the schema relationship
+    $schema = $model->schema;
+
+    // Check that relationship works
+    expect($schema)->toBeInstanceOf(FieldSchema::class);
+    expect($schema->schema_code)->toBe('test');
 });

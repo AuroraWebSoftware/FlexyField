@@ -74,35 +74,29 @@ The package documentation SHALL provide solutions for common issues and debug pr
 - **AND** log analysis guidance SHALL be included
 
 ### Requirement: Documentation Quality
-All documentation SHALL be accurate, clear, and include working code examples. Documentation SHALL be organized into two distinct audiences: AI-oriented documentation (OpenSpec files) optimized for machine reading and AI assistant understanding, and developer-oriented documentation (README and guides) optimized for human developers.
+All documentation SHALL be accurate, clear, concise, and action-oriented. Documentation SHALL avoid unnecessary verbosity and focus on practical patterns and procedures.
 
-#### Scenario: Code examples are verified
-- **WHEN** documentation includes code examples
-- **THEN** all examples SHALL be syntactically correct
-- **AND** examples SHALL be tested to work correctly
-- **AND** examples SHALL follow package conventions
+#### Scenario: Documentation is concise and scannable
+- **WHEN** documentation is reviewed
+- **THEN** sections SHALL use clear, scannable headers
+- **AND** content SHALL use bullet points and lists instead of long paragraphs
+- **AND** code examples SHALL be used instead of verbose explanations where appropriate
+- **AND** redundant explanations SHALL be removed
+- **AND** total documentation length SHALL be minimized while maintaining quality
 
-#### Scenario: Documentation is accessible
-- **WHEN** users navigate documentation
-- **THEN** table of contents SHALL be provided
-- **AND** internal links SHALL work correctly
-- **AND** documentation SHALL be well-organized and easy to search
+#### Scenario: Documentation is action-oriented
+- **WHEN** developers read documentation
+- **THEN** documentation SHALL focus on what to do (practical steps)
+- **AND** theoretical explanations SHALL be minimal unless critical
+- **AND** each section SHALL provide actionable guidance
+- **AND** quick reference tables SHALL be provided for common tasks
 
-#### Scenario: AI-oriented documentation is structured for machine reading
-- **WHEN** AI assistants read OpenSpec documentation files
-- **THEN** project context SHALL be clearly structured with explicit sections
-- **AND** architecture patterns SHALL be explained with examples and cross-references
-- **AND** conventions and constraints SHALL be explicitly documented in AI-friendly format
-- **AND** domain context SHALL include clear explanations of technical patterns (EAV, Field Sets, etc.)
-- **AND** agent instructions SHALL include comprehensive examples and troubleshooting guidance
-
-#### Scenario: Developer-oriented documentation is optimized for human readers
-- **WHEN** developers read README and guide documentation
-- **THEN** quick start sections SHALL be prominent and easy to follow
-- **AND** code examples SHALL include helpful comments and real-world use cases
-- **AND** documentation SHALL be organized by user journey (install → quick start → advanced)
-- **AND** troubleshooting and common issues SHALL be easily discoverable
-- **AND** all terminology SHALL be consistent and accurate (e.g., Field Sets not Shapes)
+#### Scenario: Documentation is well-organized
+- **WHEN** developers search for information
+- **THEN** documentation structure SHALL be logical and predictable
+- **AND** similar information SHALL not be repeated across files
+- **AND** troubleshooting SHALL follow problem → solution format
+- **AND** best practices SHALL be presented as clear patterns
 
 ### Requirement: OpenSpec Project Documentation
 The `openspec/project.md` file SHALL provide comprehensive, AI-friendly project context that helps AI assistants understand the project structure, architecture, conventions, and domain concepts.
@@ -178,4 +172,39 @@ The `README.md` file SHALL provide clear, practical documentation optimized for 
 - **AND** version compatibility information SHALL be accurate
 - **AND** all links SHALL be valid and functional
 - **AND** database structure documentation SHALL reflect current implementation
+
+### Requirement: GitHub-Optimized Documentation
+Project documentation SHALL be optimized for GitHub presentation and AI-assisted development.
+
+#### Scenario: README is optimized for GitHub presentation
+- **WHEN** users visit the GitHub repository
+- **THEN** README.md SHALL include build status, coverage, version, and compatibility badges
+- **AND** README.md SHALL have a hero section with clear value proposition
+- **AND** README.md SHALL include a comparison table (vs. alternatives)
+- **AND** README.md SHALL use syntax-highlighted code blocks
+- **AND** README.md SHALL have visual hierarchy with emojis and clear sections
+- **AND** README.md SHALL highlight v2.0 performance improvements (98% faster)
+
+**Reason**: Professional GitHub presence increases adoption. Badges convey project health at a glance.
+
+#### Scenario: Laravel Boost guidelines provide comprehensive AI context
+- **WHEN** AI agents use Laravel Boost for code generation
+- **THEN** `resources/boost/guidelines/core.blade.php` SHALL include quick reference section
+- **AND** guideline SHALL include common mistakes section
+- **AND** guideline SHALL include troubleshooting section (exceptions, solutions)
+- **AND** guideline SHALL include performance tips
+- **AND** guideline SHALL include Blade integration examples (views, forms, validation)
+- **AND** guideline SHALL use `@verbatim` and `<code-snippet>` tags for AI parsing
+- **AND** code examples SHALL be complete and runnable
+
+**Reason**: Comprehensive guidelines enable AI agents to generate better, more accurate Laravel code. Laravel Boost uses these guidelines to augment AI context.
+
+#### Scenario: Legacy documentation files are removed
+- **WHEN** documentation is maintained
+- **THEN** files with minimal content (<200 bytes) SHALL be removed or consolidated
+- **AND** redundant agent-specific docs SHALL be consolidated (if all point to same source)
+- **AND** temporary/scratch files SHALL not exist in repository
+- **AND** all references to removed files SHALL be updated
+
+**Reason**: Removing clutter improves repository cleanliness and reduces maintenance burden.
 
