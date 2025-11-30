@@ -10,29 +10,32 @@ Currently, FlexyField supports storing primitive values (strings, integers, deci
 Adding relationship support would enable FlexyField to handle these common scenarios while maintaining type safety and query integration.
 
 ## What Changes
-- **ADDED**: New `RELATIONSHIP` field type in `FlexyFieldType` enum
-- **ADDED**: Database columns `value_related_model_type` and `value_related_model_id` in `ff_values` table
-- **ADDED**: Support for storing model references in flexy fields (one-to-one, one-to-many relationships)
-- **ADDED**: Relationship retrieval methods that return Eloquent model instances
-- **ADDED**: Query support for filtering by related models
-- **ADDED**: Validation to ensure referenced models exist
-- **ADDED**: Cascade delete options for relationship fields
-- **MODIFIED**: Type detection logic to recognize Eloquent model instances
-- **MODIFIED**: Pivot view to include relationship fields for querying
-- **MODIFIED**: Field set field definitions to support relationship configuration
+- **Enum Update:** Add `RELATIONSHIP` field type in `FlexyFieldType` enum.
+- **Database Schema:** Add `value_related_model_type` (string) and `value_related_model_id` (string/int) columns to `ff_field_values` table.
+- **Metadata Configuration:**
+    - Require `target_model` (e.g., `App\Models\User::class`) in the schema field metadata to enforce type safety.
+    - Support polymorphic relationships if `target_model` is not specified or set to `*` (optional, but strict mode preferred).
+- **Eager Loading Strategy (N+1 Solution):**
+    - Implement a `loadFlexyRelations(array $fieldNames)` method in `Flexy` trait.
+    - This method will collect all IDs for the specified fields from the loaded models and perform a batch query (WhereIn) to load related models, mapping them back to the flexy fields in memory.
+    - Avoids N+1 queries when listing models with relationship fields.
+- **Pivot View Strategy:**
+    - The pivot view will expose `flexy_{field}_id` and `flexy_{field}_type` columns.
+    - **Crucial:** The view will NOT perform joins to related tables to avoid massive performance degradation. Joins should be handled at the application query level if needed.
+- **Validation:** Ensure referenced models exist in the database before saving.
+- **Cascade Delete:** Implement options in metadata (e.g., `cascade: true`) to handle behavior when the related model is deleted (set null or delete value).
 
 ## Impact
-- **Affected specs**: 
-  - `type-system` - New relationship type and type detection
-  - `dynamic-field-storage` - New storage columns and persistence logic
-  - `query-integration` - Relationship querying capabilities
+- **Affected specs**:
+  - `type-system`: New relationship type and type detection
+  - `dynamic-field-storage`: New storage columns and persistence logic
+  - `query-integration`: Relationship querying capabilities
 - **Affected code**:
-  - `src/Enums/FlexyFieldType.php` - Add RELATIONSHIP case
-  - `src/Traits/Flexy.php` - Type detection, storage, and retrieval logic
-  - `src/Models/Value.php` - Relationship accessor methods
-  - `database/migrations/create_flexyfield_table.php` - Add relationship columns
-  - `src/FlexyField.php` - Pivot view updates for relationships
-  - `src/Models/SetField.php` - Relationship metadata storage
+  - `src/Enums/FlexyFieldType.php`: Add RELATIONSHIP case
+  - `src/Traits/Flexy.php`: Type detection, storage, retrieval, and **eager loading logic**
+  - `src/Models/Value.php`: Relationship accessor methods
+  - `database/migrations/create_flexyfield_table.php`: Add relationship columns
+  - `src/FlexyField.php`: Pivot view updates (add ID/Type columns)
+  - `src/Models/SetField.php`: Relationship metadata storage
 - **Breaking changes**: None (additive feature)
-- **Migration required**: Yes - adds new columns to `ff_values` table
-
+- **Migration required**: Yes - adds new columns to `ff_field_values` table. **Note:** This table can be large, so the migration might take time on production datasets.
