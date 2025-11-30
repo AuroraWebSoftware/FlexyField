@@ -22,20 +22,12 @@ class FlexyField
 
     public static function dropAndCreatePivotViewForMysql(): void
     {
-        // Get field names from ff_view_schema (tracks all fields that have been added)
-        // Fallback to ff_field_values if view_schema is empty (for backward compatibility)
-        $fieldNames = DB::table('ff_view_schema')
+        // Get all distinct field names from actual values
+        $fieldNames = DB::table('ff_field_values')
+            ->select('name')
+            ->distinct()
             ->pluck('name')
             ->toArray();
-
-        // If no fields in tracking table, get from actual values (backward compatibility)
-        if (empty($fieldNames)) {
-            $fieldNames = DB::table('ff_field_values')
-                ->select('name')
-                ->distinct()
-                ->pluck('name')
-                ->toArray();
-        }
 
         if (empty($fieldNames)) {
             // Create empty view structure when no fields exist
@@ -59,6 +51,43 @@ class FlexyField
     }
 
     /**
+     * Get field names currently in the pivot view from database metadata
+     *
+     * @return array<string> Array of field names (without flexy_ prefix)
+     */
+    private static function getViewColumns(): array
+    {
+        $viewName = 'ff_values_pivot_view';
+
+        if (config('database.default') === 'pgsql') {
+            $results = DB::select("
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                AND table_name = ?
+                AND column_name LIKE 'flexy_%'
+             ", [$viewName]);
+
+            $columns = array_column($results, 'column_name');
+        } else {
+            $dbName = DB::connection()->getDatabaseName();
+            $results = DB::select("
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = ?
+                AND TABLE_NAME = ?
+                AND COLUMN_NAME LIKE 'flexy_%'
+             ", [$dbName, $viewName]);
+
+            $columns = array_column($results, 'COLUMN_NAME');
+        }
+
+        return array_map(function ($col) {
+            return substr($col, 6); // Remove 'flexy_' prefix
+        }, $columns);
+    }
+
+    /**
      * Recreate view only if new fields are detected
      *
      * @param  array<string>  $fieldNames  Array of field names to check
@@ -70,26 +99,15 @@ class FlexyField
             return false;
         }
 
-        // Get existing fields from schema tracking table
-        $existingFields = DB::table('ff_view_schema')
-            ->pluck('name')
-            ->toArray();
+        // Get existing fields from database metadata
+        $existingFields = self::getViewColumns();
 
-        // Find new fields that don't exist in schema
+        // Find new fields that don't exist in view
         $newFields = array_diff($fieldNames, $existingFields);
 
         if (empty($newFields)) {
             // No new fields, skip recreation
             return false;
-        }
-
-        // Insert new fields into tracking table (ignore duplicates)
-        $timestamp = now();
-        foreach ($newFields as $fieldName) {
-            DB::table('ff_view_schema')->insertOrIgnore([
-                'name' => $fieldName,
-                'added_at' => $timestamp,
-            ]);
         }
 
         // Recreate the view
@@ -99,33 +117,10 @@ class FlexyField
     }
 
     /**
-     * Force recreation of the pivot view and rebuild schema tracking
+     * Force recreation of the pivot view
      */
     public static function forceRecreateView(): void
     {
-        // Truncate schema tracking table
-        DB::table('ff_view_schema')->truncate();
-
-        // Get all distinct field names from ff_field_values
-        $allFields = DB::table('ff_field_values')
-            ->select('name')
-            ->distinct()
-            ->pluck('name')
-            ->toArray();
-
-        // Insert all fields into tracking table
-        if (! empty($allFields)) {
-            $timestamp = now();
-            $insertData = array_map(function ($fieldName) use ($timestamp) {
-                return [
-                    'name' => $fieldName,
-                    'added_at' => $timestamp,
-                ];
-            }, $allFields);
-
-            DB::table('ff_view_schema')->insert($insertData);
-        }
-
         // Recreate the view
         self::dropAndCreatePivotView();
     }
@@ -135,20 +130,12 @@ class FlexyField
      */
     public static function dropAndCreatePivotViewForPostgres(): void
     {
-        // Get field names from ff_view_schema (tracks all fields that have been added)
-        // Fallback to ff_field_values if view_schema is empty (for backward compatibility)
-        $fieldNames = DB::table('ff_view_schema')
+        // Get all distinct field names from actual values
+        $fieldNames = DB::table('ff_field_values')
+            ->select('name')
+            ->distinct()
             ->pluck('name')
             ->toArray();
-
-        // If no fields in tracking table, get from actual values (backward compatibility)
-        if (empty($fieldNames)) {
-            $fieldNames = DB::table('ff_field_values')
-                ->select('name')
-                ->distinct()
-                ->pluck('name')
-                ->toArray();
-        }
 
         if (empty($fieldNames)) {
             // Create empty view structure when no fields exist

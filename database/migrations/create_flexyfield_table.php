@@ -73,12 +73,7 @@ return new class extends Migration
             $table->index(['schema_code']);
         });
 
-        Schema::dropIfExists('ff_view_schema');
-        Schema::create('ff_view_schema', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique(); // renamed from field_name
-            $table->timestamp('added_at')->useCurrent();
-        });
+
 
         // Add foreign key constraints after creating all tables
         Schema::table('ff_schema_fields', function (Blueprint $table) {
@@ -104,7 +99,7 @@ return new class extends Migration
     public function down(): void
     {
         DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
-        Schema::dropIfExists('ff_view_schema');
+
         Schema::dropIfExists('ff_field_values');
         Schema::dropIfExists('ff_schema_fields');
         Schema::dropIfExists('ff_schemas');

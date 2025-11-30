@@ -141,24 +141,9 @@ it('handles concurrent field additions correctly', function () {
     }
 });
 
-it('tracks field names correctly in schema tracking table', function () {
-    // Create a schema with fields
-    $this->createSchemaWithFields(
-        modelClass: ExampleFlexyModel::class,
-        schemaCode: 'test',
-        fields: [
-            'field1' => ['type' => FlexyFieldType::STRING],
-            'field2' => ['type' => FlexyFieldType::INTEGER],
-        ]
-    );
 
-    // Check that fields are tracked
-    $trackedFields = DB::table('ff_view_schema')->pluck('name')->toArray();
-    expect($trackedFields)->toContain('field1')
-        ->and($trackedFields)->toContain('field2');
-});
 
-it('force recreates view and rebuilds tracking table', function () {
+it('force recreates view', function () {
     // Create a schema with fields
     $this->createSchemaWithFields(
         modelClass: ExampleFlexyModel::class,
@@ -176,15 +161,13 @@ it('force recreates view and rebuilds tracking table', function () {
     $model->flexy->field2 = 123;
     $model->save();
 
-    // Verify initial state
-    $this->assertDatabaseHas('ff_view_schema', ['name' => 'field1']);
-    $this->assertDatabaseHas('ff_view_schema', ['name' => 'field2']);
-
     // Force recreate view
     FlexyField::forceRecreateView();
 
-    // Check that tracking table is rebuilt with existing fields
-    $trackedFields = DB::table('ff_view_schema')->pluck('name')->toArray();
-    expect($trackedFields)->toContain('field1')
-        ->and($trackedFields)->toContain('field2');
+    // Check that view still exists and has correct columns
+    $viewColumns = $this->getViewColumns('ff_values_pivot_view');
+    $columnNames = array_map(fn ($col) => $col->Field, $viewColumns);
+
+    expect($columnNames)->toContain('flexy_field1')
+        ->and($columnNames)->toContain('flexy_field2');
 });
