@@ -51,7 +51,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-        cmd: ["postgres", "-c", "max_connections=200"]
+          --health-retries=3
 
     steps:
       - name: Checkout code
