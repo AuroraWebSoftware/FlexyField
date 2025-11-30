@@ -66,6 +66,39 @@ public function rules() {
 }
 ```
 
+## Select Options
+
+**Use options for controlled values:**
+
+```php
+// Indexed array (values are both keys and labels)
+['options' => ['S', 'M', 'L', 'XL']]
+
+// Associative array (keys stored, values for display)
+['options' => ['sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large']]
+```
+
+**Multi-select requires JSON type:**
+
+```php
+// ✅ Correct
+Product::addFieldToSchema('product', 'tags', FlexyFieldType::JSON, 100, null, null, [
+    'options' => ['new', 'sale', 'featured'],
+    'multiple' => true
+]);
+
+// ❌ Wrong - STRING type with multiple: true will fail
+Product::addFieldToSchema('product', 'tags', FlexyFieldType::STRING, 100, null, null, [
+    'multiple' => true  // Error: multi-select needs JSON type
+]);
+```
+
+**Keep options manageable:**
+
+- **Small lists** (< 10 items): Inline in schema
+- **Medium lists** (10-50 items): Store in config/constants
+- **Large/dynamic lists** (> 50 items): Use relationships instead of select options
+
 ## Data Migration
 
 **Add fields** (no migration needed):

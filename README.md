@@ -238,6 +238,46 @@ $product->flexy->published_at = Carbon::now();  // DATETIME
 $product->flexy->tags = ['summer', 'sale'];     // JSON
 ```
 
+### Select Options
+
+Restrict field values to predefined options:
+
+```php
+use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
+
+// Single select (dropdown)
+Product::addFieldToSchema(
+    'electronics',
+    'color',
+    FlexyFieldType::STRING,
+    100,
+    null,
+    null,
+    ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
+);
+
+// Multi-select (checkboxes)
+Product::addFieldToSchema(
+    'electronics',
+    'features',
+    FlexyFieldType::JSON,
+    100,
+    null,
+    null,
+    [
+        'options' => ['wifi', '5g', 'nfc', 'bluetooth'],
+        'multiple' => true
+    ]
+);
+
+// Usage
+$phone = Product::create(['name' => 'Smartphone']);
+$phone->assignToSchema('electronics');
+$phone->flexy->color = 'blue';              // Single value
+$phone->flexy->features = ['wifi', '5g'];   // Multiple values
+$phone->save();
+```
+
 ### Validation
 
 ```php

@@ -182,6 +182,8 @@ mkdir -p openspec/changes/add-new-feature/specs/capability-name
 - Affected specs: [list capabilities, e.g., "field-validation, type-system"]
 - Affected code: [key files/systems, e.g., "src/Traits/Flexy.php, database migrations"]
 - Breaking changes: [list if any, e.g., "Removes deprecated method X"]
+- Testing requirements: [describe what tests need to be created/updated]
+- Documentation updates: [describe what documentation needs to be updated]
 ```
 
 **Example proposal.md:**
@@ -287,7 +289,40 @@ The system SHALL support multiple data types for flexy fields via the FlexyField
 - [ ] 1.1 Create database schema
 - [ ] 1.2 Implement API endpoint
 - [ ] 1.3 Add frontend component
-- [ ] 1.4 Write tests
+
+## 2. Testing
+- [ ] 2.1 Write unit tests for new functionality
+- [ ] 2.2 Write integration tests
+- [ ] 2.3 Write feature tests for user workflows
+- [ ] 2.4 Update existing tests if needed
+
+## 3. Documentation
+- [ ] 3.1 Update README.md with new feature documentation
+- [ ] 3.2 Update Laravel Boost core.blade.php with AI guidance
+- [ ] 3.3 Add code examples to documentation
+- [ ] 3.4 Update changelog
+```
+
+**Tasks.md Template (copy and modify for your proposal):**
+```markdown
+## 1. Implementation
+- [ ] 1.1 [First implementation step]
+- [ ] 1.2 [Second implementation step]
+- [ ] 1.3 [Additional implementation steps as needed]
+
+## 2. Testing (Mandatory)
+- [ ] 2.1 Write unit tests for [specific component/method]
+- [ ] 2.2 Write integration tests for [component interactions]
+- [ ] 2.3 Write feature tests for [user workflow]
+- [ ] 2.4 Update existing tests affected by this change
+- [ ] 2.5 Verify test coverage meets minimum requirements
+
+## 3. Documentation (Mandatory)
+- [ ] 3.1 Update README.md with [new feature] documentation
+- [ ] 3.2 Update Laravel Boost core.blade.php with AI guidance
+- [ ] 3.3 Add code examples for [new functionality]
+- [ ] 3.4 Update CHANGELOG.md with [breaking changes/new features]
+- [ ] 3.5 Verify documentation examples are tested and working
 ```
 
 5. **Create design.md when needed:**
@@ -677,6 +712,40 @@ Only add complexity with:
 - `tasks.md` - Implementation steps
 - `design.md` - Technical decisions
 - `spec.md` - Requirements and behavior
+- `resources/boost/guidelines/core.blade.php` - Laravel Boost AI guidance documentation
+
+### Laravel Boost Integration
+
+Laravel Boost is an MCP (Model Context Protocol) server that accelerates AI-assisted development by providing essential context and structure for generating high-quality, Laravel-specific code. The `resources/boost/guidelines/core.blade.php` file serves as the primary AI guidance document for FlexyField.
+
+#### Purpose of core.blade.php
+The `core.blade.php` file contains structured documentation that:
+- Provides AI assistants with accurate information about FlexyField's features and usage patterns
+- Includes code examples with proper syntax highlighting using `@verbatim` and `@endverbatim` tags
+- Follows Laravel Boost's format guidelines for optimal AI comprehension
+- Serves as the single source of truth for AI-generated FlexyField code
+
+#### How AI Assistants Use core.blade.php
+When an AI assistant is working with FlexyField:
+1. Laravel Boost loads the `core.blade.php` file as context
+2. The AI uses this information to generate accurate, framework-appropriate code
+3. Code examples in the file provide templates for common use cases
+4. The AI follows the documented patterns and best practices
+
+#### Maintaining core.blade.php
+- Every proposal must include updates to this file when adding new features
+- Use the established format with `@verbatim` and `@endverbatim` tags for code examples
+- Include practical examples that demonstrate real-world usage
+- Follow the existing structure and formatting for consistency
+
+#### Example Format
+```blade
+@verbatim
+<code-snippet name="Descriptive Name" lang="php">
+// Code example here
+</code-snippet>
+@endverbatim
+```
 
 ### CLI Essentials
 ```bash
@@ -700,6 +769,19 @@ openspec archive <change-id> [--yes|-y]  # Mark complete (add --yes for automati
 - ❌ Configuration changes
 - ❌ Tests for existing behavior
 
+### Mandatory Requirements for All Proposals
+- **Testing**: Every proposal must include comprehensive testing requirements in tasks.md
+  - Unit tests for new functionality
+  - Integration tests for component interactions
+  - Feature tests for user workflows
+  - Updates to existing tests when behavior changes
+  
+- **Documentation**: Every proposal must include documentation updates in tasks.md
+  - Update README.md with new feature documentation
+  - Update Laravel Boost core.blade.php with AI guidance for the new feature
+  - Add code examples to documentation
+  - Update changelog with breaking changes and new features
+
 ### Proposal Creation Checklist
 - [ ] Read `openspec/project.md` for context
 - [ ] Run `openspec list` and `openspec list --specs` to check existing work
@@ -708,6 +790,8 @@ openspec archive <change-id> [--yes|-y]  # Mark complete (add --yes for automati
 - [ ] Create `tasks.md` with implementation checklist
 - [ ] Create `design.md` only if needed (cross-cutting, new patterns, security)
 - [ ] Create spec deltas in `specs/[capability]/spec.md` for each affected capability
+- [ ] Include testing requirements in tasks.md for all new functionality
+- [ ] Include documentation updates in tasks.md (README.md and Laravel Boost core.blade.php)
 - [ ] Run `openspec validate [change-id] --strict`
 - [ ] Fix all validation errors
 - [ ] Request approval before implementation

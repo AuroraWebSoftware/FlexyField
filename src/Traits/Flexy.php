@@ -84,9 +84,10 @@ trait Flexy
 
                     $schemaField = $schemaFields[$field];
 
-                    // Validate field value
-                    if ($schemaField->validation_rules) {
-                        $validationRules = $schemaField->getValidationRulesArray();
+                    // Validate field value (check both base validation_rules and dynamic rules from options)
+                    $validationRules = $schemaField->getValidationRulesArray();
+
+                    if (! empty($validationRules)) {
                         $rules = [$field => $validationRules];
                         $messages = $schemaField->validation_messages ? [$field => $schemaField->validation_messages] : [];
 
