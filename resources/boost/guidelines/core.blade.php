@@ -164,24 +164,18 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
 // Indexed array (values are both keys and labels)
 Product::addFieldToSchema(
-    'electronics',
-    'size',
-    FlexyFieldType::STRING,
-    100,
-    null,
-    null,
-    ['options' => ['S', 'M', 'L', 'XL']]
+    schemaCode: 'electronics',
+    fieldName: 'size',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['options' => ['S', 'M', 'L', 'XL']]
 );
 
 // Associative array (keys stored, values for display)
 Product::addFieldToSchema(
-    'electronics',
-    'color',
-    FlexyFieldType::STRING,
-    100,
-    null,
-    null,
-    ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
+    schemaCode: 'electronics',
+    fieldName: 'color',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
 );
 
 // Usage
@@ -196,13 +190,10 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
 // Multi-select requires FlexyFieldType::JSON
 Product::addFieldToSchema(
-    'electronics',
-    'features',
-    FlexyFieldType::JSON, // MUST be JSON type
-    100,
-    null,
-    null,
-    [
+    schemaCode: 'electronics',
+    fieldName: 'features',
+    fieldType: FlexyFieldType::JSON, // MUST be JSON type
+    fieldMetadata: [
         'options' => ['wifi', '5g', 'nfc', 'bluetooth'],
         'multiple' => true  // Enable multi-select
     ]

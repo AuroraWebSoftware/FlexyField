@@ -247,24 +247,18 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
 // Single select (dropdown)
 Product::addFieldToSchema(
-    'electronics',
-    'color',
-    FlexyFieldType::STRING,
-    100,
-    null,
-    null,
-    ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
+    schemaCode: 'electronics',
+    fieldName: 'color',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
 );
 
 // Multi-select (checkboxes)
 Product::addFieldToSchema(
-    'electronics',
-    'features',
-    FlexyFieldType::JSON,
-    100,
-    null,
-    null,
-    [
+    schemaCode: 'electronics',
+    fieldName: 'features',
+    fieldType: FlexyFieldType::JSON,
+    fieldMetadata: [
         'options' => ['wifi', '5g', 'nfc', 'bluetooth'],
         'multiple' => true
     ]

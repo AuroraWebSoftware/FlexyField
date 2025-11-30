@@ -82,15 +82,23 @@ public function rules() {
 
 ```php
 // ✅ Correct
-Product::addFieldToSchema('product', 'tags', FlexyFieldType::JSON, 100, null, null, [
-    'options' => ['new', 'sale', 'featured'],
-    'multiple' => true
-]);
+Product::addFieldToSchema(
+    schemaCode: 'product',
+    fieldName: 'tags',
+    fieldType: FlexyFieldType::JSON,
+    fieldMetadata: [
+        'options' => ['new', 'sale', 'featured'],
+        'multiple' => true
+    ]
+);
 
 // ❌ Wrong - STRING type with multiple: true will fail
-Product::addFieldToSchema('product', 'tags', FlexyFieldType::STRING, 100, null, null, [
-    'multiple' => true  // Error: multi-select needs JSON type
-]);
+Product::addFieldToSchema(
+    schemaCode: 'product',
+    fieldName: 'tags',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['multiple' => true]  // Error: multi-select needs JSON type
+);
 ```
 
 **Keep options manageable:**
