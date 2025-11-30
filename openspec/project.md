@@ -144,6 +144,13 @@ FlexyField is a Laravel package that enables dynamic field management for Eloque
   - Coverage: `./vendor/bin/pest --coverage`
   - Static analysis: `./vendor/bin/phpstan analyse`
   - Code style: `./vendor/bin/pint`
+- **Mandatory Testing Requirements**:
+  - All new features must include comprehensive tests
+  - Unit tests for individual components and methods
+  - Integration tests for component interactions
+  - Feature tests for complete user workflows
+  - Test coverage must not decrease with new changes
+  - Tests must be included in the same proposal as the feature implementation
 
 ### Git Workflow
 - **Main Branch**: `main` (primary development and release branch)
@@ -232,6 +239,8 @@ Product::where('flexy_color', 'blue')
 - **Schema Required**: Cannot set flexy fields without schema assignment (throws `SchemaNotFoundException`)
 - **Field Validation**: Fields not in assigned schema cannot be set (throws `FieldNotInSchemaException`)
 - **Type Safety**: Field types must match Schema definition (enforced in validation)
+- **Testing Required**: All new features must include comprehensive tests (unit, integration, feature)
+- **Documentation Required**: All new features must update README.md and Laravel Boost core.blade.php
 
 **Related Specifications:**
 - See `openspec/specs/dynamic-field-storage/spec.md` for storage requirements
@@ -246,3 +255,51 @@ Product::where('flexy_color', 'blue')
 - **Pest PHP Ecosystem**: Testing framework with Laravel and architecture plugins
 - **Larastan**: Laravel-specific PHPStan wrapper for static analysis
 - **Carbon**: Laravel's default date/time library for date field handling
+- **Laravel Boost**: MCP server for AI-assisted development with context-aware code generation
+
+## Laravel Boost Integration
+
+FlexyField integrates with Laravel Boost to provide AI assistants with accurate context for generating high-quality code. The integration includes:
+
+- **AI Guidance Documentation**: `resources/boost/guidelines/core.blade.php` contains structured documentation with code examples
+- **Context-Aware Generation**: AI assistants use this documentation to generate framework-appropriate code
+- **Standardized Format**: Documentation follows Laravel Boost's format guidelines for optimal AI comprehension
+- **Single Source of Truth**: The core.blade.php file serves as the authoritative reference for AI-generated FlexyField code
+
+### Maintaining Laravel Boost Documentation
+- All new features must include updates to `resources/boost/guidelines/core.blade.php`
+- Use the established format with `@verbatim` and `@endverbatim` tags for code examples
+- Include practical examples that demonstrate real-world usage
+- Follow the existing structure and formatting for consistency
+
+## Documentation Requirements
+
+### Mandatory Documentation Updates
+All proposals must include documentation updates as part of their implementation:
+
+1. **README.md Updates**:
+   - Document new features with clear examples
+   - Update installation/usage instructions if needed
+   - Add breaking changes notice if applicable
+
+2. **Laravel Boost Integration**:
+   - Update `resources/boost/guidelines/core.blade.php` with AI guidance for new features
+   - Include code examples that AI assistants can use
+   - Follow the established format with @verbatim and @endverbatim tags
+
+3. **Code Examples**:
+   - Provide practical examples for all new functionality
+   - Include edge cases and error handling examples
+   - Show integration with existing FlexyField features
+
+4. **Changelog**:
+   - Document all breaking changes
+   - List new features and improvements
+   - Include migration notes if needed
+
+### Documentation Format Standards
+- Use clear, concise language
+- Include code blocks with syntax highlighting
+- Provide complete, runnable examples
+- Document all parameters and return values
+- Include error conditions and handling
