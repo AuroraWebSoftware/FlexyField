@@ -5,7 +5,6 @@ use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 uses(CreatesSchemas::class);
@@ -140,8 +139,6 @@ it('handles empty view creation', function () {
     // Check that view was created even with no fields
     $this->assertTrue(Schema::hasView('ff_values_pivot_view'));
 });
-
-
 
 it('force recreates view', function () {
     // Create schema with fields

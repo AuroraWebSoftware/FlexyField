@@ -73,8 +73,6 @@ return new class extends Migration
             $table->index(['schema_code']);
         });
 
-
-
         // Add foreign key constraints after creating all tables
         Schema::table('ff_schema_fields', function (Blueprint $table) {
             $table->foreign('schema_id')

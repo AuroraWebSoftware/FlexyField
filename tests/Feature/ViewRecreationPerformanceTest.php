@@ -4,7 +4,6 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 uses(CreatesSchemas::class);
@@ -140,8 +139,6 @@ it('handles concurrent field additions correctly', function () {
         expect($model->flexy->field2)->toBeString();
     }
 });
-
-
 
 it('force recreates view', function () {
     // Create a schema with fields
