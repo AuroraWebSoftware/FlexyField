@@ -148,4 +148,33 @@ class FieldSchema extends Model
     {
         return $this->getUsageCount($modelClass) > 0;
     }
+
+    /**
+     * Get fields organized by group
+     *
+     * Returns a collection where keys are group names (or "Ungrouped") and values are collections of SchemaField objects.
+     * Groups are sorted alphabetically (case-insensitive), with "Ungrouped" always last.
+     * Fields within each group are sorted by their 'sort' column.
+     */
+    /** @phpstan-ignore-next-line */
+    public function getFieldsGrouped(): \Illuminate\Database\Eloquent\Collection
+    {
+        $fields = $this->fields()->orderBy('sort')->get();
+
+        $grouped = $fields->groupBy(function (SchemaField $field) {
+            return $field->getGroup() ?? 'Ungrouped';
+        });
+
+        // Sort groups alphabetically (case-insensitive), but keep "Ungrouped" last
+        return $grouped->sortKeysUsing(function ($a, $b) {
+            if ($a === 'Ungrouped') {
+                return 1;
+            }
+            if ($b === 'Ungrouped') {
+                return -1;
+            }
+
+            return strcasecmp($a, $b);
+        });
+    }
 }

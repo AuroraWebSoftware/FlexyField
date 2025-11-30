@@ -5,6 +5,7 @@ namespace AuroraWebSoftware\FlexyField\Tests;
 use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\FlexyFieldServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
@@ -27,13 +28,10 @@ class TestCase extends Orchestra
         // Check if we're using PostgreSQL
         $isPostgreSQL = config('database.default') === 'pgsql';
 
-        // Run migrations only once per database type
-        if ($isPostgreSQL && ! static::$pgMigrated) {
+        // Run migrations if tables don't exist
+        // We check ff_schema_fields as a proxy for all tables
+        if (! Schema::hasTable('ff_schema_fields')) {
             $this->runMigrations();
-            static::$pgMigrated = true;
-        } elseif (! $isPostgreSQL && ! static::$migrated) {
-            $this->runMigrations();
-            static::$migrated = true;
         }
 
         // Clean up data before each test
@@ -101,10 +99,20 @@ class TestCase extends Orchestra
     protected function cleanupTestData()
     {
         // Clean up in the right order to avoid foreign key constraints
-        \Illuminate\Support\Facades\DB::table('ff_field_values')->delete();
-        \Illuminate\Support\Facades\DB::table('ff_schema_fields')->delete();
-        \Illuminate\Support\Facades\DB::table('ff_schemas')->delete();
-
+        // Values first, then fields, then schemas
+        try {
+            if (Schema::hasTable('ff_field_values')) {
+                \Illuminate\Support\Facades\DB::table('ff_field_values')->delete();
+            }
+            if (Schema::hasTable('ff_schema_fields')) {
+                \Illuminate\Support\Facades\DB::table('ff_schema_fields')->delete();
+            }
+            if (Schema::hasTable('ff_schemas')) {
+                \Illuminate\Support\Facades\DB::table('ff_schemas')->delete();
+            }
+        } catch (\Exception $e) {
+            // Ignore errors during cleanup - if tables don't exist, that's fine
+        }
     }
 
     /**
@@ -117,6 +125,10 @@ class TestCase extends Orchestra
 
         // Run migration
         $migration->up();
+
+        // Run label column migration
+        $labelMigration = include __DIR__.'/../database/migrations/add_label_column_to_schema_fields.php';
+        $labelMigration->up();
     }
 
     /**

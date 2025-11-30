@@ -260,7 +260,8 @@ trait Flexy
         int $sort = 100,
         ?string $validationRules = null,
         ?array $validationMessages = null,
-        ?array $fieldMetadata = null
+        ?array $fieldMetadata = null,
+        ?string $label = null
     ): SchemaField {
         $modelType = static::getModelType();
 
@@ -277,6 +278,7 @@ trait Flexy
             'schema_code' => $schemaCode,
             'schema_id' => $schema->id,
             'name' => $fieldName,
+            'label' => $label,
             'type' => $fieldType,
             'sort' => $sort,
             'validation_rules' => $validationRules,

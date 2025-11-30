@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $schema_code
  * @property int|null $schema_id
  * @property string $name
+ * @property string|null $label
  * @property FlexyFieldType $type
  * @property int $sort
  * @property string|array<int, string>|null $validation_rules
@@ -182,5 +183,56 @@ class SchemaField extends Model
     {
         // For associative arrays, use keys; for indexed arrays, use values
         return array_is_list($options) ? $options : array_keys($options);
+    }
+
+    /**
+     * Get the group name for this field
+     */
+    public function getGroup(): ?string
+    {
+        $group = $this->metadata['group'] ?? null;
+
+        // Treat empty strings as ungrouped
+        if ($group === '' || $group === null) {
+            return null;
+        }
+
+        return (string) $group;
+    }
+
+    /**
+     * Check if this field belongs to a group
+     */
+    public function hasGroup(): bool
+    {
+        return $this->getGroup() !== null;
+    }
+
+    /**
+     * Get the label for this field (falls back to name)
+     */
+    public function getLabel(): string
+    {
+        if (! empty($this->label)) {
+            return $this->label;
+        }
+
+        return $this->name;
+    }
+
+    /**
+     * Get the placeholder text for this field
+     */
+    public function getPlaceholder(): ?string
+    {
+        return $this->metadata['placeholder'] ?? null;
+    }
+
+    /**
+     * Get the hint text for this field
+     */
+    public function getHint(): ?string
+    {
+        return $this->metadata['hint'] ?? null;
     }
 }

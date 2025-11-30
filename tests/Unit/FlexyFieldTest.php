@@ -4,13 +4,11 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\FlexyField;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 uses(CreatesSchemas::class);
 
 beforeEach(function () {
-    Artisan::call('migrate:fresh');
 
     Schema::dropIfExists('ff_example_flexy_models');
     Schema::create('ff_example_flexy_models', function ($table) {

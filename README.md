@@ -247,24 +247,18 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
 // Single select (dropdown)
 Product::addFieldToSchema(
-    'electronics',
-    'color',
-    FlexyFieldType::STRING,
-    100,
-    null,
-    null,
-    ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
+    schemaCode: 'electronics',
+    fieldName: 'color',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
 );
 
 // Multi-select (checkboxes)
 Product::addFieldToSchema(
-    'electronics',
-    'features',
-    FlexyFieldType::JSON,
-    100,
-    null,
-    null,
-    [
+    schemaCode: 'electronics',
+    fieldName: 'features',
+    fieldType: FlexyFieldType::JSON,
+    fieldMetadata: [
         'options' => ['wifi', '5g', 'nfc', 'bluetooth'],
         'multiple' => true
     ]
@@ -278,7 +272,78 @@ $phone->flexy->features = ['wifi', '5g'];   // Multiple values
 $phone->save();
 ```
 
-### Validation
+### Attribute Grouping
+
+Organize related fields into groups for better UI presentation:
+
+```php
+use AuroraWebSoftware\FlexyField\Models\FieldSchema;
+
+// Define fields with groups
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'voltage',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['group' => 'Power Specs']
+);
+
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'weight_kg',
+    fieldType: FlexyFieldType::DECIMAL,
+    fieldMetadata: ['group' => 'Physical Dimensions']
+);
+
+// Fields without group metadata are ungrouped
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'name',
+    fieldType: FlexyFieldType::STRING
+);
+
+// Retrieve fields organized by group
+$schema = FieldSchema::where('schema_code', 'electronics')->first();
+$grouped = $schema->getFieldsGrouped();
+
+// Iterate through groups
+foreach ($grouped as $groupName => $fields) {
+    echo "Group: $groupName\n";
+    foreach ($fields as $field) {
+        echo "  - {$field->name}\n";
+    }
+}
+```
+
+### UI Hints
+
+Improve UX with human-readable labels, placeholders, and hints:
+
+```php
+use AuroraWebSoftware\FlexyField\Models\SchemaField;
+
+// Define field with UI hints
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'battery_capacity_mah',
+    fieldType: FlexyFieldType::INTEGER,
+    label: 'Battery Capacity',
+    fieldMetadata: [
+        'placeholder' => 'Enter value in mAh',
+        'hint' => 'Typical range: 1000-5000mAh'
+    ]
+);
+
+// Retrieve UI hints
+$field = SchemaField::where('name', 'battery_capacity_mah')->first();
+echo $field->getLabel();        // "Battery Capacity"
+echo $field->getPlaceholder();  // "Enter value in mAh"
+echo $field->getHint();         // "Typical range: 1000-5000mAh"
+
+// Label falls back to name if null
+$field->label = null;
+echo $field->getLabel();        // "battery_capacity_mah"
+```
+
 
 ```php
 try {

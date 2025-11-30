@@ -4,11 +4,9 @@ use AuroraWebSoftware\FlexyField\Models\FieldSchema;
 use AuroraWebSoftware\FlexyField\Models\SchemaField;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
-    Artisan::call('migrate:fresh');
 
     Schema::dropIfExists('ff_example_flexy_models');
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {

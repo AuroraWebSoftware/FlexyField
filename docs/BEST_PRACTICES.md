@@ -82,15 +82,23 @@ public function rules() {
 
 ```php
 // ✅ Correct
-Product::addFieldToSchema('product', 'tags', FlexyFieldType::JSON, 100, null, null, [
-    'options' => ['new', 'sale', 'featured'],
-    'multiple' => true
-]);
+Product::addFieldToSchema(
+    schemaCode: 'product',
+    fieldName: 'tags',
+    fieldType: FlexyFieldType::JSON,
+    fieldMetadata: [
+        'options' => ['new', 'sale', 'featured'],
+        'multiple' => true
+    ]
+);
 
 // ❌ Wrong - STRING type with multiple: true will fail
-Product::addFieldToSchema('product', 'tags', FlexyFieldType::STRING, 100, null, null, [
-    'multiple' => true  // Error: multi-select needs JSON type
-]);
+Product::addFieldToSchema(
+    schemaCode: 'product',
+    fieldName: 'tags',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['multiple' => true]  // Error: multi-select needs JSON type
+);
 ```
 
 **Keep options manageable:**
@@ -99,7 +107,66 @@ Product::addFieldToSchema('product', 'tags', FlexyFieldType::STRING, 100, null, 
 - **Medium lists** (10-50 items): Store in config/constants
 - **Large/dynamic lists** (> 50 items): Use relationships instead of select options
 
-## Data Migration
+## Attribute Grouping
+
+**Organize fields by functional area:**
+
+```php
+// Group related fields together
+['group' => 'Technical Specs']  // voltage, power_consumption, etc.
+['group' => 'Physical']          // weight, dimensions, etc.
+['group' => 'Marketing']         // description, features, etc.
+```
+
+**Naming conventions:**
+
+- **Title Case:** "Power Specs", "Physical Dimensions"
+- **Keep short:** Max ~30 characters for UI readability
+- **Be consistent:** Use same group names across similar schemas
+
+**UI Recommendations:**
+
+- Display groups alphabetically (case-insensitive)
+- Show "Ungrouped" fields last
+- Use collapsible sections for each group
+- Consider icons/colors for visual distinction
+
+## UI Hints
+
+**Use descriptive labels:**
+
+```php
+// ✅ Good
+label: 'Battery Capacity'
+label: 'Product Weight'
+
+// ❌ Bad
+label: 'bat_cap'  // Too technical
+label: null       // Missing user-friendly name
+```
+
+**Write helpful placeholders:**
+
+```php
+// ✅ Specific format examples
+'placeholder' => 'e.g., 99.99'
+'placeholder' => 'Enter email address'
+
+// ❌ Vague
+'placeholder' => 'Enter value'
+```
+
+**Provide actionable hints:**
+
+```php
+// ✅ Clear constraints
+'hint' => 'Must be between 1000-5000mAh'
+'hint' => 'Leave empty for auto-generation'
+
+// ❌ Redundant
+'hint' => 'Enter battery capacity'  // Already in label
+```
+
 
 **Add fields** (no migration needed):
 

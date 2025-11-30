@@ -6,7 +6,7 @@ use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Support\Facades\Schema;
 
-uses(CreatesSchemas::class);
+uses(CreatesSchemas::class)->group('performance');
 
 beforeEach(function () {
     \Illuminate\Support\Facades\Schema::dropIfExists('ff_example_flexy_models');

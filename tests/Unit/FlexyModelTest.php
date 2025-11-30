@@ -2,13 +2,10 @@
 
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
-use Illuminate\Support\Facades\Artisan;
 
 uses(CreatesSchemas::class);
 
-beforeEach(function () {
-    Artisan::call('migrate:fresh');
-});
+beforeEach(function () {});
 
 it('can instantiate Flexy model', function () {
     $this->createSchemaWithFields(

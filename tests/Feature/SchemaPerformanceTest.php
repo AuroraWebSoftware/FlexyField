@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-uses(CreatesSchemas::class);
+uses(CreatesSchemas::class)->group('performance');
 
 beforeEach(function () {
 

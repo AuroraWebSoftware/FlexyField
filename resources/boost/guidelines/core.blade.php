@@ -164,24 +164,18 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
 // Indexed array (values are both keys and labels)
 Product::addFieldToSchema(
-    'electronics',
-    'size',
-    FlexyFieldType::STRING,
-    100,
-    null,
-    null,
-    ['options' => ['S', 'M', 'L', 'XL']]
+    schemaCode: 'electronics',
+    fieldName: 'size',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['options' => ['S', 'M', 'L', 'XL']]
 );
 
 // Associative array (keys stored, values for display)
 Product::addFieldToSchema(
-    'electronics',
-    'color',
-    FlexyFieldType::STRING,
-    100,
-    null,
-    null,
-    ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
+    schemaCode: 'electronics',
+    fieldName: 'color',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['options' => ['red' => 'Red', 'blue' => 'Blue', 'green' => 'Green']]
 );
 
 // Usage
@@ -196,13 +190,10 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 
 // Multi-select requires FlexyFieldType::JSON
 Product::addFieldToSchema(
-    'electronics',
-    'features',
-    FlexyFieldType::JSON, // MUST be JSON type
-    100,
-    null,
-    null,
-    [
+    schemaCode: 'electronics',
+    fieldName: 'features',
+    fieldType: FlexyFieldType::JSON, // MUST be JSON type
+    fieldMetadata: [
         'options' => ['wifi', '5g', 'nfc', 'bluetooth'],
         'multiple' => true  // Enable multi-select
     ]
@@ -223,7 +214,109 @@ $product->flexy->features = ['wifi', 'invalid']; // ValidationException: 'invali
 - For indexed arrays, values are used for both storage and validation
 - For associative arrays, keys are used for storage and validation
 
-### Validation
+### Attribute Grouping
+
+Organize related fields into groups for better UI organization. Especially useful in PIM/CRM applications:
+
+@verbatim
+<code-snippet name="Define Grouped Fields" lang="php">
+use AuroraWebSoftware\FlexyField\Models\FieldSchema;
+
+// Define fields with group metadata
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'voltage',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['group' => 'Power Specs']
+);
+
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'weight_kg',
+    fieldType: FlexyFieldType::DECIMAL,
+    fieldMetadata: ['group' => 'Physical Dimensions']
+);
+
+// Fields without group metadata are ungrouped
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'name',
+    fieldType: FlexyFieldType::STRING
+);
+</code-snippet>
+@endverbatim
+
+@verbatim
+<code-snippet name="Retrieve Grouped Fields" lang="php">
+// Retrieve fields organized by group
+$schema = FieldSchema::where('schema_code', 'electronics')->first();
+$grouped = $schema->getFieldsGrouped();
+
+// Iterate through groups
+foreach ($grouped as $groupName => $fields) {
+    echo "Group: $groupName\n";
+    foreach ($fields as $field) {
+        echo "  - {$field->name}\n";
+    }
+}
+
+// Groups are sorted alphabetically (case-insensitive)
+// "Ungrouped" fields always appear last
+// Fields within each group are sorted by their 'sort' column
+</code-snippet>
+@endverbatim
+
+**Grouping Rules:**
+- Group name is stored in `metadata['group']` field
+- Empty strings (`""`) are treated as ungrouped
+- Groups are sorted alphabetically (case-insensitive)
+- "Ungrouped" fields always appear last
+- Fields within groups use existing `sort` column for ordering
+
+### UI Hints
+
+Improve UX with labels, placeholders, and hints:
+
+@verbatim
+<code-snippet name="Define Field with UI Hints" lang="php">
+use AuroraWebSoftware\FlexyField\Models\SchemaField;
+
+// Define field with all UI hints
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'battery_capacity_mah',
+    fieldType: FlexyFieldType::INTEGER,
+    label: 'Battery Capacity',           // Human-readable label
+    fieldMetadata: [
+        'placeholder' => 'Enter mAh',    // Input placeholder
+        'hint' => 'Range: 1000-5000mAh'  // Help text
+    ]
+);
+</code-snippet>
+@endverbatim
+
+@verbatim
+<code-snippet name="Retrieve UI Hints" lang="php">
+$field = SchemaField::where('name', 'battery_capacity_mah')->first();
+
+// Get UI hints
+echo $field->getLabel();        // "Battery Capacity"
+echo $field->getPlaceholder();  // "Enter mAh"
+echo $field->getHint();         // "Range: 1000-5000mAh"
+
+// Label falls back to field name if null/empty
+$field->label = null;
+echo $field->getLabel();        // "battery_capacity_mah"
+</code-snippet>
+@endverbatim
+
+**Important Rules:**
+- `label` is stored in dedicated column (`ff_schema_fields.label`)
+- `placeholder` and `hint` are stored in `metadata` JSON
+- `getLabel()` always returns a string (fallback to name)
+- `getPlaceholder()` and `getHint()` return null if not set
+- Empty label strings fallback to name
+
 
 Validation is enforced when saving. Models must be assigned to schema first:
 

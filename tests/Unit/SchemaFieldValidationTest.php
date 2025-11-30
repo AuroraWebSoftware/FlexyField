@@ -4,11 +4,8 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\Models\FieldSchema;
 use AuroraWebSoftware\FlexyField\Models\SchemaField;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
-use Illuminate\Support\Facades\Artisan;
 
-beforeEach(function () {
-    Artisan::call('migrate:fresh');
-});
+beforeEach(function () {});
 
 it('throws exception for invalid field type', function () {
     FieldSchema::create([
