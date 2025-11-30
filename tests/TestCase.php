@@ -24,9 +24,6 @@ class TestCase extends Orchestra
         // Drop the view before each test to avoid conflicts
         \Illuminate\Support\Facades\DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
 
-        // Clean up data before each test
-        $this->cleanupTestData();
-
         // Check if we're using PostgreSQL
         $isPostgreSQL = config('database.default') === 'pgsql';
 
@@ -38,6 +35,9 @@ class TestCase extends Orchestra
             $this->runMigrations();
             static::$migrated = true;
         }
+
+        // Clean up data before each test
+        $this->cleanupTestData();
 
         // Recreate the view after cleaning up
         FlexyField::dropAndCreatePivotView();
@@ -60,11 +60,11 @@ class TestCase extends Orchestra
             $app['config']->set('database.default', 'pgsql');
             $app['config']->set('database.connections.pgsql', [
                 'driver' => 'pgsql',
-                'host' => '127.0.0.1',
-                'port' => '54321',
-                'database' => 'flexyfield',
-                'username' => 'flexyfield',
-                'password' => 'flexyfield',
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', '54321'),
+                'database' => env('DB_DATABASE', 'flexyfield'),
+                'username' => env('DB_USERNAME', 'flexyfield'),
+                'password' => env('DB_PASSWORD', 'flexyfield'),
                 'charset' => 'utf8',
                 'prefix' => '',
                 'search_path' => 'public',
@@ -75,11 +75,11 @@ class TestCase extends Orchestra
             $app['config']->set('database.default', 'mysql');
             $app['config']->set('database.connections.mysql', [
                 'driver' => 'mysql',
-                'host' => '127.0.0.1',
-                'port' => '33063',
-                'database' => 'flexyfield',
-                'username' => 'flexyfield',
-                'password' => 'flexyfield',
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', '33063'),
+                'database' => env('DB_DATABASE', 'flexyfield'),
+                'username' => env('DB_USERNAME', 'flexyfield'),
+                'password' => env('DB_PASSWORD', 'flexyfield'),
                 'charset' => 'utf8mb4',
                 'collation' => 'utf8mb4_unicode_ci',
                 'prefix' => '',

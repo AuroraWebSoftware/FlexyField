@@ -39,8 +39,8 @@ class FlexyField
 
         if (empty($fieldNames)) {
             // Create empty view structure when no fields exist
-            DB::unprepared('DROP VIEW IF EXISTS ff_values_pivot_view');
-            DB::unprepared('CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_field_values WHERE 1=0');
+            DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
+            DB::statement('CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_field_values WHERE 1=0');
 
             return;
         }
@@ -54,8 +54,8 @@ class FlexyField
         $columnsSql = implode(', ', $columns);
 
         // Drop and create view
-        DB::unprepared('DROP VIEW IF EXISTS ff_values_pivot_view');
-        DB::unprepared("CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id, {$columnsSql} FROM ff_field_values GROUP BY model_type, model_id");
+        DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
+        DB::statement("CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id, {$columnsSql} FROM ff_field_values GROUP BY model_type, model_id");
     }
 
     /**
@@ -152,8 +152,8 @@ class FlexyField
 
         if (empty($fieldNames)) {
             // Create empty view structure when no fields exist
-            DB::unprepared('DROP VIEW IF EXISTS ff_values_pivot_view');
-            DB::unprepared('CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_field_values WHERE FALSE');
+            DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
+            DB::statement('CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id FROM ff_field_values WHERE FALSE');
 
             return;
         }
@@ -211,7 +211,7 @@ class FlexyField
         $columnsSql = implode(', ', $columns);
 
         // Drop and create view
-        DB::unprepared('DROP VIEW IF EXISTS ff_values_pivot_view');
-        DB::unprepared("CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id, {$columnsSql} FROM ff_field_values GROUP BY model_type, model_id");
+        DB::statement('DROP VIEW IF EXISTS ff_values_pivot_view');
+        DB::statement("CREATE VIEW ff_values_pivot_view AS SELECT model_type, model_id, {$columnsSql} FROM ff_field_values GROUP BY model_type, model_id");
     }
 }
