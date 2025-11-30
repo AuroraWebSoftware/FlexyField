@@ -43,6 +43,12 @@ class TestCase extends Orchestra
         FlexyField::dropAndCreatePivotView();
     }
 
+    protected function tearDown(): void
+    {
+        \Illuminate\Support\Facades\DB::disconnect();
+        parent::tearDown();
+    }
+
     protected function getPackageProviders($app)
     {
         return [
