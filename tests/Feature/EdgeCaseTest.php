@@ -277,13 +277,15 @@ it('handles empty strings for JSON fields correctly', function () {
     $model->save();
 
     // Verify empty string is stored correctly (JSON fields store empty strings as JSON-encoded strings)
-    $this->assertDatabaseHas('ff_field_values', [
-        'model_type' => ExampleFlexyModel::class,
-        'model_id' => $model->id,
-        'name' => 'json_field',
-        'value_json' => '""',
-        'schema_code' => 'test',
-    ]);
+    // Verify empty string is stored correctly (JSON fields store empty strings as JSON-encoded strings)
+    // We use DB::table to get the raw value to avoid PostgreSQL JSON comparison issues with assertDatabaseHas
+    $storedValue = \Illuminate\Support\Facades\DB::table('ff_field_values')
+        ->where('model_type', ExampleFlexyModel::class)
+        ->where('model_id', $model->id)
+        ->where('name', 'json_field')
+        ->value('value_json');
+
+    expect($storedValue)->toBe('""');
 
     // Verify empty string is retrieved correctly
     $model->refresh();
