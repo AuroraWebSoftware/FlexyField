@@ -14,6 +14,7 @@ beforeEach(function () {
 
     Artisan::call('migrate:fresh');
 
+    Schema::dropIfExists('ff_example_flexy_models');
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');

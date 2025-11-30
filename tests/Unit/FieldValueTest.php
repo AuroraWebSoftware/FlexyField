@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 beforeEach(function () {
     Artisan::call('migrate:fresh');
 
+    Schema::dropIfExists('ff_example_flexy_models');
     Schema::create('ff_example_flexy_models', function ($table) {
         $table->id();
         $table->string('name');
