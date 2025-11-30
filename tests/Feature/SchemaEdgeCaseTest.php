@@ -1121,25 +1121,16 @@ it('handles json values correctly', function () {
 
     // Check that JSON values are stored correctly
     // PostgreSQL requires special handling for JSON comparison
-    $driver = \Illuminate\Support\Facades\DB::getDriverName();
-    if ($driver === 'pgsql') {
-        $jsonValue = \Illuminate\Support\Facades\DB::table('ff_field_values')
-            ->where('model_type', ExampleFlexyModel::class)
-            ->where('model_id', $model->id)
-            ->where('name', 'json_field')
-            ->where('schema_code', 'default')
-            ->value('value_json');
-        expect($jsonValue)->not->toBeNull();
-        expect(json_decode($jsonValue, true))->toEqual($testArray);
-    } else {
-        $this->assertDatabaseHas('ff_field_values', [
-            'model_type' => ExampleFlexyModel::class,
-            'model_id' => $model->id,
-            'name' => 'json_field',
-            'value_json' => json_encode($testArray),
-            'schema_code' => 'default',
-        ]);
-    }
+    // Check JSON value flexibly to handle database-specific formatting
+    $jsonValue = \Illuminate\Support\Facades\DB::table('ff_field_values')
+        ->where('model_type', ExampleFlexyModel::class)
+        ->where('model_id', $model->id)
+        ->where('name', 'json_field')
+        ->where('schema_code', 'default')
+        ->value('value_json');
+
+    expect($jsonValue)->not->toBeNull();
+    expect(json_decode($jsonValue, true))->toEqual($testArray);
 
     // Refresh and check retrieval
     $model->refresh();
@@ -1233,25 +1224,16 @@ it('handles mixed data types in same model', function () {
     ]);
 
     // PostgreSQL requires special handling for JSON comparison
-    $driver = \Illuminate\Support\Facades\DB::getDriverName();
-    if ($driver === 'pgsql') {
-        $jsonValue = \Illuminate\Support\Facades\DB::table('ff_field_values')
-            ->where('model_type', ExampleFlexyModel::class)
-            ->where('model_id', $model->id)
-            ->where('name', 'json_field')
-            ->where('schema_code', 'default')
-            ->value('value_json');
-        expect($jsonValue)->not->toBeNull();
-        expect(json_decode($jsonValue, true))->toEqual(['key' => 'value']);
-    } else {
-        $this->assertDatabaseHas('ff_field_values', [
-            'model_type' => ExampleFlexyModel::class,
-            'model_id' => $model->id,
-            'name' => 'json_field',
-            'value_json' => json_encode(['key' => 'value']),
-            'schema_code' => 'default',
-        ]);
-    }
+    // Check JSON value flexibly to handle database-specific formatting
+    $jsonValue = \Illuminate\Support\Facades\DB::table('ff_field_values')
+        ->where('model_type', ExampleFlexyModel::class)
+        ->where('model_id', $model->id)
+        ->where('name', 'json_field')
+        ->where('schema_code', 'default')
+        ->value('value_json');
+
+    expect($jsonValue)->not->toBeNull();
+    expect(json_decode($jsonValue, true))->toEqual(['key' => 'value']);
 
     $this->assertDatabaseHas('ff_field_values', [
         'model_type' => ExampleFlexyModel::class,
