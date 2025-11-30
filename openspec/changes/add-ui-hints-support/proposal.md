@@ -1,4 +1,4 @@
-# Change: Add UI Hints Support
+    # Change: Add UI Hints Support
 
 ## Why
 Field names (e.g., `battery_capacity_mah`) are often technical and not user-friendly. Users need guidance, placeholders, and readable labels in the UI to enter data correctly.
