@@ -3,7 +3,6 @@
 use AuroraWebSoftware\FlexyField\Models\FieldSchema;
 use AuroraWebSoftware\FlexyField\Models\FieldValue;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
