@@ -9,7 +9,15 @@ use Illuminate\Support\Facades\Schema;
 
 uses(CreatesSchemas::class);
 
-beforeEach(function () {});
+beforeEach(function () {
+    \Illuminate\Support\Facades\Schema::dropIfExists('ff_example_flexy_models');
+    \Illuminate\Support\Facades\Schema::create('ff_example_flexy_models', function (\Illuminate\Database\Schema\Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->string('schema_code')->nullable();
+        $table->timestamps();
+    });
+});
 
 it('measures view recreation performance', function () {
     // Create a schema with many fields
