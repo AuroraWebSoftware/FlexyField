@@ -93,15 +93,21 @@ The system SHALL maintain a database view that pivots EAV data into a queryable 
 - **AND** all existing and new fields SHALL be included in the view
 
 ### Requirement: Foreign Key Cascading
-The system SHALL handle cascading deletions when field sets or fields are removed.
+The system SHALL handle cascading deletions and nullifications using proper database foreign key constraints.
 
-#### Scenario: Deleting field set cascades to fields
-- **WHEN** a field set is deleted
-- **THEN** all SetField records for the set SHALL be cascade deleted via foreign key
-- **AND** no orphaned field records SHALL remain
+#### Scenario: Deleting schema cascades to schema fields
+- **WHEN** a schema is deleted from ff_schemas
+- **THEN** all SchemaField records SHALL be cascade deleted via FK constraint on schema_id
+- **AND** no orphaned field records SHALL remain in ff_schema_fields
 
-#### Scenario: Deleting field set nullifies model references
-- **WHEN** a field set is deleted
-- **THEN** all model instances with field_set_code SHALL have it set to NULL via foreign key
-- **AND** accessing flexy fields on these instances SHALL throw FieldSetNotFoundException
+#### Scenario: Deleting schema nullifies field value references
+- **WHEN** a schema is deleted from ff_schemas
+- **THEN** all FieldValue records SHALL have schema_id set to NULL via FK constraint
+- **AND** schema_code SHALL remain for reference but schema relationship will be broken
+- **AND** accessing flexy fields on these instances SHALL handle null schema gracefully
+
+#### Scenario: FK constraints prevent invalid references
+- **WHEN** attempting to create a SchemaField with non-existent schema_id
+- **THEN** the database SHALL reject the insert via FK constraint
+- **AND** an appropriate database error SHALL be raised
 

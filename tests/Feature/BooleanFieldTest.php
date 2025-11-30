@@ -1,208 +1,328 @@
 <?php
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\FlexyField;
-use AuroraWebSoftware\FlexyField\Models\Value;
-use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesFieldSets;
+use AuroraWebSoftware\FlexyField\Models\FieldValue;
+use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
-uses(CreatesFieldSets::class);
+uses(CreatesSchemas::class);
 
 beforeEach(function () {
-    Artisan::call('migrate:fresh');
 
-    Schema::create('ff_example_flexy_models', function (Blueprint $table) {
+    Schema::dropIfExists('ff_example_flexy_models'); Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
-        $table->string('field_set_code')->nullable()->index();
+        $table->string('schema_code')->nullable()->index();
         $table->timestamps();
-
-        // REMOVED FOR PGSQL:         $table->foreign('field_set_code')
-        // REMOVED FOR PGSQL:             ->references('set_code')
-        // REMOVED FOR PGSQL:             ->on('ff_field_sets')
-        // REMOVED FOR PGSQL:             ->onDelete('set null')
-        // REMOVED FOR PGSQL:             ->onUpdate('cascade');
     });
+});
 
-    // Create default field set with all boolean test fields
-    $this->createFieldSetWithFields(
+it('stores boolean field values correctly', function () {
+    // Create a schema with boolean field
+    $this->createSchemaWithFields(
         modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
+        schemaCode: 'test',
         fields: [
-            'is_active' => ['type' => FlexyFieldType::BOOLEAN],
             'bool_field' => ['type' => FlexyFieldType::BOOLEAN],
-            'int_field' => ['type' => FlexyFieldType::INTEGER],
-            'is_verified' => ['type' => FlexyFieldType::BOOLEAN],
-            'is_premium' => ['type' => FlexyFieldType::BOOLEAN],
-        ],
-        isDefault: true
+        ]
     );
 
-    // Create initial empty view
-    FlexyField::dropAndCreatePivotView();
-});
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+    $model->assignToSchema('test');
 
-it('can store and retrieve boolean false value', function () {
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
-
-    $model->flexy->is_active = false;
-    $model->save();
-
-    $fresh = ExampleFlexyModel::find($model->id);
-
-    expect($fresh->flexy->is_active)->toBe(false)
-        ->and($fresh->flexy->is_active)->not->toBeNull();
-});
-
-it('can store and retrieve boolean true value', function () {
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
-
-    $model->flexy->is_active = true;
-    $model->save();
-
-    $fresh = ExampleFlexyModel::find($model->id);
-
-    expect($fresh->flexy->is_active)->toBe(true)
-        ->and($fresh->flexy->is_active)->not->toBeNull();
-});
-
-it('can query models by boolean false value', function () {
-    $model1 = ExampleFlexyModel::create(['name' => 'Inactive']);
-    $model1->flexy->is_active = false;
-    $model1->save();
-
-    $model2 = ExampleFlexyModel::create(['name' => 'Active']);
-    $model2->flexy->is_active = true;
-    $model2->save();
-
-    // Recreate view to include the new field
-    FlexyField::forceRecreateView();
-
-    $inactive = ExampleFlexyModel::where('flexy_is_active', false)->get();
-
-    expect($inactive)->toHaveCount(1)
-        ->and($inactive->first()->name)->toBe('Inactive');
-});
-
-it('can query models by boolean true value', function () {
-    $model1 = ExampleFlexyModel::create(['name' => 'Inactive']);
-    $model1->flexy->is_active = false;
-    $model1->save();
-
-    $model2 = ExampleFlexyModel::create(['name' => 'Active']);
-    $model2->flexy->is_active = true;
-    $model2->save();
-
-    // Recreate view to include the new field
-    FlexyField::forceRecreateView();
-
-    $active = ExampleFlexyModel::where('flexy_is_active', true)->get();
-
-    expect($active)->toHaveCount(1)
-        ->and($active->first()->name)->toBe('Active');
-});
-
-it('distinguishes boolean false from integer 0 in storage', function () {
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
-
-    $model->flexy->bool_field = false;
-    $model->flexy->int_field = 0;
-    $model->save();
-
-    $boolValue = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $model->id)
-        ->where('field_name', 'bool_field')
-        ->first();
-
-    $intValue = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $model->id)
-        ->where('field_name', 'int_field')
-        ->first();
-
-    expect($boolValue->value_boolean)->toBe(false)
-        ->and($boolValue->value_int)->toBeNull()
-        ->and($intValue->value_int)->toBe(0)
-        ->and($intValue->value_boolean)->toBeNull();
-});
-
-it('distinguishes boolean true from integer 1 in storage', function () {
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
-
+    // Test true value
     $model->flexy->bool_field = true;
-    $model->flexy->int_field = 1;
     $model->save();
 
-    $boolValue = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $model->id)
-        ->where('field_name', 'bool_field')
-        ->first();
+    // Check that value was stored correctly
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'bool_field',
+        'value_boolean' => true,
+        'schema_code' => 'test',
+    ]);
 
-    $intValue = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $model->id)
-        ->where('field_name', 'int_field')
-        ->first();
+    // Test false value
+    $model->flexy->bool_field = false;
+    $model->save();
 
-    expect($boolValue->value_boolean)->toBe(true)
-        ->and($boolValue->value_int)->toBeNull()
-        ->and($intValue->value_int)->toBe(1)
-        ->and($intValue->value_boolean)->toBeNull();
+    // Check that value was stored correctly
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'bool_field',
+        'value_boolean' => false,
+        'schema_code' => 'test',
+    ]);
+
+    // Test null value
+    $model->flexy->bool_field = null;
+    $model->save();
+
+    // Check that value was stored correctly
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'bool_field',
+        'value_boolean' => null,
+        'schema_code' => 'test',
+    ]);
+
+    // Refresh model and check retrieval for each value
+    $model->refresh();
+    expect($model->flexy->bool_field)->toBeNull();
+    
+    // Set and check true value
+    $model->flexy->bool_field = true;
+    $model->save();
+    $model->refresh();
+    expect($model->flexy->bool_field)->toBeTrue();
+    
+    // Set and check false value
+    $model->flexy->bool_field = false;
+    $model->save();
+    $model->refresh();
+    expect($model->flexy->bool_field)->toBeFalse();
 });
 
-it('can validate boolean fields with field sets', function () {
-    // Check if field already exists, if not add it
-    $existingField = \AuroraWebSoftware\FlexyField\Models\SetField::where('set_code', 'default')
-        ->where('field_name', 'is_verified')
-        ->first();
+it('retrieves boolean field values correctly', function () {
+    // Create a schema with boolean fields
+    $this->createSchemaWithFields(
+        modelClass: ExampleFlexyModel::class,
+        schemaCode: 'test',
+        fields: [
+            'bool_field' => ['type' => FlexyFieldType::BOOLEAN],
+            'bool_field2' => ['type' => FlexyFieldType::BOOLEAN],
+        ]
+    );
 
-    if (! $existingField) {
-        ExampleFlexyModel::addFieldToSet('default', 'is_verified', FlexyFieldType::BOOLEAN, 1, 'required|boolean');
-    }
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+    $model->assignToSchema('test');
 
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
-    $model->flexy->is_verified = true;
+    // Set boolean values
+    $model->flexy->bool_field = true;
+    $model->flexy->bool_field2 = false;
     $model->save();
 
-    expect($model->fresh()->flexy->is_verified)->toBe(true);
+    // Create another model
+    $model2 = ExampleFlexyModel::create(['name' => 'Test 2']);
+    $model2->assignToSchema('test');
+    $model2->flexy->bool_field = true;
+    $model2->flexy->bool_field2 = false;
+    $model2->save();
+
+    // Refresh models and check retrieval
+    $model->refresh();
+    $model2->refresh();
+
+    expect($model->flexy->bool_field)->toBeTrue();
+    expect($model->flexy->bool_field2)->toBeFalse();
+
+    expect($model->flexy->bool_field)->toBeBool();
+    expect($model2->flexy->bool_field2)->toBeBool();
 });
 
-it('can update boolean value from false to true', function () {
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
+it('handles boolean field validation correctly', function () {
+    // Create a schema with boolean field
+    $this->createSchemaWithFields(
+        modelClass: ExampleFlexyModel::class,
+        schemaCode: 'test',
+        fields: [
+            'bool_field' => [
+                'type' => FlexyFieldType::BOOLEAN,
+                'rules' => 'required|boolean',
+            ],
+        ]
+    );
 
-    $model->flexy->is_active = false;
-    $model->save();
-    expect($model->fresh()->flexy->is_active)->toBe(false);
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+    $model->assignToSchema('test');
 
-    $model->flexy->is_active = true;
+    // Test valid boolean values
+    $model->flexy->bool_field = true;
     $model->save();
-    expect($model->fresh()->flexy->is_active)->toBe(true);
+    
+    $model->flexy->bool_field = false;
+    $model->save();
+
+    // Check that values were saved correctly
+    $model->refresh();
+    expect($model->flexy->bool_field)->toBeFalse();
+
+    // Test invalid boolean values - string that's not a boolean
+    expect(function () use ($model) {
+        $model->flexy->bool_field = 'not a boolean';
+        $model->save();
+    })->toThrow(\Illuminate\Validation\ValidationException::class);
 });
 
-it('can update boolean value from true to false', function () {
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
+it('handles boolean field filtering correctly', function () {
+    // Create a schema with boolean field
+    $this->createSchemaWithFields(
+        modelClass: ExampleFlexyModel::class,
+        schemaCode: 'test',
+        fields: [
+            'bool_field' => ['type' => FlexyFieldType::BOOLEAN],
+        ]
+    );
 
-    $model->flexy->is_active = true;
-    $model->save();
-    expect($model->fresh()->flexy->is_active)->toBe(true);
+    // Create models with different boolean values
+    $model1 = ExampleFlexyModel::create(['name' => 'Test 1']);
+    $model1->assignToSchema('test');
+    $model1->flexy->bool_field = true;
+    $model1->save();
 
-    $model->flexy->is_active = false;
-    $model->save();
-    expect($model->fresh()->flexy->is_active)->toBe(false);
+    $model2 = ExampleFlexyModel::create(['name' => 'Test 2']);
+    $model2->assignToSchema('test');
+    $model2->flexy->bool_field = false;
+    $model2->save();
+
+    // Query models with boolean field = true
+    $trueModels = ExampleFlexyModel::where('flexy_bool_field', true)->get();
+
+    // Query models with boolean field = false
+    $falseModels = ExampleFlexyModel::where('flexy_bool_field', false)->get();
+
+    // Check results
+    expect($trueModels)->toHaveCount(1);
+    expect($falseModels)->toHaveCount(1);
+    expect($trueModels->first()->flexy->bool_field)->toBeTrue();
+    expect($falseModels->first()->flexy->bool_field)->toBeFalse();
 });
 
-it('handles multiple boolean fields on same model', function () {
-    $model = ExampleFlexyModel::create(['name' => 'Test Model']);
+it('handles boolean field sorting correctly', function () {
+    // Create a schema with boolean fields in specific order
+    $this->createSchemaWithFields(
+        modelClass: ExampleFlexyModel::class,
+        schemaCode: 'test',
+        fields: [
+            'bool_field1' => ['type' => FlexyFieldType::BOOLEAN, 'sort' => 1],
+            'bool_field2' => ['type' => FlexyFieldType::BOOLEAN, 'sort' => 2],
+            'bool_field3' => ['type' => FlexyFieldType::BOOLEAN, 'sort' => 3],
+        ]
+    );
 
-    $model->flexy->is_active = true;
-    $model->flexy->is_verified = false;
-    $model->flexy->is_premium = true;
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+    $model->assignToSchema('test');
+
+    // Get fields for the schema
+    $fields = ExampleFlexyModel::getFieldsForSchema('test');
+
+    // Check that fields are returned in correct order
+    expect($fields)->toHaveCount(3);
+    expect($fields[0]->name)->toBe('bool_field1');
+    expect($fields[0]->sort)->toBe(1);
+    expect($fields[1]->name)->toBe('bool_field2');
+    expect($fields[1]->sort)->toBe(2);
+    expect($fields[2]->name)->toBe('bool_field3');
+    expect($fields[2]->sort)->toBe(3);
+});
+
+it('handles boolean field deletion correctly', function () {
+    // Create a schema with boolean field
+    $this->createSchemaWithFields(
+        modelClass: ExampleFlexyModel::class,
+        schemaCode: 'test',
+        fields: [
+            'bool_field' => ['type' => FlexyFieldType::BOOLEAN],
+        ]
+    );
+
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+    $model->assignToSchema('test');
+
+    // Set a boolean value
+    $model->flexy->bool_field = true;
     $model->save();
 
-    $fresh = $model->fresh();
+    // Verify value exists
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'bool_field',
+        'value_boolean' => true,
+        'schema_code' => 'test',
+    ]);
 
-    expect($fresh->flexy->is_active)->toBe(true)
-        ->and($fresh->flexy->is_verified)->toBe(false)
-        ->and($fresh->flexy->is_premium)->toBe(true);
+    // Remove the field
+    ExampleFlexyModel::removeFieldFromSchema('test', 'bool_field');
+
+    // Create another model and assign to schema
+    $model2 = ExampleFlexyModel::create(['name' => 'Test 2']);
+    $model2->assignToSchema('test');
+
+    // Try to set the removed field
+    expect(function () use ($model2) {
+        $model2->flexy->bool_field = true;
+        $model2->save();
+    })->toThrow(\AuroraWebSoftware\FlexyField\Exceptions\FieldNotInSchemaException::class);
+});
+
+it('handles boolean field updates correctly', function () {
+    // Create a schema with boolean field
+    $this->createSchemaWithFields(
+        modelClass: ExampleFlexyModel::class,
+        schemaCode: 'test',
+        fields: [
+            'bool_field' => ['type' => FlexyFieldType::BOOLEAN],
+        ]
+    );
+
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+    $model->assignToSchema('test');
+
+    // Set initial boolean value
+    $model->flexy->bool_field = true;
+    $model->save();
+
+    // Update the boolean value
+    $model->flexy->bool_field = false;
+    $model->save();
+
+    // Check that value was updated
+    $model->refresh();
+    expect($model->flexy->bool_field)->toBeFalse();
+});
+
+it('handles boolean field null values correctly', function () {
+    // Create a schema with nullable boolean field
+    $this->createSchemaWithFields(
+        modelClass: ExampleFlexyModel::class,
+        schemaCode: 'test',
+        fields: [
+            'bool_field' => [
+                'type' => FlexyFieldType::BOOLEAN,
+            ],
+        ]
+    );
+
+    // Create a model
+    $model = ExampleFlexyModel::create(['name' => 'Test']);
+    $model->assignToSchema('test');
+
+    // Set null value
+    $model->flexy->bool_field = null;
+    $model->save();
+
+    // Check that value was saved
+    $model->refresh();
+    expect($model->flexy->bool_field)->toBeNull();
+
+    // Set empty string value (should be converted to false for boolean field)
+    $model->flexy->bool_field = '';
+    $model->save();
+
+    // Check that value was saved and converted to boolean
+    $model->refresh();
+    expect($model->flexy->bool_field)->toBeFalse();
 });

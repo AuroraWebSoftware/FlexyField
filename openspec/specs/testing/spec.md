@@ -329,3 +329,50 @@ Performance tests SHALL be available for explicit execution via a dedicated comm
 - **THEN** if performance tests fail on either database, the command SHALL exit with non-zero status
 - **AND** both database test runs SHALL complete before reporting failure
 
+### Requirement: Code Quality Standards
+The codebase SHALL maintain high code quality standards with clean, production-ready code free of debug statements and unresolved TODOs.
+
+#### Scenario: Debug code is removed from production
+- **WHEN** code is reviewed or deployed
+- **THEN** production code SHALL NOT contain debug statements (e.g., `fwrite(STDERR, ...)`, `dump()`, `dd()`)
+- **AND** commented debug code SHALL be removed from source files
+- **AND** debug echo/print statements SHALL be removed from test files
+
+#### Scenario: TODO comments are resolved
+- **WHEN** code is reviewed or deployed
+- **THEN** TODO comments SHALL be resolved or removed
+- **AND** any incomplete functionality referenced by TODOs SHALL be documented or implemented
+- **AND** code SHALL not contain unplanned work items in comments
+
+### Requirement: Test Organization and Quality
+The test suite SHALL be well-organized, free of redundancy, and follow clear organizational patterns with comprehensive coverage.
+
+#### Scenario: Tests are organized by functionality
+- **WHEN** tests are reviewed or new tests are added
+- **THEN** test files SHALL be organized by functionality (validation, assignment, schema, type system)
+- **AND** test file names SHALL clearly indicate what is being tested
+- **AND** edge case tests SHALL be included in the relevant functional test file
+- **AND** "EdgeCase" SHALL NOT be used as a primary test file name
+
+#### Scenario: Redundant tests are removed
+- **WHEN** tests are consolidated
+- **THEN** duplicate test scenarios across different files SHALL be identified
+- **AND** only one version of each test scenario SHALL be kept
+- **AND** the most comprehensive version SHALL be preserved
+- **AND** removed duplicates SHALL be documented in commit messages
+
+#### Scenario: Test coverage is maintained during consolidation
+- **WHEN** test files are consolidated
+- **THEN** all unique test scenarios SHALL be preserved
+- **AND** test count SHALL be maintained or increased
+- **AND** test coverage percentage SHALL not decrease
+- **AND** all spec requirements SHALL continue to have corresponding tests
+
+#### Scenario: Test organization follows clear patterns
+- **WHEN** developers look for tests
+- **THEN** test location SHALL be predictable based on functionality
+- **AND** validation tests SHALL be in SchemaValidationTest
+- **AND** assignment tests SHALL be in SchemaAssignmentTest
+- **AND** type system tests SHALL be in TypeSystemTest
+- **AND** schema edge cases SHALL be in SchemaEdgeCaseTest
+

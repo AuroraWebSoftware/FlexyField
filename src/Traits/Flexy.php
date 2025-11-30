@@ -4,14 +4,14 @@ namespace AuroraWebSoftware\FlexyField\Traits;
 
 use AuroraWebSoftware\FlexyField\Contracts\FlexyModelContract;
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\Exceptions\FieldNotInSetException;
-use AuroraWebSoftware\FlexyField\Exceptions\FieldSetInUseException;
-use AuroraWebSoftware\FlexyField\Exceptions\FieldSetNotFoundException;
+use AuroraWebSoftware\FlexyField\Exceptions\FieldNotInSchemaException;
+use AuroraWebSoftware\FlexyField\Exceptions\SchemaInUseException;
+use AuroraWebSoftware\FlexyField\Exceptions\SchemaNotFoundException;
 use AuroraWebSoftware\FlexyField\Exceptions\FlexyFieldTypeNotAllowedException;
 use AuroraWebSoftware\FlexyField\FlexyField;
-use AuroraWebSoftware\FlexyField\Models\FieldSet;
-use AuroraWebSoftware\FlexyField\Models\SetField;
-use AuroraWebSoftware\FlexyField\Models\Value;
+use AuroraWebSoftware\FlexyField\Models\FieldSchema;
+use AuroraWebSoftware\FlexyField\Models\SchemaField;
+use AuroraWebSoftware\FlexyField\Models\FieldValue;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -41,16 +41,20 @@ trait Flexy
                 });
         });
 
-        // Auto-assign default field set on model creation
+        static::retrieved(function (FlexyModelContract $flexyModelContract) {
+            $flexyModelContract->resetFlexy();
+        });
+
+        // Auto-assign default schema on model creation
         static::creating(function (FlexyModelContract $flexyModelContract) {
-            if (! $flexyModelContract->field_set_code) {
+            if (! $flexyModelContract->schema_code) {
                 $modelType = static::getModelType();
-                $defaultSet = FieldSet::where('model_type', $modelType)
+                $defaultSchema = FieldSchema::where('model_type', $modelType)
                     ->where('is_default', true)
                     ->first();
 
-                if ($defaultSet) {
-                    $flexyModelContract->field_set_code = $defaultSet->set_code;
+                if ($defaultSchema) {
+                    $flexyModelContract->schema_code = $defaultSchema->schema_code;
                 }
             }
         });
@@ -60,33 +64,36 @@ trait Flexy
                 $modelType = static::getModelType();
                 $dirtyFields = $flexyModelContract->flexy->getDirty() ?? [];
 
-                // Get field set code for this instance
-                $fieldSetCode = $flexyModelContract->getFieldSetCode();
+                // Get schema code for this instance
+                $schemaCode = $flexyModelContract->getSchemaCode();
 
-                if (! $fieldSetCode) {
-                    throw FieldSetNotFoundException::notAssigned($modelType, $flexyModelContract->id ?? 0);
+                if (! $schemaCode) {
+                    throw SchemaNotFoundException::notAssigned($modelType, $flexyModelContract->id ?? 0);
                 }
 
-                // Get available fields for this field set
-                $setFields = SetField::where('set_code', $fieldSetCode)->get()->keyBy('field_name');
+                // Get available fields for this schema
+                $schemaFields = SchemaField::where('schema_code', $schemaCode)->get()->keyBy('name');
 
+                // Prepare data for validation (all current values + dirty values)
+                $validationData = $flexyModelContract->flexy->getAttributes();
+                
                 foreach ($dirtyFields as $field => $value) {
-                    // Check if field exists in assigned field set
-                    if (! $setFields->has($field)) {
-                        $availableFields = $setFields->pluck('field_name')->toArray();
-                        throw FieldNotInSetException::forField($field, $fieldSetCode, $availableFields);
+                    // Check if field exists in assigned schema
+                    if (! $schemaFields->has($field)) {
+                        $availableFields = $schemaFields->pluck('name')->toArray();
+                        throw FieldNotInSchemaException::forField($field, $schemaCode, $availableFields);
                     }
 
-                    $setField = $setFields[$field];
+                    $schemaField = $schemaFields[$field];
 
                     // Validate field value
-                    if ($setField->validation_rules) {
-                        $data = [$field => $value];
-                        $validationRules = $setField->getValidationRulesArray();
+                    if ($schemaField->validation_rules) {
+                        $validationRules = $schemaField->getValidationRulesArray();
                         $rules = [$field => $validationRules];
-                        $messages = $setField->validation_messages ? [$field => $setField->validation_messages] : [];
+                        $messages = $schemaField->validation_messages ? [$field => $schemaField->validation_messages] : [];
 
-                        Validator::make($data, $rules, $messages)->validate();
+                        // Use the full validation data
+                        Validator::make($validationData, $rules, $messages)->validate();
                     }
 
                     $addition = [
@@ -99,38 +106,46 @@ trait Flexy
                         'value_json' => null,
                     ];
 
-                    // Type detection order: most specific to least specific
-                    if ($value === null) {
-                        // Null values are allowed, all columns remain null
-                    } elseif (is_bool($value)) {
-                        $addition['value_boolean'] = $value;
-                    } elseif (is_int($value)) {
-                        $addition['value_int'] = $value;
-                    } elseif (is_float($value)) {
-                        $addition['value_decimal'] = $value;
-                    } elseif ($value instanceof DateTime) {
+                    // Assign value based on schema field type
+                    if ($schemaField->type === FlexyFieldType::DATE) {
+                        $addition['value_date'] = $value;
+                    } elseif ($schemaField->type === FlexyFieldType::DATETIME) {
                         $addition['value_datetime'] = $value;
-                    } elseif (is_string($value)) {
-                        $addition['value_string'] = $value;
-                    } elseif ($value instanceof \Closure) {
-                        throw new FlexyFieldTypeNotAllowedException('Closure type is not supported');
-                    } elseif (is_array($value) || is_object($value)) {
-                        $addition['value_json'] = json_encode($value);
+                    } elseif ($schemaField->type === FlexyFieldType::BOOLEAN) {
+                         // Handle boolean casting explicitly, including empty strings
+                         if ($value === null) {
+                             $addition['value_boolean'] = null;
+                         } else {
+                             $addition['value_boolean'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                         }
+                    } elseif ($schemaField->type === FlexyFieldType::INTEGER) {
+                        $addition['value_int'] = $value !== null ? (int) $value : null;
+                    } elseif ($schemaField->type === FlexyFieldType::DECIMAL) {
+                        $addition['value_decimal'] = $value !== null ? (float) $value : null;
+                    } elseif ($schemaField->type === FlexyFieldType::JSON) {
+                        $addition['value_json'] = $value !== null ? json_encode($value) : null;
                     } else {
-                        throw new FlexyFieldTypeNotAllowedException;
+                        // Default to string for STRING type or unknown
+                        $addition['value_string'] = $value !== null ? (string) $value : null;
                     }
 
-                    Value::updateOrCreate(
+                    // Get schema_id from schema_code for foreign key
+                    $schema = FieldSchema::where('model_type', $modelType)
+                        ->where('schema_code', $schemaCode)
+                        ->first();
+
+                    FieldValue::updateOrCreate(
                         [
                             'model_type' => $modelType,
                             'model_id' => $flexyModelContract->id,
-                            'field_name' => $field,
+                            'name' => $field,
                         ],
                         [
                             'model_type' => $modelType,
                             'model_id' => $flexyModelContract->id,
-                            'field_name' => $field,
-                            'field_set_code' => $fieldSetCode,
+                            'name' => $field,
+                            'schema_code' => $schemaCode,
+                            'schema_id' => $schema?->id,
                             ...$addition,
                         ]
                     );
@@ -150,32 +165,32 @@ trait Flexy
             $modelType = static::getModelType();
             $modelId = $flexyModelContract->id;
 
-            Value::where([
+            FieldValue::where([
                 'model_type' => $modelType,
                 'model_id' => $modelId,
             ])->delete();
         });
     }
 
-    // ==================== Field Set Management Methods ====================
+    // ==================== Schema Management Methods ====================
 
     /**
-     * Create a new field set for this model type
+     * Create a new schema for this model type
      *
      * @throws \Exception
      */
-    public static function createFieldSet(
-        string $setCode,
+    public static function createSchema(
+        string $schemaCode,
         string $label,
         ?string $description = null,
         ?array $metadata = null,
         bool $isDefault = false
-    ): FieldSet {
+    ): FieldSchema {
         $modelType = static::getModelType();
 
-        return FieldSet::create([
+        return FieldSchema::create([
             'model_type' => $modelType,
-            'set_code' => $setCode,
+            'schema_code' => $schemaCode,
             'label' => $label,
             'description' => $description,
             'metadata' => $metadata,
@@ -184,102 +199,114 @@ trait Flexy
     }
 
     /**
-     * Get a field set by set code for this model type
+     * Get a schema by schema code for this model type
      */
-    public static function getFieldSet(string $setCode): ?FieldSet
+    public static function getSchema(string $schemaCode): ?FieldSchema
     {
         $modelType = static::getModelType();
 
-        return FieldSet::where('model_type', $modelType)
-            ->where('set_code', $setCode)
+        return FieldSchema::where('model_type', $modelType)
+            ->where('schema_code', $schemaCode)
             ->first();
     }
 
     /**
-     * Get all field sets for this model type
+     * Get all schemas for this model type
      */
-    public static function getAllFieldSets(): Collection
+    public static function getAllSchemas(): Collection
     {
         $modelType = static::getModelType();
 
-        return FieldSet::where('model_type', $modelType)
+        return FieldSchema::where('model_type', $modelType)
             ->orderBy('is_default', 'desc')
             ->orderBy('label')
             ->get();
     }
 
     /**
-     * Delete a field set (with usage check)
+     * Delete a schema (with usage check)
      *
-     * @throws FieldSetInUseException
+     * @throws SchemaInUseException
      */
-    public static function deleteFieldSet(string $setCode): bool
+    public static function deleteSchema(string $schemaCode): bool
     {
         $modelType = static::getModelType();
 
-        $fieldSet = FieldSet::where('model_type', $modelType)
-            ->where('set_code', $setCode)
+        $schema = FieldSchema::where('model_type', $modelType)
+            ->where('schema_code', $schemaCode)
             ->first();
 
-        if (! $fieldSet) {
+        if (! $schema) {
             return false;
         }
 
-        // Check if field set is in use
-        $usageCount = $fieldSet->getUsageCount($modelType);
+        // Check if schema is in use
+        $usageCount = $schema->getUsageCount($modelType);
         if ($usageCount > 0) {
-            throw FieldSetInUseException::cannotDelete($setCode, $usageCount);
+            throw SchemaInUseException::cannotDelete($schemaCode, $usageCount);
         }
 
-        return $fieldSet->delete();
+        return $schema->delete();
     }
 
     // ==================== Field Management Methods ====================
 
     /**
-     * Add a field to a field set
+     * Add a field to a schema
      */
-    public static function addFieldToSet(
-        string $setCode,
+    public static function addFieldToSchema(
+        string $schemaCode,
         string $fieldName,
         FlexyFieldType $fieldType,
         int $sort = 100,
         ?string $validationRules = null,
         ?array $validationMessages = null,
         ?array $fieldMetadata = null
-    ): SetField {
-        $setField = SetField::create([
-            'set_code' => $setCode,
-            'field_name' => $fieldName,
-            'field_type' => $fieldType,
+    ): SchemaField {
+        $modelType = static::getModelType();
+        
+        // Get schema_id from schema_code for foreign key
+        $schema = FieldSchema::where('model_type', $modelType)
+            ->where('schema_code', $schemaCode)
+            ->first();
+
+        if (! $schema) {
+            throw SchemaNotFoundException::forSchemaCode($schemaCode, $modelType);
+        }
+
+        $schemaField = SchemaField::create([
+            'schema_code' => $schemaCode,
+            'schema_id' => $schema->id,
+            'name' => $fieldName,
+            'type' => $fieldType,
             'sort' => $sort,
             'validation_rules' => $validationRules,
             'validation_messages' => $validationMessages,
-            'field_metadata' => $fieldMetadata,
+            'metadata' => $fieldMetadata,
         ]);
 
         // Recreate pivot view to include new field
         FlexyField::recreateViewIfNeeded([$fieldName]);
 
-        return $setField;
+        return $schemaField;
     }
 
     /**
-     * Remove a field from a field set
+     * Remove a field from a schema
      */
-    public static function removeFieldFromSet(string $setCode, string $fieldName): bool
+    public static function removeFieldFromSchema(string $schemaCode, string $fieldName): bool
     {
-        return SetField::where('set_code', $setCode)
-            ->where('field_name', $fieldName)
+        return SchemaField::where('schema_code', $schemaCode)
+            ->where('name', $fieldName)
             ->delete();
     }
 
     /**
-     * Get all fields for a field set
+     * Get all fields for a schema
      */
-    public static function getFieldsForSet(string $setCode): Collection
+    public static function getFieldsForSchema(string $schemaCode): Collection
     {
-        return SetField::where('set_code', $setCode)
+        return SchemaField::where('schema_code', $schemaCode)
             ->orderBy('sort')
             ->get();
     }
@@ -287,141 +314,238 @@ trait Flexy
     // ==================== Instance Methods ====================
 
     /**
-     * Assign this model instance to a field set
+     * Assign this model instance to a schema
      *
-     * @throws FieldSetNotFoundException
+     * @throws SchemaNotFoundException
      */
-    public function assignToFieldSet(string $setCode): void
+    public function assignToSchema(string $schemaCode): void
     {
         $modelType = static::getModelType();
 
-        // Verify field set exists
-        $fieldSet = FieldSet::where('model_type', $modelType)
-            ->where('set_code', $setCode)
+        // Verify schema exists
+        $schema = FieldSchema::where('model_type', $modelType)
+            ->where('schema_code', $schemaCode)
             ->first();
 
-        if (! $fieldSet) {
-            throw FieldSetNotFoundException::forSetCode($setCode, $modelType);
+        if (! $schema) {
+            throw SchemaNotFoundException::forSchemaCode($schemaCode, $modelType);
         }
 
-        // Update model's field_set_code
-        $this->field_set_code = $setCode;
+        // Update model's schema_code
+        $this->schema_code = $schemaCode;
         $this->save();
+
+        // Update internal Flexy model if initialized
+        if ($this->fields) {
+            $this->fields->_schema_code = $schemaCode;
+        }
     }
 
     /**
-     * Get the field set code for this instance
+     * Get the schema code for this instance
      */
-    public function getFieldSetCode(): ?string
+    public function getSchemaCode(): ?string
     {
-        return $this->field_set_code ?? null;
+        return $this->schema_code ?? null;
     }
 
     /**
-     * Get available fields for this instance's field set
+     * Get available fields for this instance's schema
      */
     public function getAvailableFields(): Collection
     {
-        $fieldSetCode = $this->getFieldSetCode();
+        $schemaCode = $this->getSchemaCode();
 
-        if (! $fieldSetCode) {
+        if (! $schemaCode) {
             return collect();
         }
 
-        return SetField::where('set_code', $fieldSetCode)
+        return SchemaField::where('schema_code', $schemaCode)
             ->orderBy('sort')
             ->get();
     }
 
     /**
-     * Get the field set relationship
+     * Get the schema relationship
      */
-    public function fieldSet(): BelongsTo
+    public function schema(): BelongsTo
     {
-        return $this->belongsTo(FieldSet::class, 'field_set_code', 'set_code');
+        return $this->belongsTo(FieldSchema::class, 'schema_code', 'schema_code');
     }
 
     // ==================== Flexy Accessor ====================
 
+    public function resetFlexy(): void
+    {
+        $this->fields = null;
+    }
+
     public function flexy(): Attribute
     {
-        return new Attribute(
-            get: function () {
+        return Attribute::make(
+            get: function ($value, $attributes) {
                 if ($this->fields == null) {
+                    $schemaCode = $this->getSchemaCode();
+                    
                     $this->fields = new \AuroraWebSoftware\FlexyField\Models\Flexy;
                     $this->fields->_model_type = static::getModelType();
-                    $this->fields->_model_id = $this->id;
-
-                    $fieldSetCode = $this->getFieldSetCode();
-
-                    // Query for values, optionally filtered by field_set_code
-                    $valuesQuery = Value::where([
-                        'ff_values.model_type' => static::getModelType(),
-                        'ff_values.model_id' => $this->id,
+                    $this->fields->_model_id = $attributes['id'] ?? $this->getKey();
+                    $this->fields->_schema_code = $schemaCode;
+                    
+                    // Query for values, optionally filtered by schema_code
+                    $valuesQuery = FieldValue::where([
+                        'ff_field_values.model_type' => static::getModelType(),
+                        'ff_field_values.model_id' => $attributes['id'] ?? $this->getKey(),
                     ]);
 
-                    if ($fieldSetCode) {
-                        $valuesQuery->where('ff_values.field_set_code', $fieldSetCode);
+                    if ($schemaCode) {
+                        $valuesQuery->where('ff_field_values.schema_code', $schemaCode);
                     }
 
                     $values = $valuesQuery
-                        ->leftJoin('ff_set_fields', function ($join) use ($fieldSetCode) {
-                            $join->on('ff_values.field_name', '=', 'ff_set_fields.field_name');
-                            if ($fieldSetCode) {
-                                $join->where('ff_set_fields.set_code', '=', $fieldSetCode);
+                        ->join('ff_schema_fields', function ($join) use ($schemaCode) {
+                            $join->on('ff_field_values.name', '=', 'ff_schema_fields.name');
+                            if ($schemaCode) {
+                                $join->where('ff_schema_fields.schema_code', '=', $schemaCode);
                             }
                         })
-                        ->orderBy('ff_set_fields.sort')
-                        ->select('ff_values.*', 'ff_set_fields.sort')
+                        ->orderBy('ff_schema_fields.sort')
+                        ->select('ff_field_values.*', 'ff_schema_fields.sort', 'ff_schema_fields.type')
                         ->get();
 
                     $values->each(function ($value) {
-                        $fieldValue = $value->value_date ??
-                            $value->value_datetime ??
-                            $value->value_decimal ??
-                            $value->value_int ??
-                            $value->value_string ??
-                            $value->value_boolean ?? null;
-
+                        // Initialize fieldValue from specific columns based on type or fallback
+                        $fieldValue = null;
+                        
+                        // Cast based on schema field type
+                        // Note: $value->type can be either an enum value or a string from the database
+                        $typeValue = is_string($value->type) ? strtolower($value->type) : $value->type->value;
+                        
+                        if ($typeValue === FlexyFieldType::DATE->value) {
+                            $fieldValue = $value->value_date ? \Carbon\Carbon::parse($value->value_date) : null;
+                        } elseif ($typeValue === FlexyFieldType::DATETIME->value) {
+                             $fieldValue = $value->value_datetime ? \Carbon\Carbon::parse($value->value_datetime) : null;
+                        } elseif ($typeValue === FlexyFieldType::DECIMAL->value) {
+                            $fieldValue = $value->value_decimal !== null ? (float) $value->value_decimal : null;
+                        } elseif ($typeValue === FlexyFieldType::INTEGER->value) {
+                            $fieldValue = $value->value_int !== null ? (int) $value->value_int : null;
+                        } elseif ($typeValue === FlexyFieldType::BOOLEAN->value) {
+                            $fieldValue = $value->value_boolean !== null ? (bool) $value->value_boolean : null;
+                        } else {
+                            // String or default
+                            $fieldValue = $value->value_string;
+                        }
+                        
                         // Decode JSON if present (value_json is stored as JSON string in database)
                         if ($value->value_json !== null && $fieldValue === null) {
                             $fieldValue = json_decode($value->value_json, true);
                         }
 
-                        $this->fields[$value->field_name] = $fieldValue;
+                        $this->fields->setAttribute($value->name, $fieldValue);
                     });
+                    
+                    // Ensure schema code is synced (in case it was initialized before schema assignment)
+                    if ($this->fields && $this->fields->_schema_code !== $this->getSchemaCode()) {
+                        $this->fields->_schema_code = $this->getSchemaCode();
+                    }
+
+                    $this->fields->setRawAttributes($this->fields->getAttributes(), true);
                 }
 
-                $this->fields->setRawAttributes($this->fields->getAttributes(), true);
-
                 return $this->fields;
-            },
+            }
         );
     }
 
     // ==================== Query Scopes ====================
 
     /**
-     * Scope to filter by field set code
+     * Scope to filter by schema code
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
      */
-    public function scopeWhereFieldSet(Builder $query, string $setCode): Builder
+    public function scopeWhereSchema(Builder $query, string $schemaCode): Builder
     {
-        return $query->where($this->getTable().'.field_set_code', $setCode);
+        return $query->where('schema_code', $schemaCode);
     }
 
     /**
-     * Scope to filter by multiple field set codes
+     * Scope to filter by schema codes
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @param  array<string>  $schemaCodes
+     * @return \Illuminate\Database\Eloquent\Builder<static>
      */
-    public function scopeWhereFieldSetIn(Builder $query, array $setCodes): Builder
+    public function scopeWhereInSchema(Builder $query, array $schemaCodes): Builder
     {
-        return $query->whereIn($this->getTable().'.field_set_code', $setCodes);
+        return $query->whereIn('schema_code', $schemaCodes);
     }
 
     /**
-     * Scope to filter models without field set assignment
+     * Scope to filter by default schema
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
      */
-    public function scopeWhereFieldSetNull(Builder $query): Builder
+    public function scopeWhereDefaultSchema(Builder $query): Builder
     {
-        return $query->whereNull($this->getTable().'.field_set_code');
+        $modelType = static::getModelType();
+        
+        return $query->whereHas('schema', function ($query) use ($modelType) {
+            $query->where('model_type', $modelType)
+                  ->where('is_default', true);
+        });
+    }
+
+    /**
+     * Scope to filter by having any schema assigned
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function scopeWhereHasSchema(Builder $query): Builder
+    {
+        return $query->whereNotNull('schema_code');
+    }
+
+    /**
+     * Scope to filter by having no schema assigned
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function scopeWhereDoesntHaveSchema(Builder $query): Builder
+    {
+        return $query->whereNull('schema_code');
+    }
+
+    /**
+     * Override refresh to clear cached fields
+     */
+    public function refresh()
+    {
+        $this->fields = null;
+        return parent::refresh();
+    }
+
+    /**
+     * Get the model's attributes, excluding the flexy accessor
+     */
+    public function getAttributes()
+    {
+        $attributes = parent::getAttributes();
+        unset($attributes['flexy']);
+        return $attributes;
+    }
+
+    /**
+     * Get the attributes that have been changed, excluding the flexy accessor
+     */
+    public function getDirty()
+    {
+        $dirty = parent::getDirty();
+        unset($dirty['flexy']);
+        return $dirty;
     }
 }

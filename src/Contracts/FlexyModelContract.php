@@ -3,8 +3,8 @@
 namespace AuroraWebSoftware\FlexyField\Contracts;
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\Models\FieldSet;
-use AuroraWebSoftware\FlexyField\Models\SetField;
+use AuroraWebSoftware\FlexyField\Models\FieldSchema;
+use AuroraWebSoftware\FlexyField\Models\SchemaField;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,98 +14,98 @@ interface FlexyModelContract
 {
     public static function getModelType(): string;
 
-    // ==================== Field Set Management ====================
+    // ==================== Schema Management ====================
 
     /**
-     * Create a new field set for this model type
+     * Create a new schema for this model type
      *
      * @param  array<string, mixed>|null  $metadata
      */
-    public static function createFieldSet(
-        string $setCode,
+    public static function createSchema(
+        string $schemaCode,
         string $label,
         ?string $description = null,
         ?array $metadata = null,
         bool $isDefault = false
-    ): FieldSet;
+    ): FieldSchema;
 
     /**
-     * Get a field set by set code
+     * Get a schema by schema code
      */
-    public static function getFieldSet(string $setCode): ?FieldSet;
+    public static function getSchema(string $schemaCode): ?FieldSchema;
 
     /**
-     * Get all field sets for this model type
+     * Get all schemas for this model type
      *
-     * @return Collection<int, FieldSet>
+     * @return Collection<int, FieldSchema>
      */
-    public static function getAllFieldSets(): Collection;
+    public static function getAllSchemas(): Collection;
 
     /**
-     * Delete a field set
+     * Delete a schema
      */
-    public static function deleteFieldSet(string $setCode): bool;
+    public static function deleteSchema(string $schemaCode): bool;
 
     // ==================== Field Management ====================
 
     /**
-     * Add a field to a field set
+     * Add a field to a schema
      *
      * @param  array<string, string>|null  $validationMessages
      * @param  array<string, mixed>|null  $fieldMetadata
      */
-    public static function addFieldToSet(
-        string $setCode,
+    public static function addFieldToSchema(
+        string $schemaCode,
         string $fieldName,
         FlexyFieldType $fieldType,
         int $sort = 100,
         ?string $validationRules = null,
         ?array $validationMessages = null,
         ?array $fieldMetadata = null
-    ): SetField;
+    ): SchemaField;
 
     /**
-     * Remove a field from a field set
+     * Remove a field from a schema
      */
-    public static function removeFieldFromSet(string $setCode, string $fieldName): bool;
+    public static function removeFieldFromSchema(string $schemaCode, string $fieldName): bool;
 
     /**
-     * Get all fields for a field set
+     * Get all fields for a schema
      *
-     * @return Collection<int, SetField>
+     * @return Collection<int, SchemaField>
      */
-    public static function getFieldsForSet(string $setCode): Collection;
+    public static function getFieldsForSchema(string $schemaCode): Collection;
 
     // ==================== Instance Methods ====================
 
     /**
-     * Assign this instance to a field set
+     * Assign this instance to a schema
      */
-    public function assignToFieldSet(string $setCode): void;
+    public function assignToSchema(string $schemaCode): void;
 
     /**
-     * Get the field set code for this instance
+     * Get schema code for this instance
      */
-    public function getFieldSetCode(): ?string;
+    public function getSchemaCode(): ?string;
 
     /**
      * Get available fields for this instance
      *
-     * @return Collection<int, SetField>
+     * @return Collection<int, SchemaField>
      */
     public function getAvailableFields(): Collection;
 
     /**
-     * Get the field set relationship
+     * Get schema relationship
      *
-     * @return BelongsTo<FieldSet, Model>
+     * @return BelongsTo<FieldSchema, Model>
      */
-    public function fieldSet(): BelongsTo;
+    public function schema(): BelongsTo;
 
     /**
-     * Get the flexy fields accessor
+     * Get flexy fields accessor
      *
-     * @return Attribute<\AuroraWebSoftware\FlexyField\Models\Flexy, never>
+     * @return Attribute<\auroraWebSoftware\FlexyField\Models\Flexy, never>
      */
     public function flexy(): Attribute;
 }

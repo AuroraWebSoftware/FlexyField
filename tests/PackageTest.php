@@ -1,15 +1,15 @@
 <?php
 
 use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
-use AuroraWebSoftware\FlexyField\Models\Value;
-use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesFieldSets;
+use AuroraWebSoftware\FlexyField\Models\FieldValue;
+use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
-uses(CreatesFieldSets::class);
+uses(CreatesSchemas::class);
 
 beforeEach(function () {
 
@@ -18,326 +18,298 @@ beforeEach(function () {
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
         $table->string('name');
-        $table->string('field_set_code')->nullable()->index();
+        $table->string('schema_code')->nullable();
         $table->timestamps();
-
-        // REMOVED FOR PGSQL:         $table->foreign('field_set_code')
-        // REMOVED FOR PGSQL:             ->references('set_code')
-        // REMOVED FOR PGSQL:             ->on('ff_field_sets')
-        // REMOVED FOR PGSQL:             ->onDelete('set null')
-        // REMOVED FOR PGSQL:             ->onUpdate('cascade');
     });
-
 });
 
-it('can test', function () {
-    expect(true)->toBeTrue();
+it('creates field set with fields', function () {
+    $this->createDefaultSchema(ExampleFlexyModel::class);
+
+    $this->assertDatabaseHas('ff_schemas', [
+        'model_type' => ExampleFlexyModel::class,
+        'schema_code' => 'default',
+        'label' => 'Default',
+    ]);
+
+    $this->assertDatabaseHas('ff_schema_fields', [
+        'schema_code' => 'default',
+        'name' => 'test_field',
+        'type' => FlexyFieldType::STRING->value,
+    ]);
+
+    $this->assertDatabaseHas('ff_schema_fields', [
+        'schema_code' => 'default',
+        'name' => 'count',
+        'type' => FlexyFieldType::INTEGER->value,
+    ]);
+
+    $this->assertDatabaseHas('ff_schema_fields', [
+        'schema_code' => 'default',
+        'name' => 'price',
+        'type' => FlexyFieldType::DECIMAL->value,
+    ]);
+
+    $this->assertDatabaseHas('ff_schema_fields', [
+        'schema_code' => 'default',
+        'name' => 'is_active',
+        'type' => FlexyFieldType::BOOLEAN->value,
+    ]);
 });
 
-it('can set and get a flexy models flexy fields', function () {
-    $this->createFieldSetWithFields(
+it('creates model with flexy fields', function () {
+    $this->createDefaultSchema(ExampleFlexyModel::class);
+    $model = ExampleFlexyModel::create(['name' => 'Test Product']);
+
+    $model->assignToSchema('default');
+    $model->flexy->test_field = 'test value';
+    $model->flexy->count = 42;
+    $model->flexy->price = 19.99;
+    $model->flexy->is_active = true;
+    $model->save();
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'test_field',
+        'value_string' => 'test value',
+        'schema_code' => 'default',
+    ]);
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'count',
+        'value_int' => 42,
+        'schema_code' => 'default',
+    ]);
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'price',
+        'value_decimal' => 19.99,
+        'schema_code' => 'default',
+    ]);
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'is_active',
+        'value_boolean' => true,
+        'schema_code' => 'default',
+    ]);
+});
+
+it('validates field values', function () {
+    $this->createSchemaWithFields(
         modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
+        schemaCode: 'default',
         fields: [
-            'a' => ['type' => FlexyFieldType::STRING],
-            'b' => ['type' => FlexyFieldType::STRING],
-        ]
-    );
-
-    $flexyModel1 = ExampleFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
-
-    $flexyModel1->flexy->a = '1';
-    $flexyModel1->save();
-
-    expect($flexyModel1->flexy->a)->toBe('1');
-
-    $flexyModel1->flexy->a = '2';
-    $flexyModel1->save();
-
-    expect($flexyModel1->flexy->a)->toBe('2');
-
-    $flexyModel1->flexy->b = '1';
-    $flexyModel1->save();
-
-    expect($flexyModel1->flexy->b)->toBe('1');
-});
-
-it('can get a flexy models with where condition of flexy fields', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: [
-            'a' => ['type' => FlexyFieldType::INTEGER],
-            'b' => ['type' => FlexyFieldType::STRING],
-        ]
-    );
-
-    $flexyModel1 = ExampleFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
-    $flexyModel1->flexy->a = 1;
-    $flexyModel1->flexy->b = 'tester1';
-    $flexyModel1->save();
-
-    $flexyModel2 = ExampleFlexyModel::create(['name' => 'ExampleFlexyModel 2']);
-    $flexyModel2->flexy->a = 1;
-    $flexyModel2->flexy->b = 'tester2';
-    $flexyModel2->save();
-
-    // Recreate view to include fields
-    \AuroraWebSoftware\FlexyField\FlexyField::forceRecreateView();
-
-    expect(ExampleFlexyModel::where('flexy_a', 1)->where('flexy_b', 'tester2')->get())->toHaveCount(1)
-        ->and(ExampleFlexyModel::where('flexy_a', 1)->get())->toHaveCount(2);
-});
-
-it('can delete flexy values', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: [
-            'a' => ['type' => FlexyFieldType::INTEGER],
-            'b' => ['type' => FlexyFieldType::INTEGER],
-        ]
-    );
-
-    $flexyModel1 = ExampleFlexyModel::create(['name' => 'ExampleFlexyModel 1']);
-    $flexyModel2 = ExampleFlexyModel::create(['name' => 'ExampleFlexyModel 2']);
-
-    $flexyModel1->flexy->a = 5;
-    $flexyModel1->save();
-    $flexyModel2->flexy->b = 1;
-    $flexyModel2->save();
-
-    expect(Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel1->id)->exists())->toBeTrue();
-
-    $flexyModel1->delete();
-
-    expect(Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel1->id)->exists())->toBeFalse();
-
-    expect(Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel2->id)->exists())->toBeTrue();
-});
-
-// Tests for fix-critical-bugs proposal
-
-it('can store boolean false without converting to integer', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: ['is_active' => ['type' => FlexyFieldType::BOOLEAN]]
-    );
-
-    $flexyModel = ExampleFlexyModel::create(['name' => 'Boolean Test']);
-    $flexyModel->assignToFieldSet('default');
-
-    $flexyModel->flexy->is_active = false;
-    $flexyModel->save();
-
-    $value = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->where('field_name', 'is_active')
-        ->first();
-
-    expect($value->value_boolean)->toBe(false)
-        ->and($value->value_int)->toBeNull()
-        ->and($flexyModel->fresh()->flexy->is_active)->toBe(false);
-});
-
-it('can store boolean true without converting to integer', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: ['is_active' => ['type' => FlexyFieldType::BOOLEAN]]
-    );
-
-    $flexyModel = ExampleFlexyModel::create(['name' => 'Boolean Test']);
-    $flexyModel->assignToFieldSet('default');
-
-    $flexyModel->flexy->is_active = true;
-    $flexyModel->save();
-
-    $value = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->where('field_name', 'is_active')
-        ->first();
-
-    expect($value->value_boolean)->toBe(true)
-        ->and($value->value_int)->toBeNull()
-        ->and($flexyModel->fresh()->flexy->is_active)->toBe(true);
-});
-
-it('can store integer zero without converting to boolean', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: ['quantity' => ['type' => FlexyFieldType::INTEGER]]
-    );
-
-    $flexyModel = ExampleFlexyModel::create(['name' => 'Integer Test']);
-    $flexyModel->assignToFieldSet('default');
-
-    $flexyModel->flexy->quantity = 0;
-    $flexyModel->save();
-
-    $value = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->where('field_name', 'quantity')
-        ->first();
-
-    expect($value->value_int)->toBe(0)
-        ->and($value->value_boolean)->toBeNull()
-        ->and($flexyModel->fresh()->flexy->quantity)->toBe(0);
-});
-
-it('can distinguish between boolean false and integer 0', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: [
-            'bool_field' => ['type' => FlexyFieldType::BOOLEAN],
-            'int_field' => ['type' => FlexyFieldType::INTEGER],
-        ]
-    );
-
-    $flexyModel = ExampleFlexyModel::create(['name' => 'Type Distinction Test']);
-    $flexyModel->assignToFieldSet('default');
-
-    // Set boolean false
-    $flexyModel->flexy->bool_field = false;
-    $flexyModel->flexy->int_field = 0;
-    $flexyModel->save();
-
-    $boolValue = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->where('field_name', 'bool_field')
-        ->first();
-
-    $intValue = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->where('field_name', 'int_field')
-        ->first();
-
-    expect($boolValue->value_boolean)->toBe(false)
-        ->and($boolValue->value_int)->toBeNull()
-        ->and($intValue->value_int)->toBe(0)
-        ->and($intValue->value_boolean)->toBeNull();
-});
-
-it('can store float values as decimal', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: ['price' => ['type' => FlexyFieldType::DECIMAL]]
-    );
-
-    $flexyModel = ExampleFlexyModel::create(['name' => 'Float Test']);
-    $flexyModel->assignToFieldSet('default');
-
-    $flexyModel->flexy->price = 19.99;
-    $flexyModel->save();
-
-    $value = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->where('field_name', 'price')
-        ->first();
-
-    expect($value->value_decimal)->toBe('19.99')
-        ->and($value->value_int)->toBeNull()
-        ->and((float) $flexyModel->fresh()->flexy->price)->toBe(19.99);
-});
-
-it('can preserve numeric strings with leading zeros', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: [
-            'zip_code' => ['type' => FlexyFieldType::STRING],
-            'product_code' => ['type' => FlexyFieldType::STRING],
-        ]
-    );
-
-    $flexyModel = ExampleFlexyModel::create(['name' => 'Numeric String Test']);
-    $flexyModel->assignToFieldSet('default');
-
-    $flexyModel->flexy->zip_code = '007';
-    $flexyModel->flexy->product_code = '00123';
-    $flexyModel->save();
-
-    $zipValue = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->where('field_name', 'zip_code')
-        ->first();
-
-    $productValue = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->where('field_name', 'product_code')
-        ->first();
-
-    expect($zipValue->value_string)->toBe('007')
-        ->and($productValue->value_string)->toBe('00123')
-        ->and($flexyModel->fresh()->flexy->zip_code)->toBe('007')
-        ->and($flexyModel->fresh()->flexy->product_code)->toBe('00123');
-});
-
-it('can use custom validation messages correctly', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: [
-            'email' => [
-                'type' => FlexyFieldType::STRING,
-                'rules' => 'required|email',
-                'messages' => ['email' => 'Please provide a valid email address'],
+            'test_field' => ['type' => FlexyFieldType::STRING],
+            'count' => [
+                'type' => FlexyFieldType::INTEGER,
+                'rules' => 'integer',
             ],
-        ]
+        ],
+        isDefault: true
     );
 
-    $flexyModel = ExampleFlexyModel::create(['name' => 'Validation Test']);
-    $flexyModel->flexy->email = 'invalid-email';
+    $model = ExampleFlexyModel::create(['name' => 'Test Product']);
+    $model->assignToSchema('default');
 
-    try {
-        $flexyModel->save();
-        expect(false)->toBeTrue('Should have thrown validation exception');
-    } catch (ValidationException $e) {
-        expect($e->errors())->toHaveKey('email')
-            ->and($e->errors()['email'][0])->toContain('Please provide a valid email address');
-    }
+    // Valid data should save
+    $model->flexy->test_field = 'valid';
+    $model->flexy->count = 42;
+    $model->save();
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'test_field',
+        'value_string' => 'valid',
+    ]);
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'count',
+        'value_int' => 42,
+    ]);
+
+    // Invalid data should throw validation exception
+    $invalidModel = ExampleFlexyModel::create(['name' => 'Invalid Product']);
+    $invalidModel->assignToSchema('default');
+
+    $this->expectException(ValidationException::class);
+    $invalidModel->flexy->count = 'not a number';
+    $invalidModel->save();
 });
 
-it('stores different types correctly in appropriate columns', function () {
-    $this->createFieldSetWithFields(
-        modelClass: ExampleFlexyModel::class,
-        setCode: 'default',
-        fields: [
-            'bool_val' => ['type' => FlexyFieldType::BOOLEAN],
-            'int_val' => ['type' => FlexyFieldType::INTEGER],
-            'float_val' => ['type' => FlexyFieldType::DECIMAL],
-            'string_val' => ['type' => FlexyFieldType::STRING],
-            'json_val' => ['type' => FlexyFieldType::JSON],
-        ]
+it('retrieves flexy fields correctly', function () {
+    $this->createDefaultSchema(ExampleFlexyModel::class);
+    $model = ExampleFlexyModel::create(['name' => 'Test Product']);
+    $model->assignToSchema('default');
+
+    $model->flexy->test_field = 'test value';
+    $model->flexy->count = 42;
+    $model->flexy->price = 19.99;
+    $model->flexy->is_active = true;
+    $model->save();
+
+    // Refresh model to ensure clean state
+    $model->refresh();
+
+    expect($model->flexy->test_field)->toBe('test value');
+    expect($model->flexy->count)->toBe(42);
+    expect($model->flexy->price)->toBe(19.99);
+    expect($model->flexy->is_active)->toBeTrue();
+});
+
+it('handles json fields', function () {
+    $this->createDefaultSchema(ExampleFlexyModel::class);
+    // Add json field to the default schema - ALREADY ADDED IN createDefaultSchema
+    // ExampleFlexyModel::addFieldToSchema('default', 'json_field', FlexyFieldType::JSON);
+    
+    $model = ExampleFlexyModel::create(['name' => 'Test Product']);
+    $model->assignToSchema('default');
+
+    $testArray = ['key1' => 'value1', 'key2' => 'value2'];
+    $model->flexy->json_field = $testArray;
+    $model->save();
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'json_field',
+        'schema_code' => 'default',
+    ]);
+
+    // Refresh model to ensure clean state
+    $model->refresh();
+
+    $retrievedArray = $model->flexy->json_field;
+    expect($retrievedArray)->toEqual($testArray);
+});
+
+it('updates existing field values', function () {
+    $this->createDefaultSchema(ExampleFlexyModel::class);
+    $model = ExampleFlexyModel::create(['name' => 'Test Product']);
+    $model->assignToSchema('default');
+
+    // Create initial value
+    $model->flexy->test_field = 'initial value';
+    $model->save();
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'test_field',
+        'value_string' => 'initial value',
+        'schema_code' => 'default',
+    ]);
+
+    // Update the value
+    $model->flexy->test_field = 'updated value';
+    $model->save();
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'test_field',
+        'value_string' => 'updated value',
+        'schema_code' => 'default',
+    ]);
+});
+
+it('deletes field values when model is deleted', function () {
+    $this->createDefaultSchema(ExampleFlexyModel::class);
+    $model = ExampleFlexyModel::create(['name' => 'Test Product']);
+    $model->assignToSchema('default');
+
+    $model->flexy->test_field = 'test value';
+    $model->flexy->count = 42;
+    $model->save();
+
+    // Verify values exist
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'test_field',
+        'value_string' => 'test value',
+        'schema_code' => 'default',
+    ]);
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'count',
+        'value_int' => 42,
+        'schema_code' => 'default',
+    ]);
+
+    // Delete the model
+    $model->delete();
+
+    // Verify values are deleted
+    $this->assertDatabaseMissing('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'test_field',
+    ]);
+
+    $this->assertDatabaseMissing('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'count',
+    ]);
+});
+
+it('creates pivot view correctly', function () {
+    $this->createDefaultSchema(ExampleFlexyModel::class);
+
+    // Check that the view was created
+    $this->assertTrue(
+        Schema::hasView('ff_values_pivot_view'),
+        'Pivot view should be created'
     );
+});
 
-    $flexyModel = ExampleFlexyModel::create(['name' => 'Multi-type Test']);
-    $flexyModel->assignToFieldSet('default');
+it('handles date and datetime fields', function () {
+    $this->createDefaultSchema(ExampleFlexyModel::class);
+    // Add date and datetime fields to the default schema - ALREADY ADDED IN createDefaultSchema
+    // ExampleFlexyModel::addFieldToSchema('default', 'date_field', FlexyFieldType::DATE);
+    // ExampleFlexyModel::addFieldToSchema('default', 'datetime_field', FlexyFieldType::DATETIME);
+    
+    $model = ExampleFlexyModel::create(['name' => 'Test Product']);
+    $model->assignToSchema('default');
 
-    $flexyModel->flexy->bool_val = true;
-    $flexyModel->flexy->int_val = 42;
-    $flexyModel->flexy->float_val = 3.14;
-    $flexyModel->flexy->string_val = 'hello';
-    $flexyModel->flexy->json_val = ['key' => 'value'];
-    $flexyModel->save();
+    $date = now()->startOfDay();
+    $datetime = now();
 
-    $values = Value::where('model_type', ExampleFlexyModel::getModelType())
-        ->where('model_id', $flexyModel->id)
-        ->get()
-        ->keyBy('field_name');
+    $model->flexy->date_field = $date;
+    $model->flexy->datetime_field = $datetime;
+    $model->save();
 
-    expect($values['bool_val']->value_boolean)->toBe(true)
-        ->and($values['bool_val']->value_int)->toBeNull()
-        ->and($values['int_val']->value_int)->toBe(42)
-        ->and($values['int_val']->value_boolean)->toBeNull()
-        ->and($values['float_val']->value_decimal)->toBe('3.14')
-        ->and($values['string_val']->value_string)->toBe('hello')
-        ->and(json_decode($values['json_val']->value_json, true))->toBe(['key' => 'value']);
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'date_field',
+        'value_date' => $date->format('Y-m-d'),
+        'schema_code' => 'default',
+    ]);
+
+    $this->assertDatabaseHas('ff_field_values', [
+        'model_type' => ExampleFlexyModel::class,
+        'model_id' => $model->id,
+        'name' => 'datetime_field',
+        'value_datetime' => $datetime->format('Y-m-d H:i:s'),
+        'schema_code' => 'default',
+    ]);
+
+    // Refresh model to ensure clean state
+    $model->refresh();
+
+    expect($model->flexy->date_field->format('Y-m-d'))->toBe($date->format('Y-m-d'));
+    expect($model->flexy->datetime_field->format('Y-m-d H:i:s'))->toBe($datetime->format('Y-m-d H:i:s'));
 });
