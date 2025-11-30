@@ -9,6 +9,13 @@ uses(CreatesSchemas::class);
 
 beforeEach(function () {
     // Ensure we have a clean database state
+    \Illuminate\Support\Facades\Schema::dropIfExists('ff_example_flexy_models');
+    \Illuminate\Support\Facades\Schema::create('ff_example_flexy_models', function (\Illuminate\Database\Schema\Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->string('schema_code')->nullable();
+        $table->timestamps();
+    });
 });
 
 it('assigns model to schema correctly', function () {

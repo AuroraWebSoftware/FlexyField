@@ -98,6 +98,7 @@ class TestCase extends Orchestra
         \Illuminate\Support\Facades\DB::table('ff_field_values')->delete();
         \Illuminate\Support\Facades\DB::table('ff_schema_fields')->delete();
         \Illuminate\Support\Facades\DB::table('ff_schemas')->delete();
+        \Illuminate\Support\Facades\DB::table('ff_view_schema')->truncate();
     }
 
     /**
