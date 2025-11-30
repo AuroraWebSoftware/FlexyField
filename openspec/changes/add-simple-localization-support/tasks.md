@@ -22,7 +22,20 @@
 ## Quality Assurance
 - [ ] Run `phpstan analyse` (Larastan)
 - [ ] Run `pint`
+- [ ] Run full test suite
 
-## Documentation
-- [ ] Update `README.md` with localization examples
+## Documentation Updates
+- [ ] Update `README.md`
+    - [ ] Add Simple Localization section
+    - [ ] Show translatable field usage
+    - [ ] Document locale switching and fallback
 - [ ] Update `docs/BEST_PRACTICES.md`
+    - [ ] Add localization best practices
+    - [ ] Document when to use translatable fields
+    - [ ] Add tips for managing translations
+- [ ] Update `resources/boost/guidelines/core.blade.php`
+    - [ ] Add localization code snippets
+    - [ ] Document getTranslation() and setTranslation() methods
+- [ ] Update OpenSpec documentation
+    - [ ] Update `openspec/project.md` if needed
+    - [ ] Update type system documentation
