@@ -84,23 +84,22 @@ FlexyField is a Laravel package that enables dynamic field management for Eloque
   - Related model: `src/Models/FieldValue.php`
 
 *Supporting Tables:*
-- `ff_view_schema`: Tracks field definitions for optimized view recreation
-  - Columns: `id`, `name` (unique), `added_at` (timestamp)
-  - Used to detect when new fields are added (triggers view recreation)
-  - Prevents unnecessary view recreations on every save
+- `ff_values_pivot_view`: A dynamically created view that pivots field values into columns for easy querying
+  - Dynamically recreated when new fields are added (detected via database metadata)
+  - Columns: `model_type`, `model_id`, `flexy_{field_name}`
 
 *Database Views:*
 - `ff_values_pivot_view`: Database view that pivots all values for efficient querying
-  - Dynamically recreated when new fields are added (detected via `ff_view_schema`)
+  - Dynamically recreated when new fields are added (detected via database metadata)
   - Creates columns like `flexy_color`, `flexy_size`, etc. for each unique field name
   - Used by global scopes for automatic left joins
   - Recreation command: `php artisan flexyfield:rebuild-view`
   - Implementation: `src/FlexyField.php::dropAndCreatePivotView()`
 
 
-**View Recreation Mechanism:**
-- View is only recreated when new fields are detected (not on every save)
-- Detection: When a new field name appears in `ff_field_values`, it's added to `ff_view_schema`
+### View Recreation Logic
+- Trigger: `FlexyField::recreateViewIfNeeded($fieldNames)` called during model save
+- Detection: When a new field name appears in `ff_field_values` that isn't in the view metadata, the view is recreated
 - Recreation: `FlexyField::dropAndCreatePivotView()` drops and recreates the view with all current fields
 - Performance: ~98% reduction in overhead compared to recreating on every save
 - Manual rebuild: `php artisan flexyfield:rebuild-view` command available

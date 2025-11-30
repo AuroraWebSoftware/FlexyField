@@ -59,7 +59,10 @@ Product::select('id', 'name', 'flexy_color')->get();
 **Smart Optimization (v2.0+):**
 - Only recreates view when NEW fields added
 - 1000 updates = 1-2 recreations (not 1000!)
-- Tracked in `ff_view_schema` table
+- Tracked via database metadata (`information_schema`)
+- Only recreates view when a *new* field name is introduced
+- Existing fields don't trigger recreation
+- View creation happens in a single transaction
 
 **Manual rebuild:**
 ```bash
@@ -74,10 +77,16 @@ php artisan flexyfield:rebuild-view
 ## Monitoring
 
 ### Health Check
-
+You can monitor view recreation frequency by checking your logs or database query history.
+To see total fields in the view:
+```php
+// Get field count from view metadata
+$columns = Schema::getColumnListing('ff_values_pivot_view');
+$fieldCount = count($columns) - 2; // Subtract model_type and model_id
+```
 ```php
 Route::get('/health/flexyfield', fn() => response()->json([
-    'total_fields' => DB::table('ff_view_schema')->count(),
+    'total_fields' => (Schema::hasTable('ff_values_pivot_view') ? count(Schema::getColumnListing('ff_values_pivot_view')) - 2 : 0),
     'total_values' => DB::table('ff_field_values')->count(),
     'view_exists' => !empty(DB::select("SHOW TABLES LIKE 'ff_values_pivot_view'")),
 ]));

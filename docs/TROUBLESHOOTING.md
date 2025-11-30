@@ -141,13 +141,30 @@ php artisan migrate:status
 php artisan migrate --pretend
 ```
 
-**Missing ff_view_schema table:**
+**Missing ff_values_pivot_view:**
+If the pivot view is missing, you can force recreation:
 ```php
-Schema::create('ff_view_schema', function (Blueprint $table) {
-    $table->id();
-    $table->string('name')->unique();
-    $table->timestamp('added_at')->useCurrent();
-});
+\AuroraWebSoftware\FlexyField\FlexyField::forceRecreateView();
+```
+
+### Database Integrity
+To ensure database integrity, you can run:
+```bash
+php artisan migrate:refresh
+```
+**Backup:**
+Always backup your data before performing manual database operations:
+```bash
+mysqldump -u user -p db ff_field_values ff_schemas ff_schema_fields > backup.sql
+```
+
+### Manual Cleanup
+If you need to manually clean up the database (WARNING: destructive):
+```php
+Schema::dropIfExists('ff_values_pivot_view');
+Schema::dropIfExists('ff_field_values');
+Schema::dropIfExists('ff_schema_fields');
+Schema::dropIfExists('ff_schemas');
 ```
 
 ## Debug Mode
