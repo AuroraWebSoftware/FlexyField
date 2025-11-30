@@ -272,6 +272,49 @@ $phone->flexy->features = ['wifi', '5g'];   // Multiple values
 $phone->save();
 ```
 
+### Attribute Grouping
+
+Organize related fields into groups for better UI presentation:
+
+```php
+use AuroraWebSoftware\FlexyField\Models\FieldSchema;
+
+// Define fields with groups
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'voltage',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['group' => 'Power Specs']
+);
+
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'weight_kg',
+    fieldType: FlexyFieldType::DECIMAL,
+    fieldMetadata: ['group' => 'Physical Dimensions']
+);
+
+// Fields without group metadata are ungrouped
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'name',
+    fieldType: FlexyFieldType::STRING
+);
+
+// Retrieve fields organized by group
+$schema = FieldSchema::where('schema_code', 'electronics')->first();
+$grouped = $schema->getFieldsGrouped();
+
+// Iterate through groups
+foreach ($grouped as $groupName => $fields) {
+    echo "Group: $groupName\n";
+    foreach ($fields as $field) {
+        echo "  - {$field->name}\n";
+    }
+}
+```
+
+
 ### Validation
 
 ```php

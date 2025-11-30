@@ -214,6 +214,66 @@ $product->flexy->features = ['wifi', 'invalid']; // ValidationException: 'invali
 - For indexed arrays, values are used for both storage and validation
 - For associative arrays, keys are used for storage and validation
 
+### Attribute Grouping
+
+Organize related fields into groups for better UI organization. Especially useful in PIM/CRM applications:
+
+@verbatim
+<code-snippet name="Define Grouped Fields" lang="php">
+use AuroraWebSoftware\FlexyField\Models\FieldSchema;
+
+// Define fields with group metadata
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'voltage',
+    fieldType: FlexyFieldType::STRING,
+    fieldMetadata: ['group' => 'Power Specs']
+);
+
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'weight_kg',
+    fieldType: FlexyFieldType::DECIMAL,
+    fieldMetadata: ['group' => 'Physical Dimensions']
+);
+
+// Fields without group metadata are ungrouped
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'name',
+    fieldType: FlexyFieldType::STRING
+);
+</code-snippet>
+@endverbatim
+
+@verbatim
+<code-snippet name="Retrieve Grouped Fields" lang="php">
+// Retrieve fields organized by group
+$schema = FieldSchema::where('schema_code', 'electronics')->first();
+$grouped = $schema->getFieldsGrouped();
+
+// Iterate through groups
+foreach ($grouped as $groupName => $fields) {
+    echo "Group: $groupName\n";
+    foreach ($fields as $field) {
+        echo "  - {$field->name}\n";
+    }
+}
+
+// Groups are sorted alphabetically (case-insensitive)
+// "Ungrouped" fields always appear last
+// Fields within each group are sorted by their 'sort' column
+</code-snippet>
+@endverbatim
+
+**Grouping Rules:**
+- Group name is stored in `metadata['group']` field
+- Empty strings (`""`) are treated as ungrouped
+- Groups are sorted alphabetically (case-insensitive)
+- "Ungrouped" fields always appear last
+- Fields within groups use existing `sort` column for ordering
+
+
 ### Validation
 
 Validation is enforced when saving. Models must be assigned to schema first:

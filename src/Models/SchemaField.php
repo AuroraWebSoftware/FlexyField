@@ -183,4 +183,27 @@ class SchemaField extends Model
         // For associative arrays, use keys; for indexed arrays, use values
         return array_is_list($options) ? $options : array_keys($options);
     }
+
+    /**
+     * Get the group name for this field
+     */
+    public function getGroup(): ?string
+    {
+        $group = $this->metadata['group'] ?? null;
+
+        // Treat empty strings as ungrouped
+        if ($group === '' || $group === null) {
+            return null;
+        }
+
+        return (string) $group;
+    }
+
+    /**
+     * Check if this field belongs to a group
+     */
+    public function hasGroup(): bool
+    {
+        return $this->getGroup() !== null;
+    }
 }

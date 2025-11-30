@@ -107,6 +107,31 @@ Product::addFieldToSchema(
 - **Medium lists** (10-50 items): Store in config/constants
 - **Large/dynamic lists** (> 50 items): Use relationships instead of select options
 
+## Attribute Grouping
+
+**Organize fields by functional area:**
+
+```php
+// Group related fields together
+['group' => 'Technical Specs']  // voltage, power_consumption, etc.
+['group' => 'Physical']          // weight, dimensions, etc.
+['group' => 'Marketing']         // description, features, etc.
+```
+
+**Naming conventions:**
+
+- **Title Case:** "Power Specs", "Physical Dimensions"
+- **Keep short:** Max ~30 characters for UI readability
+- **Be consistent:** Use same group names across similar schemas
+
+**UI Recommendations:**
+
+- Display groups alphabetically (case-insensitive)
+- Show "Ungrouped" fields last
+- Use collapsible sections for each group
+- Consider icons/colors for visual distinction
+
+
 ## Data Migration
 
 **Add fields** (no migration needed):
