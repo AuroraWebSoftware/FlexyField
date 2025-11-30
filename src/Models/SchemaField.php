@@ -86,19 +86,101 @@ class SchemaField extends Model
     /**
      * Get validation rules as array
      *
-     * @return array<int, string>
+     * @return array<int, string|callable>
      */
     public function getValidationRulesArray(): array
     {
-        if (empty($this->validation_rules)) {
+        $rules = [];
+
+        // Get base validation rules
+        if (! empty($this->validation_rules)) {
+            // validation_rules can be stored as a string (pipe-separated rules) or as an array
+            if (is_array($this->validation_rules)) {
+                $rules = $this->validation_rules;
+            } else {
+                $rules = explode('|', (string) $this->validation_rules);
+            }
+        }
+
+        // Add options validation if options are defined
+        if ($this->hasOptions()) {
+            $options = $this->getOptions();
+            $allowedValues = $this->getOptionsKeys($options);
+
+            if ($this->isMultiSelect()) {
+                // Multi-select: must be array and all values must be in options
+                $rules[] = 'array';
+                $rules[] = function ($attribute, $value, $fail) use ($allowedValues) {
+                    if (! is_array($value)) {
+                        return; // 'array' rule handles this
+                    }
+
+                    foreach ($value as $item) {
+                        if (! in_array($item, $allowedValues, true)) {
+                            $fail("The selected {$attribute} contains an invalid value.");
+
+                            return;
+                        }
+                    }
+                };
+            } else {
+                // Single select: value must be in options
+                $rules[] = function ($attribute, $value, $fail) use ($allowedValues) {
+                    if (! in_array($value, $allowedValues, true)) {
+                        $fail("The selected {$attribute} is invalid.");
+                    }
+                };
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Get options array from metadata
+     *
+     * @return array<int|string, string>
+     */
+    public function getOptions(): array
+    {
+        if (! isset($this->metadata['options'])) {
             return [];
         }
 
-        // validation_rules can be stored as a string (pipe-separated rules) or as an array
-        if (is_array($this->validation_rules)) {
-            return $this->validation_rules;
+        $options = $this->metadata['options'];
+
+        if (! is_array($options)) {
+            return [];
         }
 
-        return explode('|', (string) $this->validation_rules);
+        return $options;
+    }
+
+    /**
+     * Check if field has options defined
+     */
+    public function hasOptions(): bool
+    {
+        return ! empty($this->getOptions());
+    }
+
+    /**
+     * Check if this field allows multiple selections
+     */
+    public function isMultiSelect(): bool
+    {
+        return isset($this->metadata['multiple']) && $this->metadata['multiple'] === true;
+    }
+
+    /**
+     * Get option keys for validation (handles both indexed and associative arrays)
+     *
+     * @param  array<int|string, string>  $options
+     * @return array<int, int|string>
+     */
+    protected function getOptionsKeys(array $options): array
+    {
+        // For associative arrays, use keys; for indexed arrays, use values
+        return array_is_list($options) ? $options : array_keys($options);
     }
 }
