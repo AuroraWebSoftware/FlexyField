@@ -92,6 +92,99 @@ $blueShoes = Product::where('flexy_color', 'blue')->get();
 $affordable = Product::where('flexy_price', '<', 100)->get();
 ```
 
+## 🛒 E-Commerce Example
+
+Here is a practical example of how to use FlexyField in an e-commerce application with `Category`, `Product`, and `Order` models.
+
+### 1. Setup Models
+
+```php
+use AuroraWebSoftware\FlexyField\Contracts\FlexyModelContract;
+use AuroraWebSoftware\FlexyField\Traits\Flexy;
+use Illuminate\Database\Eloquent\Model;
+
+class Category extends Model implements FlexyModelContract
+{
+    use Flexy;
+}
+
+class Product extends Model implements FlexyModelContract
+{
+    use Flexy;
+}
+
+class Order extends Model implements FlexyModelContract
+{
+    use Flexy;
+}
+```
+
+### 2. Define Schemas & Fields
+
+```php
+use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
+
+// --- Category Schema ---
+Category::createSchema('electronics', 'Electronics');
+Category::addFieldToSchema('electronics', 'icon_class', FlexyFieldType::STRING);
+Category::addFieldToSchema('electronics', 'banner_color', FlexyFieldType::STRING);
+
+// --- Product Schema ---
+Product::createSchema('smartphone', 'Smartphone');
+Product::addFieldToSchema('smartphone', 'screen_size', FlexyFieldType::DECIMAL);
+Product::addFieldToSchema('smartphone', 'battery_capacity', FlexyFieldType::INTEGER);
+Product::addFieldToSchema('smartphone', 'has_5g', FlexyFieldType::BOOLEAN);
+Product::addFieldToSchema('smartphone', 'release_date', FlexyFieldType::DATE);
+
+// --- Order Schema ---
+Order::createSchema('gift_order', 'Gift Order');
+Order::addFieldToSchema('gift_order', 'gift_note', FlexyFieldType::STRING);
+Order::addFieldToSchema('gift_order', 'is_wrapped', FlexyFieldType::BOOLEAN);
+Order::addFieldToSchema('gift_order', 'delivery_instructions', FlexyFieldType::STRING);
+```
+
+### 3. Usage in Controller
+
+```php
+// Create a Category with custom attributes
+$category = Category::create(['name' => 'Smartphones']);
+$category->assignToSchema('electronics');
+$category->flexy->icon_class = 'fa-mobile';
+$category->flexy->banner_color = '#FF5733';
+$category->save();
+
+// Create a Product with specific specs
+$product = Product::create(['name' => 'iPhone 15', 'category_id' => $category->id]);
+$product->assignToSchema('smartphone');
+$product->flexy->screen_size = 6.1;
+$product->flexy->battery_capacity = 3349;
+$product->flexy->has_5g = true;
+$product->flexy->release_date = '2023-09-22';
+$product->save();
+
+// Create an Order with special instructions
+$order = Order::create(['user_id' => 1, 'total' => 999.99]);
+$order->assignToSchema('gift_order');
+$order->flexy->gift_note = 'Happy Birthday!';
+$order->flexy->is_wrapped = true;
+$order->save();
+```
+
+### 4. Querying
+
+```php
+// Find all 5G smartphones released after 2023
+$modernPhones = Product::whereSchema('smartphone')
+    ->where('flexy_has_5g', true)
+    ->where('flexy_release_date', '>=', '2023-01-01')
+    ->get();
+
+// Find all gift orders that need wrapping
+$ordersToWrap = Order::whereSchema('gift_order')
+    ->where('flexy_is_wrapped', true)
+    ->get();
+```
+
 ## 📚 Documentation
 
 - [**Performance Guide**](docs/PERFORMANCE.md) - Optimization, indexing, scaling (v2.0: 98% faster!)
