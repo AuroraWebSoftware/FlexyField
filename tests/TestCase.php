@@ -117,6 +117,10 @@ class TestCase extends Orchestra
 
         // Run migration
         $migration->up();
+
+        // Run label column migration
+        $labelMigration = include __DIR__.'/../database/migrations/add_label_column_to_schema_fields.php';
+        $labelMigration->up();
     }
 
     /**
