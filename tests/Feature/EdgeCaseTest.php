@@ -5,7 +5,6 @@ use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 uses(CreatesSchemas::class);
 
@@ -610,12 +609,12 @@ it('rejects invalid string assignments to integer fields', function () {
     $model->assignToSchema('test');
 
     // Try to assign a non-numeric string to an integer field
-    expect(fn() => $model->flexy->int_field = 'not a number')->not->toThrow(Exception::class);
-    
+    expect(fn () => $model->flexy->int_field = 'not a number')->not->toThrow(Exception::class);
+
     // Save and verify value was converted or handled appropriately
     $model->save();
     $model->refresh();
-    
+
     // The system should either convert string to 0 or handle it gracefully
     expect($model->flexy->int_field)->toBe(0);
 });
