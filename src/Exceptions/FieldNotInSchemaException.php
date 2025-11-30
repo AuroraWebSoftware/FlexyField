@@ -5,7 +5,7 @@ namespace AuroraWebSoftware\FlexyField\Exceptions;
 class FieldNotInSchemaException extends \Exception
 {
     /**
-     * @param array<string> $availableFields
+     * @param  array<string>  $availableFields
      */
     public static function forField(string $field, string $schemaCode, array $availableFields): self
     {
