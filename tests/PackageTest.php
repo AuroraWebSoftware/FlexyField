@@ -4,7 +4,6 @@ use AuroraWebSoftware\FlexyField\Enums\FlexyFieldType;
 use AuroraWebSoftware\FlexyField\Tests\Concerns\CreatesSchemas;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
@@ -13,7 +12,7 @@ uses(CreatesSchemas::class);
 beforeEach(function () {
     // Don't call migrate:fresh - it doesn't run package migrations
     // TestCase already handles migrations via runMigrations()
-    
+
     Schema::dropIfExists('ff_example_flexy_models');
     Schema::create('ff_example_flexy_models', function (Blueprint $table) {
         $table->id();
@@ -21,7 +20,7 @@ beforeEach(function () {
         $table->string('schema_code')->nullable();
         $table->timestamps();
     });
-    
+
     // Clean up test data
     $this->cleanupTestData();
 });

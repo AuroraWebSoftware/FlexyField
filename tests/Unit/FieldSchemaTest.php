@@ -4,7 +4,6 @@ use AuroraWebSoftware\FlexyField\Models\FieldSchema;
 use AuroraWebSoftware\FlexyField\Models\SchemaField;
 use AuroraWebSoftware\FlexyField\Tests\Models\ExampleFlexyModel;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
