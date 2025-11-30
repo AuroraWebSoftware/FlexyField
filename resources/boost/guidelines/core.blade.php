@@ -273,8 +273,50 @@ foreach ($grouped as $groupName => $fields) {
 - "Ungrouped" fields always appear last
 - Fields within groups use existing `sort` column for ordering
 
+### UI Hints
 
-### Validation
+Improve UX with labels, placeholders, and hints:
+
+@verbatim
+<code-snippet name="Define Field with UI Hints" lang="php">
+use AuroraWebSoftware\FlexyField\Models\SchemaField;
+
+// Define field with all UI hints
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'battery_capacity_mah',
+    fieldType: FlexyFieldType::INTEGER,
+    label: 'Battery Capacity',           // Human-readable label
+    fieldMetadata: [
+        'placeholder' => 'Enter mAh',    // Input placeholder
+        'hint' => 'Range: 1000-5000mAh'  // Help text
+    ]
+);
+</code-snippet>
+@endverbatim
+
+@verbatim
+<code-snippet name="Retrieve UI Hints" lang="php">
+$field = SchemaField::where('name', 'battery_capacity_mah')->first();
+
+// Get UI hints
+echo $field->getLabel();        // "Battery Capacity"
+echo $field->getPlaceholder();  // "Enter mAh"
+echo $field->getHint();         // "Range: 1000-5000mAh"
+
+// Label falls back to field name if null/empty
+$field->label = null;
+echo $field->getLabel();        // "battery_capacity_mah"
+</code-snippet>
+@endverbatim
+
+**Important Rules:**
+- `label` is stored in dedicated column (`ff_schema_fields.label`)
+- `placeholder` and `hint` are stored in `metadata` JSON
+- `getLabel()` always returns a string (fallback to name)
+- `getPlaceholder()` and `getHint()` return null if not set
+- Empty label strings fallback to name
+
 
 Validation is enforced when saving. Models must be assigned to schema first:
 

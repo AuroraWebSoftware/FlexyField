@@ -131,8 +131,42 @@ Product::addFieldToSchema(
 - Use collapsible sections for each group
 - Consider icons/colors for visual distinction
 
+## UI Hints
 
-## Data Migration
+**Use descriptive labels:**
+
+```php
+// ✅ Good
+label: 'Battery Capacity'
+label: 'Product Weight'
+
+// ❌ Bad
+label: 'bat_cap'  // Too technical
+label: null       // Missing user-friendly name
+```
+
+**Write helpful placeholders:**
+
+```php
+// ✅ Specific format examples
+'placeholder' => 'e.g., 99.99'
+'placeholder' => 'Enter email address'
+
+// ❌ Vague
+'placeholder' => 'Enter value'
+```
+
+**Provide actionable hints:**
+
+```php
+// ✅ Clear constraints
+'hint' => 'Must be between 1000-5000mAh'
+'hint' => 'Leave empty for auto-generation'
+
+// ❌ Redundant
+'hint' => 'Enter battery capacity'  // Already in label
+```
+
 
 **Add fields** (no migration needed):
 

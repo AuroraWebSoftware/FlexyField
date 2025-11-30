@@ -314,8 +314,36 @@ foreach ($grouped as $groupName => $fields) {
 }
 ```
 
+### UI Hints
 
-### Validation
+Improve UX with human-readable labels, placeholders, and hints:
+
+```php
+use AuroraWebSoftware\FlexyField\Models\SchemaField;
+
+// Define field with UI hints
+Product::addFieldToSchema(
+    schemaCode: 'electronics',
+    fieldName: 'battery_capacity_mah',
+    fieldType: FlexyFieldType::INTEGER,
+    label: 'Battery Capacity',
+    fieldMetadata: [
+        'placeholder' => 'Enter value in mAh',
+        'hint' => 'Typical range: 1000-5000mAh'
+    ]
+);
+
+// Retrieve UI hints
+$field = SchemaField::where('name', 'battery_capacity_mah')->first();
+echo $field->getLabel();        // "Battery Capacity"
+echo $field->getPlaceholder();  // "Enter value in mAh"
+echo $field->getHint();         // "Typical range: 1000-5000mAh"
+
+// Label falls back to name if null
+$field->label = null;
+echo $field->getLabel();        // "battery_capacity_mah"
+```
+
 
 ```php
 try {
