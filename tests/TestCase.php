@@ -28,13 +28,10 @@ class TestCase extends Orchestra
         // Check if we're using PostgreSQL
         $isPostgreSQL = config('database.default') === 'pgsql';
 
-        // Run migrations only once per database type
-        if ($isPostgreSQL && ! static::$pgMigrated) {
+        // Run migrations if tables don't exist
+        // We check ff_schema_fields as a proxy for all tables
+        if (! Schema::hasTable('ff_schema_fields')) {
             $this->runMigrations();
-            static::$pgMigrated = true;
-        } elseif (! $isPostgreSQL && ! static::$migrated) {
-            $this->runMigrations();
-            static::$migrated = true;
         }
 
         // Clean up data before each test
@@ -103,14 +100,18 @@ class TestCase extends Orchestra
     {
         // Clean up in the right order to avoid foreign key constraints
         // Values first, then fields, then schemas
-        if (Schema::hasTable('ff_field_values')) {
-            \Illuminate\Support\Facades\DB::table('ff_field_values')->delete();
-        }
-        if (Schema::hasTable('ff_schema_fields')) {
-            \Illuminate\Support\Facades\DB::table('ff_schema_fields')->delete();
-        }
-        if (Schema::hasTable('ff_schemas')) {
-            \Illuminate\Support\Facades\DB::table('ff_schemas')->delete();
+        try {
+            if (Schema::hasTable('ff_field_values')) {
+                \Illuminate\Support\Facades\DB::table('ff_field_values')->delete();
+            }
+            if (Schema::hasTable('ff_schema_fields')) {
+                \Illuminate\Support\Facades\DB::table('ff_schema_fields')->delete();
+            }
+            if (Schema::hasTable('ff_schemas')) {
+                \Illuminate\Support\Facades\DB::table('ff_schemas')->delete();
+            }
+        } catch (\Exception $e) {
+            // Ignore errors during cleanup - if tables don't exist, that's fine
         }
     }
 
