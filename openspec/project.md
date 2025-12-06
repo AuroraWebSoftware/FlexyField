@@ -1,4 +1,12 @@
-# Project Context
+# FlexyField Project Context
+
+## Package Information
+- **Package Name**: `aurorawebsoftware/flexyfield`
+- **Current Version**: 2.x (Active Development)
+- **License**: MIT License
+- **Author**: Aurora Web Software Team
+- **Repository**: https://github.com/aurorawebsoftware/flexyfield
+- **Documentation**: Comprehensive guides for installation, usage, and deployment
 
 ## Purpose
 FlexyField is a Laravel package that enables dynamic field management for Eloquent models without requiring database schema modifications. It provides a flexible, type-safe solution for adding custom fields to models at runtime, with built-in validation and query support.
