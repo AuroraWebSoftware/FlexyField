@@ -311,3 +311,235 @@ All proposals must include documentation updates as part of their implementation
 - Provide complete, runnable examples
 - Document all parameters and return values
 - Include error conditions and handling
+
+## API Reference
+
+### Core Methods
+
+#### Schema Management
+```php
+// Create a new schema
+FieldSchema::createSchema(string $schemaCode, string $label, ?string $description = null, ?array $metadata = null, bool $isDefault = false): FieldSchema
+
+// Add field to schema
+Model::addFieldToSchema(string $schemaCode, string $fieldName, FlexyFieldType $fieldType, int $sort = 100, ?string $validationRules = null, ?array $validationMessages = null, ?array $fieldMetadata = null, ?string $label = null): SchemaField
+
+// Get schema for model
+Model::getSchema(string $schemaCode): ?FieldSchema
+
+// Get all schemas for model type
+Model::getAllSchemas(): Collection
+
+// Delete schema (with usage check)
+Model::deleteSchema(string $schemaCode): bool
+```
+
+#### Instance Methods
+```php
+// Assign model to schema
+$model->assignToSchema(string $schemaCode): void
+
+// Get schema code for instance
+$model->getSchemaCode(): ?string
+
+// Get available fields for instance
+$model->getAvailableFields(): Collection
+
+// Access flexy fields
+$model->flexy->fieldName  // Magic accessor
+$model->flexy_fieldName   // Direct accessor
+```
+
+#### Query Scopes
+```php
+// Filter by schema
+Model::whereSchema(string $schemaCode): Builder
+Model::whereInSchema(array $schemaCodes): Builder
+Model::whereHasSchema(): Builder
+Model::whereDoesntHaveSchema(): Builder
+
+// Query flexy fields
+Model::where('flexy_fieldName', $value): Builder
+Model::whereFlexyFieldName($value): Builder
+```
+
+## Error Handling
+
+### Exception Hierarchy
+
+**Core Exceptions:**
+- `SchemaNotFoundException`: Thrown when schema is not found or not assigned
+- `FieldNotInSchemaException`: Thrown when trying to set field not in assigned schema
+- `SchemaInUseException`: Thrown when attempting to delete schema in use
+- `FieldNotInSchemaException`: Thrown when field doesn't exist in schema
+
+**Error Handling Best Practices:**
+```php
+try {
+    $product->flexy->size = 42;
+    $product->save();
+} catch (SchemaNotFoundException $e) {
+    // Handle unassigned schema
+    $product->assignToSchema('footwear');
+    $product->flexy->size = 42;
+    $product->save();
+} catch (FieldNotInSchemaException $e) {
+    // Handle invalid field
+    Log::error('Invalid field assignment', ['field' => $e->field, 'schema' => $e->schema]);
+}
+```
+
+## Configuration Options
+
+### Package Configuration (`config/flexyfield.php`)
+```php
+return [
+    // Default file storage configuration (for FILE field type)
+    'file_storage' => [
+        'default_disk' => env('FLEXYFIELD_DEFAULT_DISK', 'public'),
+        'default_path' => env('FLEXYFIELD_DEFAULT_PATH', 'flexyfield'),
+    ],
+    
+    // Performance settings
+    'performance' => [
+        'enable_view_caching' => env('FLEXYFIELD_VIEW_CACHING', true),
+        'max_fields_per_view' => env('FLEXYFIELD_MAX_FIELDS', 100),
+    ],
+    
+    // Validation settings
+    'validation' => [
+        'strict_mode' => env('FLEXYFIELD_STRICT_VALIDATION', true),
+        'auto_trim_strings' => env('FLEXYFIELD_AUTO_TRIM', true),
+    ],
+];
+```
+
+### Environment Variables
+```bash
+# File storage
+FLEXYFIELD_DEFAULT_DISK=public
+FLEXYFIELD_DEFAULT_PATH=flexyfield
+
+# Performance
+FLEXYFIELD_VIEW_CACHING=true
+FLEXYFIELD_MAX_FIELDS=100
+
+# Validation
+FLEXYFIELD_STRICT_VALIDATION=true
+FLEXYFIELD_AUTO_TRIM=true
+```
+
+## Security Considerations
+
+### Data Validation
+- **Input Sanitization**: All flexy field values are validated against schema rules
+- **Type Safety**: Strict type checking prevents injection attacks
+- **SQL Injection**: Protected through Eloquent ORM and parameter binding
+
+### Access Control
+- **Schema Assignment**: Only assigned schemas can be modified
+- **Field Validation**: Only defined fields can be set
+- **Model-Level Security**: Apply Laravel authorization policies as needed
+
+### Best Practices
+```php
+// Use Laravel policies for authorization
+public function update(User $user, Product $product): bool
+{
+    return $user->id === $product->user_id || $user->isAdmin();
+}
+
+// Validate schema assignment in controllers
+public function updateProduct(Request $request, Product $product): JsonResponse
+{
+    $this->authorize('update', $product);
+    
+    // Ensure schema is assigned before allowing flexy field updates
+    if (!$product->getSchemaCode()) {
+        return response()->json(['error' => 'Schema assignment required'], 422);
+    }
+    
+    // Proceed with flexy field updates...
+}
+```
+
+## Performance Metrics
+
+### Current Performance Benchmarks (v2.0+)
+- **Single Save (existing field)**: 5-15ms
+- **Single Save (new field)**: 50-100ms (includes view recreation)
+- **Query Performance**: 15-50ms for single model with 5 fields
+- **Bulk Operations**: 1000 updates in 2-5 seconds (1-2 view recreations)
+
+### Scaling Recommendations
+- **Small Scale**: 1-20 fields, <100K models (Excellent performance)
+- **Medium Scale**: 20-50 fields, 100K-1M models (Good performance)
+- **Large Scale**: 50-100 fields, 1M-10M models (Acceptable with optimization)
+
+### Monitoring
+```php
+// Performance monitoring
+DB::listen(function ($query) {
+    if (str_contains($query->sql, 'ff_') && $query->time > 50) {
+        Log::warning('Slow FlexyField query', [
+            'sql' => $query->sql,
+            'time' => $query->time,
+            'bindings' => $query->bindings
+        ]);
+    }
+});
+
+// View recreation monitoring
+Event::listen('flexyfield.view-recreated', function ($data) {
+    Log::info('FlexyField view recreated', [
+        'field_count' => $data['field_count'],
+        'recreation_time' => $data['time_ms']
+    ]);
+});
+```
+
+## Current Development Status
+
+### Active Features (v2.x)
+- **File Field Type**: Adding file upload support with storage management
+- **Enhanced Performance**: Optimized view recreation (98% improvement)
+- **Schema Refactoring**: Complete migration from FieldSet to Schema terminology
+- **Multi-Database Support**: Full MySQL and PostgreSQL compatibility
+
+### Planned Features
+- **File Field Type**: File upload, storage, and management (In Progress)
+- **Relationship Field Type**: Support for related model references
+- **Simple Localization**: Multi-language field support
+- **Advanced Query Features**: Enhanced filtering and aggregation
+
+### Recent Major Changes (November-December 2025)
+- **Schema System Overhaul**: Complete refactoring from FieldSet to Schema
+- **Performance Optimization**: Smart view recreation implementation
+- **Database Cleanup**: Removed legacy shapes system
+- **Testing Enhancement**: Comprehensive test coverage and CI/CD improvements
+
+## Migration Strategy
+
+### From v1.x to v2.x
+The migration from FieldSet to Schema system requires:
+
+1. **Database Migration**:
+   ```bash
+   php artisan migrate
+   php artisan flexyfield:rebuild-view
+   ```
+
+2. **Code Updates**:
+   - Replace `FieldSet` with `Schema` in all code
+   - Update method calls: `assignToFieldSet()` → `assignToSchema()`
+   - Rename database columns: `field_set_code` → `schema_code`
+
+3. **Backward Compatibility**:
+   - Legacy data is automatically migrated
+   - Old method names are deprecated but still functional
+   - Gradual migration path provided
+
+### Future Migrations
+- **Schema Versioning**: Track schema changes for rollback capability
+- **Data Migration Tools**: Automated tools for complex schema transformations
+- **Migration Validation**: Ensure data integrity during schema changes
